@@ -7,7 +7,7 @@
 
 ## What Was the Problem?
 *Imagine that this bicycle retail chain was operating without proper data tracking or analytics. As a result, the business faced several critical challenges:*
-  # Revenue Blindness: The company did not know which brands or product categories were generating the highest revenue or profit.
+   * 1.Revenue Blindness: The company did not know which brands or product categories were generating the highest revenue or profit.
 
 
 
