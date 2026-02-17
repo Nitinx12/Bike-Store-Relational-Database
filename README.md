@@ -5,7 +5,7 @@
 
 <img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/1fb0edef-67f6-454d-8bee-06fa02341374" />
 
-## 📌 Business Problem
+## Business Problem
 
 Before implementing data analytics, the bicycle retail chain operated with little visibility into its business performance. The absence of structured data tracking led to several critical operational and strategic challenges:
 
