@@ -145,30 +145,24 @@ Bicycle Retail Project/
 │       ├── staff_report.sql
 │       ├── summary_of_everything.sql
 │
-├── notebooks/                               # Jupyter Notebooks 
-│   ├── eda/                                 # From 'Exploratory Data analysis (EDA)' folder
+├── notebooks/                                # Jupyter Notebooks 
+│   ├── eda/                                  # From 'Exploratory Data analysis (EDA)' folder
 │       └── exploratory_analysis.ipynb
 │
-├── dashboards/                             # The Power BI folder contains SQL scripts for dimension and fact tables that create the star schema, and the dashboard has been built using these SQL scripts
+├── dashboards/                               # The Power BI folder contains SQL scripts for dimension and fact tables that create the star schema, and the dashboard has been built using these SQL scripts
 │   └── sql/ 
-│       ├── dim_products.sql
-│       ├── dim_customers.sql
-│       ├── dim_staffs.sql
-│       ├── dim_stores.sql
-│       ├── fact_sales.sql
+│   │    ├── dim_products.sql
+│   │    ├── dim_customers.sql
+│   │    ├── dim_staffs.sql
+│   │    ├── dim_stores.sql
+│   │    ├── fact_sales.sql
+│   │
+│   └── retail_dashboard.pbix                 # From 'Power BI Dashboard' folder
 │
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
+├── .gitignore                                # Files to ignore (e.g., venv, __pycache__, local data)
+├── requirements.txt                          # Python dependencies (pandas, sqlalchemy, psycopg2)
+├── LICENSE
+└── README.md                                 # Project Overview
 ```
 
 
