@@ -1,4 +1,4 @@
-<img width="1176" height="807" alt="image" src="https://github.com/user-attachments/assets/aa0ed8e0-6368-4f7f-af3c-baba22f3b66a" /># Bicycle Retail Project
+# Bicycle Retail Project
 
 ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.0.0-green)
 
