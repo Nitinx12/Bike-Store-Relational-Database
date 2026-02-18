@@ -55,6 +55,8 @@ I engineered complex SQL queries to aggregate sales data, revealing that company
 | **Road Bikes** | **$1,665,098.49** | Driven by fitness enthusiasts and long-distance riders. |
 | **Cruiser Bicycles** | **$995,032.62** | Popular among casual riders for leisure and comfort. |
 
+<img width="1189" height="790" alt="cate" src="https://github.com/user-attachments/assets/ac8d5b5b-4c4d-4293-9aab-c9eac6e219c8" />
+
 ---
 
 #### 2. Quantified Staff Performance
