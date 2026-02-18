@@ -91,11 +91,25 @@ Addressed the "Stock-Out" vs "Dead Stock" dilemma by analyzing the correlation b
 **Key Insight:**
 * **Dead Stock Alert:** The **Trek 820** has 55 units in stock but **zero sales**. This is "Dead Capital" that needs to be liquidated immediately to free up warehouse space and cash flow.
 
+---
+
 ## Strategic Recommendations
 
 1.  **HR Retention Strategy:** Investigate why **Venita Daniel** (#2 Top Seller) left. Implement retention bonuses for top-tier staff like **Marcelene Boyer**.
 2.  **Inventory Liquidation:** Launch a "Clearance Sale" for the **Trek 820** and other "Dead Stock" items to recover capital.
 3.  **Brand Focus:** Shift marketing budget towards **Trek and Electra**, as they drive 60%+ of the revenue.
+
+---
+
+### Built With
+* Python
+* SQL (PostgreSQL)
+* Pandas
+* Jupyter Notebook
+* Matplotlib & Seaborn
+* Duckdb
+  
+---
 
 
 
