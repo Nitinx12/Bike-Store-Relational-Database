@@ -1,4 +1,4 @@
-# Bicycle Retail Project
+<img width="1176" height="807" alt="image" src="https://github.com/user-attachments/assets/aa0ed8e0-6368-4f7f-af3c-baba22f3b66a" /># Bicycle Retail Project
 
 ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.0.0-green)
 
@@ -172,6 +172,12 @@ Bicycle Retail Project/
 ├── LICENSE
 └── README.md                                 # Project Overview
 ```
+## ERD of dataset
+
+<img width="1176" height="807" alt="image" src="https://github.com/user-attachments/assets/b955f8cd-24d5-455f-b02f-bf01f2dfe025" />
+
+---
+
 ---
 ## ⚙️ Installation & Usage
 To replicate this analysis, follow these steps:
