@@ -137,14 +137,38 @@ Bicycle Retail Project/
 │   │    ├── monthly_sales_trend.sql
 │   │    ├── rfm_segmentation.sql
 │   │   
-│   └── sql/                                    # There are business-related reports in the business reportfolder
+│   └── sql/                                  # There are business-related reports in the business reportfolder
 │       ├── customer_report.sql
 │       ├── inventory_analytics.sql
 │       ├── product_reports.sql
 │       ├── store_report.sql
 │       ├── staff_report.sql
 │       ├── summary_of_everything.sql
-
+│
+├── notebooks/                               # Jupyter Notebooks 
+│   ├── eda/                                 # From 'Exploratory Data analysis (EDA)' folder
+│       └── exploratory_analysis.ipynb
+│
+├── dashboards/                             # The Power BI folder contains SQL scripts for dimension and fact tables that create the star schema, and the dashboard has been built using these SQL scripts
+│   └── sql/ 
+│       ├── dim_products.sql
+│       ├── dim_customers.sql
+│       ├── dim_staffs.sql
+│       ├── dim_stores.sql
+│       ├── fact_sales.sql
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
 ```
 
 
