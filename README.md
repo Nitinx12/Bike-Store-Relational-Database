@@ -7,25 +7,25 @@
 
 ## Business Problem
 
-Before implementing data analytics, the bicycle retail chain operated with little visibility into its business performance. The absence of structured data tracking led to several critical operational and strategic challenges:
+*Before implementing data analytics, the bicycle retail chain operated with little visibility into its business performance. The absence of structured data tracking led to several critical operational and strategic challenges:*
 
 ### 1. Revenue Blindness  
-The company lacked insight into which brands, product categories, or individual products generated the most revenue and profit. This made strategic decision-making difficult and often resulted in suboptimal product focus.
+*The company lacked insight into which brands, product categories, or individual products generated the most revenue and profit. This made strategic decision-making difficult and often resulted in suboptimal product focus.*
 
 ### 2. Staff Performance Uncertainty  
-Management had no objective way to evaluate sales staff performance. It was unclear which employees were high performers and which required additional training or support.
+*Management had no objective way to evaluate sales staff performance. It was unclear which employees were high performers and which required additional training or support.*
 
 ### 3. Poor Customer Retention Insights  
-The business could not identify high-value customers — those who purchased frequently and contributed significantly to total revenue. Without this information, targeted marketing and loyalty initiatives were impossible.
+*The business could not identify high-value customers — those who purchased frequently and contributed significantly to total revenue. Without this information, targeted marketing and loyalty initiatives were impossible.*
 
 ### 4. Inventory Mismanagement  
 
-Inventory decisions were made without data support, leading to two major issues:
+*Inventory decisions were made without data support, leading to two major issues:*
 
-- Slow-moving products accumulated as dead stock  
-- High-demand bikes frequently went out of stock  
+*- Slow-moving products accumulated as dead stock*
+*- High-demand bikes frequently went out of stock*
 
-This imbalance resulted in lost sales opportunities, increased holding costs, and reduced customer satisfaction.
+*This imbalance resulted in lost sales opportunities, increased holding costs, and reduced customer satisfaction.*
 
 
 
