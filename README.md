@@ -80,7 +80,16 @@ Management can now objectively evaluate employees using a dynamic leaderboard sy
 Addressed the "Stock-Out" vs "Dead Stock" dilemma by analyzing the correlation between Order Volume and Current Stock Levels.
 
 * **Technical Approach:** Performed `JOIN` operations between `Orders` and `Stocks` tables to calculate the **Sales-to-Stock Ratio**.
-* **Outcome:** Flagged high-demand models (like Trek Mountain Bikes) for immediate restocking and identified slow-moving inventory for discount clearance sales.
+  **Inventory Health Report:**
+
+| Product Name | Stock | Days Since Last Sale | Status | Action Required |
+| :--- | :--- | :--- | :--- | :--- |
+| **Trek 820 - 2016** | **55** | N/A (0 Sales) | **Dead Stock** | **Clearance Sale** |
+| **Ritchey Timberwolf** | 45 | 266 Days | **Slow Moving** | Discount Bundle |
+| **Surly Wednesday** | 34 | 349 Days | **Moderate** | Monitor |
+
+** Key Insight:**
+* **Dead Stock Alert:** The **Trek 820** has 55 units in stock but **zero sales**. This is "Dead Capital" that needs to be liquidated immediately to free up warehouse space and cash flow.
 
 
 
