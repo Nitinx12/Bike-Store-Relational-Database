@@ -62,14 +62,6 @@ Management can now objectively evaluate employees using a dynamic leaderboard sy
 * **Technical Approach:** Utilized SQL Window Functions (`DENSE_RANK`, `ROW_NUMBER`) to rank staff based on total revenue generated and order volume.
 * **Outcome:** Revealed a critical retention issue regarding top talent.
 
----
-
-#### 3. Optimized Inventory Management
-Addressed the "Stock-Out" vs "Dead Stock" dilemma by analyzing the correlation between Order Volume and Current Stock Levels.
-
-* **Technical Approach:** Performed `JOIN` operations between `Orders` and `Stocks` tables to calculate the **Sales-to-Stock Ratio**.
-* **Outcome:** Flagged high-demand models (like Trek Mountain Bikes) for immediate restocking and identified slow-moving inventory for discount clearance sales.
-
 **Top Performing Sales Associates:**
 | Rank | Staff Name | Store Location | Revenue ($) | Status |
 | :--- | :--- | :--- | :--- | :--- |
@@ -77,7 +69,14 @@ Addressed the "Stock-Out" vs "Dead Stock" dilemma by analyzing the correlation b
 | **#2** | **Venita Daniel** | Baldwin Bikes | **$2,591,631** | **Inactive** |
 | **#3** | **Genna Serrano** | Santa Cruz Bikes | **$853,287** | Active |
 | **#4** | **Kali Vargas** | Rowlett Bikes | **$463,918** | Active |
+
 ---
+
+#### 3. Optimized Inventory Management
+Addressed the "Stock-Out" vs "Dead Stock" dilemma by analyzing the correlation between Order Volume and Current Stock Levels.
+
+* **Technical Approach:** Performed `JOIN` operations between `Orders` and `Stocks` tables to calculate the **Sales-to-Stock Ratio**.
+* **Outcome:** Flagged high-demand models (like Trek Mountain Bikes) for immediate restocking and identified slow-moving inventory for discount clearance sales.
 
 
 
