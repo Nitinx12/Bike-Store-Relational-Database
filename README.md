@@ -1,5 +1,4 @@
 # Bicycle Retail Project
---
 
 ## Project Overview
 *The primary goal of this project is to analyze the sales data of a bicycle retail chain to generate actionable insights for business growth. The study aims to identify top-selling products, evaluate staff performance, and optimize inventory management to minimize stock-out risks and maintain efficient supply levels.
