@@ -70,6 +70,10 @@ Management can now objectively evaluate employees using a dynamic leaderboard sy
 | **#3** | **Genna Serrano** | Santa Cruz Bikes | **$853,287** | Active |
 | **#4** | **Kali Vargas** | Rowlett Bikes | **$463,918** | Active |
 
+**Key Business Insight:**
+* **Talent Loss:** **Venita Daniel**, the #2 performer contributing **$2.59M** in revenue, has left the company (Inactive). This represents a massive loss in sales capability and requires an immediate HR review of retention policies.
+* **Store Dominance:** Staff at **Baldwin Bikes** are outperforming other branches by a factor of 3x.
+
 ---
 
 #### 3. Optimized Inventory Management
