@@ -1,5 +1,7 @@
 # Bicycle Retail Project
 
+![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.0.0-green)
+
 ## Project Overview
 *The primary goal of this project is to analyze the sales data of a bicycle retail chain to generate actionable insights for business growth. The study aims to identify top-selling products, evaluate staff performance, and optimize inventory management to minimize stock-out risks and maintain efficient supply levels.*
 
@@ -198,7 +200,7 @@ To replicate this analysis, follow these steps:
     pip install -r requirements.txt
     ```
 5.  **Run Analysis:**
-    * **For SQL Analysis:** Execute the queries in `Customers_report.sql` using a SQL client like DBeaver, pgadmin4 or `psql`.
+    * **For SQL Analysis:** Execute the queries in `product_report.sql` using a SQL client like DBeaver, pgadmin4 or `psql`.
 ```sql
 WITH Sales_base AS(
 	SELECT
@@ -353,5 +355,17 @@ LEFT JOIN product_segmentation AS PM ON
 PM.product_id = P.product_id
 CROSS JOIN dataset_date AS GD;
 ```
+---
 
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## Contact Information
+
+* **LinkedIn:** [https://www.linkedin.com/in/nitin-k-220651351/](https://www.linkedin.com/in/nitin-k-220651351/)
+* **GitHub:** [https://github.com/Nitinx12](https://github.com/Nitinx12)
+* **Email:** Nitin321x@gmail.com
+
+---
 
