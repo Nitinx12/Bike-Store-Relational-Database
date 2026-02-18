@@ -35,9 +35,9 @@
 * **Solved Revenue Blindness:**
 
 * The analysis revealed that revenue was highly concentrated among a few key brands:
-  * 1. Trek 4,602,754.35 The dominant revenue driver, indicating strong market demand and brand preference.
-    2. Electra 1,205,320.82  A solid secondary contributor, suggesting a stable niche presence.
-    3. Surly 949,507.06 A smaller but still meaningful contributor to overall sales.
+  *  Trek 4,602,754.35 The dominant revenue driver, indicating strong market demand and brand preference.
+     Electra 1,205,320.82  A solid secondary contributor, suggesting a stable niche presence.
+     Surly 949,507.06 A smaller but still meaningful contributor to overall sales.
  
 * Revenue distribution across product categories shows clear customer preferences:
   * 1. Mountain Bikes 2,715,079.53 The highest-performing category, indicating strong demand for off-road and adventure bicycles.
