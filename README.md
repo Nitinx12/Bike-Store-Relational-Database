@@ -47,6 +47,8 @@ I engineered complex SQL queries to aggregate sales data, revealing that company
 | **Electra** | **$1,205,320.82** | **Strong Contributor:** Suggests a stable presence in a niche segment. |
 | **Surly** | **$949,507.06** | **Steady Performer:** A smaller but meaningful contributor to overall sales. |
 
+<img width="1253" height="677" alt="image" src="https://github.com/user-attachments/assets/27e0f5f5-7cae-4f48-8e9c-66ce2a8abcac" />
+
 **Revenue by Product Category:**
 
 | Category | Total Revenue ($) | Customer Preference Insight |
