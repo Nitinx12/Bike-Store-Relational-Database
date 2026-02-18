@@ -172,9 +172,49 @@ Bicycle Retail Project/
 ├── LICENSE
 └── README.md                                 # Project Overview
 ```
-## ERD of dataset
+## Database Schema
+
+The database follows a **normalized relational structure** designed to handle transactions and catalog data efficiently.
 
 <img width="1176" height="807" alt="image" src="https://github.com/user-attachments/assets/b955f8cd-24d5-455f-b02f-bf01f2dfe025" />
+
+### 🔗 Entity Relationships (How Tables Connect)
+The database is divided into three logical groups. Here is how the tables are linked via **Primary Keys (PK)** and **Foreign Keys (FK)**:
+
+#### 1. Sales & Orders (Transactional Data)
+* **`orders` Table**: The central table linking customers, stores, and staff.
+    * Links to `customers` via `customer_id` (One Customer -> Many Orders).
+    * Links to `stores` via `store_id` (One Store -> Many Orders).
+    * Links to `staffs` via `staff_id` (One Staff -> Many Orders).
+* **`order_items` Table**: Contains the details of each order (SKU, quantity, price).
+    * Links to `orders` via `order_id`.
+    * Links to `products` via `product_id` to get product details.
+
+#### 2. Production & Catalog (Dimensional Data)
+* **`products` Table**: Contains product details.
+    * Links to `brands` via `brand_id`.
+    * Links to `categories` via `category_id`.
+* **`stocks` Table**: Tracks inventory levels.
+    * A composite link connecting `stores` (`store_id`) and `products` (`product_id`) to show quantity on hand per location.
+ 
+#### 3. HR & Management
+* **`staffs` Table**:
+    * Links to `stores` via `store_id`.
+    * **Self-Join**: Includes a `manager_id` field that links back to the `staff_id` in the same table to create a hierarchy.
+
+## Table Descriptions
+
+| Table Name | Type | Description |
+| :--- | :--- | :--- |
+| **orders** | Fact | Stores order status, dates, and IDs for customer/store/staff. |
+| **order_items** | Fact | Line items for each order, including quantity, list price, and discount. |
+| **customers** | Dimension | Customer demographics (Name, Phone, Email, City, State). |
+| **products** | Dimension | Product name, model year, and list price. |
+| **categories** | Dimension | Classification (e.g., Mountain Bikes, Road Bikes). |
+| **brands** | Dimension | Brand names (e.g., Trek, Haro). |
+| **stores** | Dimension | Store names and physical locations. |
+| **stocks** | Fact | Current quantity of products available at each store. |
+| **staffs** | Dimension | Employee details and reporting hierarchy. |
 
 ---
 
