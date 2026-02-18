@@ -30,9 +30,9 @@
 ## Our Data-Driven Solution
 *To resolve the operational inefficiencies and lack of visibility, I designed and implemented a **Centralized Relational Database System** using PostgreSQL. This solution transformed raw transactional data into actionable strategic insights.*
 
-### 📊 Key Technical Implementations
+### Key Technical Implementations
 
-#### ✅ Solved Revenue Blindness
+#### Solved Revenue Blindness
 
 The analysis revealed that company revenue was highly concentrated among a few key brands:
 
@@ -49,7 +49,7 @@ The analysis revealed that company revenue was highly concentrated among a few k
 
 ---
 
-#### 🚲 Revenue by Product Category
+#### Revenue by Product Category
 
 Revenue distribution across product categories highlights clear customer preferences:
 
