@@ -110,8 +110,42 @@ Addressed the "Stock-Out" vs "Dead Stock" dilemma by analyzing the correlation b
   
 ---
 
+## Project Structure
 
+```
+Bicycle Retail Project/
+|
+├── data/                                      # Data storage (gitignored in real projects)
+|   ├── raw/                                   # Raw CSV files from the 'Dataset' folder
+│   |   ├── brands.csv
+│   |   ├── categories.csv
+│   |   ├── customers.csv
+│   |   ├── order_itens.csv
+│   |   ├── orders.csv
+│   |   ├── products.csv
+│   |   ├── staffs.csv
+│   |   ├── stocks.csv
+│   |   ├── stores.csv
+│   └── processed/                            # Stores processed/cleaned data if needed.
+│
+├── src/                                      # Source code for the project
+│   ├── etl/                                  # Extract, Transform, Load scripts
+│   ├── __init__.py                           # Load Dataset in PostgreSQL.py
+│   │
+│   └── sql/                                  # SQL scripts (from 'Advanced Data Analytics')
+│   │    ├── cohort_analysis.sql
+│   │    ├── monthly_sales_trend.sql
+│   │    ├── rfm_segmentation.sql
+│   │   
+│   └── sql/                                    # There are business-related reports in the business reportfolder
+│       ├── customer_report.sql
+│       ├── inventory_analytics.sql
+│       ├── product_reports.sql
+│       ├── store_report.sql
+│       ├── staff_report.sql
+│       ├── summary_of_everything.sql
 
+```
 
 
 
