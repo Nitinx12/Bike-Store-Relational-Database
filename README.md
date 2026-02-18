@@ -102,6 +102,8 @@ Addressed the "Stock-Out" vs "Dead Stock" dilemma by analyzing the correlation b
 2.  **Inventory Liquidation:** Launch a "Clearance Sale" for the **Trek 820** and other "Dead Stock" items to recover capital.
 3.  **Brand Focus:** Shift marketing budget towards **Trek and Electra**, as they drive 60%+ of the revenue.
 
+<img width="1237" height="672" alt="image" src="https://github.com/user-attachments/assets/553d1112-7810-4272-af24-6de30b156da9" />
+
 ---
 
 ### Built With
