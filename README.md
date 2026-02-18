@@ -30,19 +30,38 @@
 ## Our Data-Driven Solution
 *To resolve the operational inefficiencies and lack of visibility, I designed and implemented a **Centralized Relational Database System** using PostgreSQL. This solution transformed raw transactional data into actionable strategic insights.*
 
-### Key Technical Implementations:
+### 📊 Key Technical Implementations
 
-* **Solved Revenue Blindness:**
+#### ✅ Solved Revenue Blindness
 
-* The analysis revealed that revenue was highly concentrated among a few key brands:
-  * ** Trek 4,602,754.35 The dominant revenue driver, indicating strong market demand and brand preference.
-    ** Electra 1,205,320.82  A solid secondary contributor, suggesting a stable niche presence.
-    ** Surly 949,507.06 A smaller but still meaningful contributor to overall sales.
- 
-* Revenue distribution across product categories shows clear customer preferences:
-  * ** Mountain Bikes 2,715,079.53 The highest-performing category, indicating strong demand for off-road and adventure bicycles.
-    ** Road Bikes 1,665,098.49 A major segment driven by fitness and long-distance cycling enthusiasts.
-    ** Cruisers Bicycles: 995,032.62 A smaller but stable category appealing to casual riders.
+The analysis revealed that company revenue was highly concentrated among a few key brands:
+
+**Top Revenue-Generating Brands**
+
+- **Trek — 4,602,754.35**  
+  The dominant revenue driver, indicating exceptionally strong market demand and brand preference.
+
+- **Electra — 1,205,320.82**  
+  A solid secondary contributor, suggesting a stable presence in a niche segment.
+
+- **Surly — 949,507.06**  
+  A smaller but still meaningful contributor to overall sales performance.
+
+---
+
+#### 🚲 Revenue by Product Category
+
+Revenue distribution across product categories highlights clear customer preferences:
+
+- **Mountain Bikes — 2,715,079.53**  
+  The highest-performing category, reflecting strong demand for off-road and adventure cycling.
+
+- **Road Bikes — 1,665,098.49**  
+  A major segment driven by fitness enthusiasts and long-distance riders.
+
+- **Cruiser Bicycles — 995,032.62**  
+  A smaller yet stable category appealing primarily to casual riders.
+
 
 
 
