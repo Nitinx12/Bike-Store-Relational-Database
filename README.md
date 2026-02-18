@@ -60,7 +60,7 @@ I engineered complex SQL queries to aggregate sales data, revealing that company
 Management can now objectively evaluate employees using a dynamic leaderboard system created via SQL.
 
 * **Technical Approach:** Utilized SQL Window Functions (`DENSE_RANK`, `ROW_NUMBER`) to rank staff based on total revenue generated and order volume.
-* **Outcome:** Identified top-performing sales associates in each store, enabling a reward system, while pinpointing underperformers for targeted training programs.
+* **Outcome:** Revealed a critical retention issue regarding top talent.
 
 ---
 
@@ -70,26 +70,15 @@ Addressed the "Stock-Out" vs "Dead Stock" dilemma by analyzing the correlation b
 * **Technical Approach:** Performed `JOIN` operations between `Orders` and `Stocks` tables to calculate the **Sales-to-Stock Ratio**.
 * **Outcome:** Flagged high-demand models (like Trek Mountain Bikes) for immediate restocking and identified slow-moving inventory for discount clearance sales.
 
+**Top Performing Sales Associates:**
+| Rank | Staff Name | Store Location | Revenue ($) | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **#1** | **Marcelene Boyer** | Baldwin Bikes | **$2,624,121** | Active |
+| **#2** | **Venita Daniel** | Baldwin Bikes | **$2,591,631** | **Inactive** |
+| **#3** | **Genna Serrano** | Santa Cruz Bikes | **$853,287** | Active |
+| **#4** | **Kali Vargas** | Rowlett Bikes | **$463,918** | Active |
 ---
 
-#### 4. Customer Segmentation & Retention
-Transitioned from mass marketing to targeted engagement by identifying high-value customer clusters.
-
-* **Technical Approach:** Analyzed customer location data (City/State) and Purchase Frequency using aggregate functions.
-* **Outcome:** Discovered that customers in **NY and CA** generate the highest average order value, allowing for location-specific marketing campaigns.
-
----
-
-## Strategic Recommendations
-
-Based on the data analysis, the following actions are recommended to maximize growth:
-
-1.  **Prioritize the "Power Trio":** Since **Trek, Electra, and Surly** drive the majority of revenue, marketing budgets should be allocated heavily towards these brands to maximize ROI.
-2.  **Inventory Rebalancing:** Increase stock levels for **Mountain Bikes** before the peak season to prevent lost sales due to stock-outs.
-3.  **Staff Training:** Pair low-performing staff with top-tier sales associates (identified in the report) for mentorship programs.
-4.  **Targeted Promotions:** Launch a "Leisure Rider" campaign specifically for **Cruiser Bicycles** to boost sales in the casual segment.
-
----
 
 
 
