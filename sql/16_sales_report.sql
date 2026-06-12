@@ -1,0 +1,5 @@
+-- ============================================================
+--   FULL DETAILED MONTHLY SALES TREND REPORT
+--   Tables: orders, order_items, products, customers
+--   Grain : One row per month (or per month + category)
+-- ============================================================
