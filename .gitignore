@@ -272,4 +272,3 @@ mlruns/
 __init__.py
 
 .env
-charts
