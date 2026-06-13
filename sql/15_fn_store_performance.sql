@@ -41,6 +41,8 @@
 --   - staff count reflects all staff assigned, not active in date range
 --   - on_time_rate only counts orders where shipped_date IS NOT NULL
 --   - repeat_customers = customers with more than 1 order in date range
+--   - order_status values: 'Rejected', 'Processing', 'Completed', 'Pending'
+--     (cancelled_orders / cancellation_rate are based on 'Rejected' status)
 -- =====================================================================
 
 CREATE OR REPLACE FUNCTION fn_store_performance(
@@ -77,9 +79,9 @@ BEGIN
     WITH order_summary AS (
         SELECT
             O.store_id,
-            COUNT(O.order_id)                                                    AS total_orders,
-            COUNT(CASE WHEN O.order_status = 'Completed' THEN O.order_id END)    AS completed_orders,
-            COUNT(CASE WHEN O.order_status = 'Cancelled' THEN O.order_id END)    AS cancelled_orders
+            COUNT(O.order_id)                                                   AS total_orders,
+            COUNT(CASE WHEN O.order_status = 'Completed' THEN O.order_id END)   AS completed_orders,
+            COUNT(CASE WHEN O.order_status = 'Rejected'  THEN O.order_id END)   AS cancelled_orders
         FROM orders AS O
         WHERE O.order_date BETWEEN p_start_date AND p_end_date
         GROUP BY O.store_id
@@ -178,12 +180,18 @@ BEGIN
         COALESCE(CM.repeat_customers,     0)              AS repeat_customers,
         COALESCE(SK.total_stock_quantity, 0::NUMERIC)     AS total_stock_quantity
     FROM stores AS ST
-    LEFT JOIN order_summary    AS OS ON OS.store_id = ST.store_id
-    LEFT JOIN revenue_metrics  AS RM ON RM.store_id = ST.store_id
-    LEFT JOIN fulfillment      AS F  ON F.store_id  = ST.store_id
-    LEFT JOIN staff_metrics    AS SM ON SM.store_id = ST.store_id
-    LEFT JOIN customer_metrics AS CM ON CM.store_id = ST.store_id
-    LEFT JOIN stock_metrics    AS SK ON SK.store_id = ST.store_id
+    LEFT JOIN order_summary    AS OS 
+    ON OS.store_id = ST.store_id
+    LEFT JOIN revenue_metrics  AS RM 
+    ON RM.store_id = ST.store_id
+    LEFT JOIN fulfillment      AS F  
+    ON F.store_id  = ST.store_id
+    LEFT JOIN staff_metrics    AS SM 
+    ON SM.store_id = ST.store_id
+    LEFT JOIN customer_metrics AS CM 
+    ON CM.store_id = ST.store_id
+    LEFT JOIN stock_metrics    AS SK 
+    ON SK.store_id = ST.store_id
     ORDER BY total_revenue DESC;
 
 END;
