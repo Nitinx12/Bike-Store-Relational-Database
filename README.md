@@ -1,423 +1,562 @@
-# Bike Store Analytics Database
+# Bike Store Relational Database
 
-![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.0.0-green)
+A full-stack data engineering and analytics project that incrementally loads retail data from **MongoDB** into **PostgreSQL** using **PySpark**, validates it with a SQL-based quality test suite, and surfaces insights through a structured library of 21 analytical SQL scripts, automated health checks, and pre-generated business reports.
+
+---
+
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Architecture](#architecture)
+- [Folder Structure](#folder-structure)
+- [Data Model](#data-model)
+- [ETL Pipeline](#etl-pipeline)
+  - [How Incremental Loading Works](#how-incremental-loading-works)
+  - [Run Modes](#run-modes)
+  - [Configuration](#configuration)
+- [Data Quality Tests](#data-quality-tests)
+- [SQL Analytics Library](#sql-analytics-library)
+- [Health Check](#health-check)
+- [Reports & Charts](#reports--charts)
+- [Setup & Installation](#setup--installation)
+- [Environment Variables](#environment-variables)
+- [Running the Project](#running-the-project)
+- [Troubleshooting](#troubleshooting)
+- [Known Limitations](#known-limitations)
+
+---
 
 ## Project Overview
-*The primary goal of this project is to analyze the sales data of a bicycle retail chain to generate actionable insights for business growth. The study aims to identify top-selling products, evaluate staff performance, and optimize inventory management to minimize stock-out risks and maintain efficient supply levels.*
 
-<img width="800" height="450" alt="image" src="https://github.com/user-attachments/assets/1fb0edef-67f6-454d-8bee-06fa02341374" />
+This project solves the problem of keeping a PostgreSQL analytical database in sync with a MongoDB operational database, without reloading everything on every run.
 
+The pipeline uses a **watermark-based incremental strategy**: it compares the `updated_at` timestamp and row counts between both systems on every run, and only moves the rows that are actually new or changed. Once data is in PostgreSQL, a suite of SQL data quality checks validates structural integrity and business logic, and a library of analytical queries transforms the raw tables into actionable business insights.
 
-## Business Problem
+**Key capabilities:**
 
-Before implementing data analytics, the bicycle retail chain operated with little visibility into its business performance. The absence of structured data tracking led to several critical operational and strategic challenges:
-
-### 1. Revenue Blindness
-The company lacked insight into which brands, product categories, or individual products generated the most revenue and profit. This made strategic decision-making difficult and often resulted in suboptimal product focus.
-
-### 2. Staff Performance Uncertainty
-Management had no objective way to evaluate sales staff performance. It was unclear which employees were high performers and which required additional training or support.
-
-### 3. Poor Customer Retention Insights
-The business could not identify high-value customers — those who purchased frequently and contributed significantly to total revenue. Without this information, targeted marketing and loyalty initiatives were impossible.
-
-### 4. Inventory Mismanagement
-Inventory decisions were made without data support, leading to two major issues:
-* **Dead Stock:** Slow-moving products accumulated, tying up capital.
-* **Stock-Outs:** High-demand bikes frequently went out of stock, leading to lost sales.
-
-This imbalance resulted in lost sales opportunities, increased holding costs, and reduced customer satisfaction.
+- Automated, stateless incremental ETL — no checkpoint files or watermark tables needed
+- Schema evolution — new MongoDB fields are automatically added as PostgreSQL columns
+- Upsert logic — updates to existing records are correctly reflected without duplication
+- 10-file SQL data quality suite covering nulls, uniqueness, type validity, referential integrity, and business rules
+- 21 SQL analytical scripts across exploration, analysis, reporting, and advanced segments
+- Automated health checks with timestamped last-run records
+- Pre-generated brand and store performance reports with supporting charts
 
 ---
 
-## Our Data-Driven Solution
-
-To resolve operational inefficiencies, I designed and implemented a **Centralized Relational Database System** using PostgreSQL. This solution transformed raw transactional data into actionable strategic insights.
-
-### Key Technical Implementations & Insights
-
-#### 1. Solved Revenue Blindness
-I engineered complex SQL queries to aggregate sales data, revealing that company revenue is highly concentrated among a few key players. This allowed us to move from guesswork to data-backed strategy.
-
-**Top Revenue-Generating Brands:**
-
-| Brand Name | Total Revenue ($) | Market Position |
-| :--- | :--- | :--- |
-| **Trek** | **$4,602,754.35** | **Dominant Driver:** Indicates exceptionally strong market demand and brand preference. |
-| **Electra** | **$1,205,320.82** | **Strong Contributor:** Suggests a stable presence in a niche segment. |
-| **Surly** | **$949,507.06** | **Steady Performer:** A smaller but meaningful contributor to overall sales. |
-
-<img width="1253" height="677" alt="image" src="https://github.com/user-attachments/assets/27e0f5f5-7cae-4f48-8e9c-66ce2a8abcac" />
-
-**Revenue by Product Category:**
-
-| Category | Total Revenue ($) | Customer Preference Insight |
-| :--- | :--- | :--- |
-| **Mountain Bikes** | **$2,715,079.53** | **#1 Best Seller:** Strong demand for off-road and adventure cycling. |
-| **Road Bikes** | **$1,665,098.49** | Driven by fitness enthusiasts and long-distance riders. |
-| **Cruiser Bicycles** | **$995,032.62** | Popular among casual riders for leisure and comfort. |
-
-<img width="1189" height="790" alt="cate" src="https://github.com/user-attachments/assets/ac8d5b5b-4c4d-4293-9aab-c9eac6e219c8" />
-
----
-
-#### 2. Quantified Staff Performance
-Management can now objectively evaluate employees using a dynamic leaderboard system created via SQL.
-
-* **Technical Approach:** Utilized SQL Window Functions (`DENSE_RANK`, `ROW_NUMBER`) to rank staff based on total revenue generated and order volume.
-* **Outcome:** Revealed a critical retention issue regarding top talent.
-
-**Top Performing Sales Associates:**
-| Rank | Staff Name | Store Location | Revenue ($) | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **#1** | **Marcelene Boyer** | Baldwin Bikes | **$2,624,121** | Active |
-| **#2** | **Venita Daniel** | Baldwin Bikes | **$2,591,631** | **Inactive** |
-| **#3** | **Genna Serrano** | Santa Cruz Bikes | **$853,287** | Active |
-| **#4** | **Kali Vargas** | Rowlett Bikes | **$463,918** | Active |
-
-**Key Business Insight:**
-* **Talent Loss:** **Venita Daniel**, the #2 performer contributing **$2.59M** in revenue, has left the company (Inactive). This represents a massive loss in sales capability and requires an immediate HR review of retention policies.
-* **Store Dominance:** Staff at **Baldwin Bikes** are outperforming other branches by a factor of 3x.
-
----
-
-#### 3. Optimized Inventory Management
-Addressed the "Stock-Out" vs "Dead Stock" dilemma by analyzing the correlation between Order Volume and Current Stock Levels.
-
-* **Technical Approach:** Performed `JOIN` operations between `Orders` and `Stocks` tables to calculate the **Sales-to-Stock Ratio**.
-  **Inventory Health Report:**
-
-| Product Name | Stock | Days Since Last Sale | Status | Action Required |
-| :--- | :--- | :--- | :--- | :--- |
-| **Trek 820 - 2016** | **55** | N/A (0 Sales) | **Dead Stock** | **Clearance Sale** |
-| **Ritchey Timberwolf** | 45 | 266 Days | **Slow Moving** | Discount Bundle |
-| **Surly Wednesday** | 34 | 349 Days | **Moderate** | Monitor |
-
-**Key Insight:**
-* **Dead Stock Alert:** The **Trek 820** has 55 units in stock but **zero sales**. This is "Dead Capital" that needs to be liquidated immediately to free up warehouse space and cash flow.
-
----
-
-## Strategic Recommendations
-
-1.  **HR Retention Strategy:** Investigate why **Venita Daniel** (#2 Top Seller) left. Implement retention bonuses for top-tier staff like **Marcelene Boyer**.
-2.  **Inventory Liquidation:** Launch a "Clearance Sale" for the **Trek 820** and other "Dead Stock" items to recover capital.
-3.  **Brand Focus:** Shift marketing budget towards **Trek and Electra**, as they drive 60%+ of the revenue.
-
-<img width="1237" height="672" alt="image" src="https://github.com/user-attachments/assets/553d1112-7810-4272-af24-6de30b156da9" />
-
----
-
-### Built With
-* Python
-* SQL (PostgreSQL)
-* Pandas
-* Jupyter Notebook
-* Matplotlib & Seaborn
-* Duckdb
-  
----
-
-## Project Structure
+## Architecture
 
 ```
-Bicycle Retail Project/
-|
-├── data/                                      # Data storage (gitignored in real projects)
-|   ├── raw/                                   # Raw CSV files from the 'Dataset' folder
-│   |   ├── brands.csv
-│   |   ├── categories.csv
-│   |   ├── customers.csv
-│   |   ├── order_itens.csv
-│   |   ├── orders.csv
-│   |   ├── products.csv
-│   |   ├── staffs.csv
-│   |   ├── stocks.csv
-│   |   ├── stores.csv
-│   └── processed/                            # Stores processed/cleaned data if needed.
-│
-├── src/                                      # Source code for the project
-│   ├── etl/                                  # Extract, Transform, Load scripts
-│   ├── __init__.py                           # Load Dataset in PostgreSQL.py
-│   │
-│   └── sql/                                  # SQL scripts (from 'Advanced Data Analytics')
-│   │    ├── cohort_analysis.sql
-│   │    ├── monthly_sales_trend.sql
-│   │    ├── rfm_segmentation.sql
-│   │   
-│   └── sql/                                  # There are business-related reports in the business reportfolder
-│       ├── customer_report.sql
-│       ├── inventory_analytics.sql
-│       ├── product_reports.sql
-│       ├── store_report.sql
-│       ├── staff_report.sql
-│       ├── summary_of_everything.sql
-│
-├── notebooks/                                # Jupyter Notebooks 
-│   ├── eda/                                  # From 'Exploratory Data analysis (EDA)' folder
-│       └── exploratory_analysis.ipynb
-│
-├── dashboards/                               # The Power BI folder contains SQL scripts for dimension and fact tables that create the star schema, and the dashboard has been built using these SQL scripts.
-│   └── sql/ 
-│   │    ├── dim_products.sql
-│   │    ├── dim_customers.sql
-│   │    ├── dim_staffs.sql
-│   │    ├── dim_stores.sql
-│   │    ├── fact_sales.sql
-│   │
-│   └── retail_dashboard.pbix                 # From 'Power BI Dashboard' folder
-│
-├── .gitignore                                # Files to ignore (e.g., venv, __pycache__, local data)
-├── requirements.txt                          # Python dependencies (pandas, sqlalchemy, psycopg2)
-├── LICENSE
-└── README.md                                 # Project Overview
+MongoDB (source)
+      │
+      │  PyMongo (count + MAX timestamp comparison)
+      ▼
+ Change Detection ──── No change? ──► SKIP collection
+      │
+      │  Yes: delta only (updated_at > pg_max_ts)
+      ▼
+ PySpark Read (filtered MongoDB query)
+      │
+      ▼
+ Slugify columns → Deduplicate → Add loaded_at
+      │
+      ▼
+ JDBC Write → Staging Table ({table}_staging_{run_id})
+      │
+      ▼
+ Upsert: INSERT INTO target SELECT FROM staging
+   ├── Has PK  →  ON CONFLICT (pk) DO UPDATE
+   └── No PK   →  ON CONFLICT (_row_hash) DO NOTHING
+      │
+      ▼
+ DROP staging table
+      │
+      ▼
+PostgreSQL (target)
+      │
+      ▼
+ SQL Data Quality Tests (10 files, zero-row = pass)
+      │
+      ▼
+ SQL Analytics Library (21 scripts)
+      │
+      ▼
+ Reports / Charts / Health Check
 ```
-## Database Schema
-
-The database follows a **normalized relational structure** designed to handle transactions and catalog data efficiently.
-
-<img width="1176" height="807" alt="image" src="https://github.com/user-attachments/assets/b955f8cd-24d5-455f-b02f-bf01f2dfe025" />
-
-### 🔗 Entity Relationships (How Tables Connect)
-The database is divided into three logical groups. Here is how the tables are linked via **Primary Keys (PK)** and **Foreign Keys (FK)**:
-
-#### 1. Sales & Orders (Transactional Data)
-* **`orders` Table**: The central table linking customers, stores, and staff.
-    * Links to `customers` via `customer_id` (One Customer -> Many Orders).
-    * Links to `stores` via `store_id` (One Store -> Many Orders).
-    * Links to `staffs` via `staff_id` (One Staff -> Many Orders).
-* **`order_items` Table**: Contains the details of each order (SKU, quantity, price).
-    * Links to `orders` via `order_id`.
-    * Links to `products` via `product_id` to get product details.
-
-#### 2. Production & Catalog (Dimensional Data)
-* **`products` Table**: Contains product details.
-    * Links to `brands` via `brand_id`.
-    * Links to `categories` via `category_id`.
-* **`stocks` Table**: Tracks inventory levels.
-    * A composite link connecting `stores` (`store_id`) and `products` (`product_id`) to show quantity on hand per location.
- 
-#### 3. HR & Management
-* **`staffs` Table**:
-    * Links to `stores` via `store_id`.
-    * **Self-Join**: Includes a `manager_id` field that links back to the `staff_id` in the same table to create a hierarchy.
-
-## Table Descriptions
-
-| Table Name | Type | Description |
-| :--- | :--- | :--- |
-| **orders** | Fact | Stores order status, dates, and IDs for customer/store/staff. |
-| **order_items** | Fact | Line items for each order, including quantity, list price, and discount. |
-| **customers** | Dimension | Customer demographics (Name, Phone, Email, City, State). |
-| **products** | Dimension | Product name, model year, and list price. |
-| **categories** | Dimension | Classification (e.g., Mountain Bikes, Road Bikes). |
-| **brands** | Dimension | Brand names (e.g., Trek, Haro). |
-| **stores** | Dimension | Store names and physical locations. |
-| **stocks** | Fact | Current quantity of products available at each store. |
-| **staffs** | Dimension | Employee details and reporting hierarchy. |
 
 ---
 
----
-## ⚙️ Installation & Usage
-To replicate this analysis, follow these steps:
+## Folder Structure
 
-1.  **Clone the Repository:**
-    ```bash
-    git clone [https://github.com/Nitinx12/Bike-Store-Relational-Database/tree/main]
-    ```
-2.  **Set Up PostgreSQL Database:**
-    * Ensure you have PostgreSQL installed.    
- * Create a new database (e.g., `Bicycle_database`).
-    * Update the connection string in the `Load_Data_in_postgreSQL.py` file with your database credentials.
-3.  **Load Data:**
-    * Place the 9 `.csv` files (`customers`, `products.csv`, etc.) in the `data/` directory.
-    * Run the Python script to load the data into your PostgreSQL database:
-        ```bash
-       Load_Data_in_postgreSQL.py
-        ```
-4.  **Install dependencies**
-    Create a `requirements.txt` file with the following content:
-    ```
-    pandas
-    sqlalchemy
-    psycopg2-binary
-    matplotlib
-    seaborn
-    jupyter
-    duckdb
-    ```
-    Then, run the installation command:
-    ```bash
-    pip install -r requirements.txt
-    ```
-5.  **Run Analysis:**
-    * **For SQL Analysis:** Execute the queries in `product_report.sql` using a SQL client like DBeaver, pgadmin4 or `psql`.
-```sql
-WITH Sales_base AS(
-	SELECT
-		OI.product_id,
-		O.order_id,
-		O.customer_id,
-		O.store_id,
-		O.order_date,
-		C.state,
-		S.store_name,
-		OI.quantity,
-		OI.list_price,
-		OI.discount,
-		OI.quantity * OI.list_price * (1 - OI.discount) AS revenue,
-		OI.quantity * OI.list_price * OI.discount AS discount_amount
-	FROM order_items AS OI
-	INNER JOIN orders AS O ON
-	OI.order_id = O.order_id
-	INNER JOIN customers AS C ON
-	C.customer_id = O.customer_id
-	INNER JOIN stores AS S ON
-	S.store_id = O.store_id
-),
-Metrics AS(
-	SELECT
-		product_id,
-		SUM(quantity) AS total_units_sold,
-		SUM(revenue) AS total_revenue,
-		COUNT(DISTINCT order_id) AS total_orders,
-		COUNT(DISTINCT customer_id) AS unique_customers,
-		SUM(discount_amount) AS total_discount,
-		MIN(order_date) AS first_sale_date,
-		MAX(order_date) AS last_sale_date
-	FROM Sales_base
-	GROUP BY
-		product_id
-),
-Inventory_metrics AS(
-	SELECT
-		product_id,
-		SUM(quantity) AS inventory_level
-	FROM stocks
-	GROUP BY
-		product_id
-),
-Top_state AS(
-	SELECT
-		product_id,
-		state,
-		ROW_NUMBER()
-			OVER(PARTITION BY product_id
-			ORDER BY SUM(revenue) DESC) AS rnk
-	FROM Sales_base
-	GROUP BY
-		product_id,
-		state
-),
-Top_store AS(
-	SELECT
-		product_id,
-		store_name,
-		ROW_NUMBER()
-			OVER(PARTITION BY product_id
-			ORDER BY SUM(revenue) DESC) AS rnk
-	FROM Sales_base
-	GROUP BY
-		product_id,
-		store_name
-),
-dataset_date AS(
-	SELECT 
-		MAX(order_date) AS last_dataset_date
-	FROM orders
-),
-product_segmentation AS(
-	SELECT
-		product_id,
-		total_revenue,
-		revenue_segment,
-		AVG(total_revenue) OVER(PARTITION BY category_id) AS avg_category_revenue,
-		CASE
-			WHEN total_revenue > AVG(total_revenue) OVER(PARTITION BY category_id)
-			THEN 'Above average'
-			ELSE 'Below average'
-		END AS performance_stats
-	FROM(SELECT
-			P.product_id,
-			P.category_id,
-			SUM(OI.total_value) AS total_revenue,
-			CASE
-				WHEN SUM(OI.total_value) >= 15000 THEN 'High Revenue'
-				WHEN SUM(OI.total_value) BETWEEN 3000 AND 14999 THEN 'Medium Revenue'
-				ELSE 'Low Revenue'
-			END AS revenue_segment
-		FROM products AS P
-		INNER JOIN order_items AS OI ON
-		P.product_id = OI.product_id
-		GROUP BY
-			P.product_id,
-			P.category_id) AS X
-)
-SELECT
-	P.product_name,
-	B.brand_name,
-	C.category_name,
-	P.list_price,
-	DENSE_RANK()
-		OVER(PARTITION BY P.category_id
-		ORDER BY COALESCE(M.total_units_sold,0) DESC) AS category_rank,
-	ROUND(COALESCE(M.total_units_sold,0),2) AS total_units_sold,
-	ROUND(COALESCE(M.total_revenue,0),2) AS total_revenue,
-	COALESCE(M.total_orders,0) AS total_orders,
-	COALESCE(M.unique_customers,0) AS unique_customers,
-	CASE
-		WHEN M.total_units_sold > 0
-		THEN ROUND(M.total_revenue / M.total_units_sold,2)
-		ELSE NULL
-	END AS avg_selling_price,
-	ROUND(COALESCE(M.total_discount,0),2) AS total_discount,
-	M.first_sale_date,
-	M.last_sale_date,
-	GD.last_dataset_date - M.last_sale_date AS days_since_last_sale,
-	TS.state AS top_state,
-	TSS.store_name AS top_store,
-	COALESCE(IM.inventory_level,0) AS inventory_level,
-	PM.revenue_segment,
-	ROUND(PM.avg_category_revenue,2) AS avg_category_revenue,
-	PM.performance_stats,
-	CASE
-		WHEN M.last_sale_date IS NULL
-		THEN 'Never_sold'
-		WHEN GD.last_dataset_date - M.last_sale_date <= 365
-		THEN 'Active'
-		WHEN GD.last_dataset_date - M.last_sale_date <= 1095
-		THEN 'Slow Moving'
-		ELSE 'Obsolete'
-	END AS lifecycle_status
-FROM products AS P
-LEFT JOIN brands AS B ON
-B.brand_id = P.brand_id
-LEFT JOIN categories AS C ON
-C.category_id = P.category_id
-LEFT JOIN Metrics AS M ON
-M.product_id = P.product_id
-LEFT JOIN Inventory_metrics AS IM ON
-P.product_id = IM.product_id
-LEFT JOIN Top_state AS TS ON
-TS.product_id = P.product_id AND TS.rnk = 1
-LEFT JOIN Top_store AS TSS ON
-TSS.product_id = P.product_id AND TSS.rnk = 1
-LEFT JOIN product_segmentation AS PM ON
-PM.product_id = P.product_id
-CROSS JOIN dataset_date AS GD;
 ```
+project-root/
+├── charts/                       — Generated charts using seaborn and matplotlib
+│   ├── avg_order_value.png
+│   ├── chart_cancellation_rate.png
+│   ├── chart_on_time_rate.png
+│   ├── chart_order_breakdown.png
+│   ├── chart_repeat_customer_rate.png
+│   ├── chart_revenue_per_staff.png
+│   ├── chart_stock_to_sales.png
+│   ├── chart_total_revenue.png
+│   ├── revenue_by_brand.png
+│   ├── revenue_per_product.png
+│   ├── revenue_share_donut.png
+│   ├── top5_relative_performance.png
+│   └── units_vs_customers.png
+│
+├── docs/                         — Project documentation
+│   ├── data_catlog.md            — Full schema reference for all 9 tables
+│   ├── data_quality_checks.md    — Explanation of every SQL test and its purpose
+│   ├── incremental_loading.md    — Deep-dive into the ETL algorithm
+│   └── run_book.md               — Operational run book: how to run, configure, and troubleshoot
+│
+├── driver/                       — Database driver dependencies
+│   ├── postgresql.jar            — PostgreSQL JDBC driver (required by PySpark)
+│   └── README.md
+│
+├── notebooks/
+│   └── public.ipynb              — Exploratory analysis notebook
+│
+├── reports/                      — Markdown business reports
+│   ├── brand_performance.md
+│   └── store_performance.md
+│
+├── scripts/                      — Executable ETL pipeline scripts
+│   ├── mongo_to_postgres.py      — Main PySpark incremental ETL script
+│   └── README.md
+│
+├── sql/                          — SQL analytics library (21 scripts)
+│   ├── 01_database_exploration.sql
+│   ├── 02_dimensions_exploration.sql
+│   ├── 03_date_range_exploration.sql
+│   ├── 04_measures_exploration.sql
+│   ├── 05_magnitude_analysis.sql
+│   ├── 06_ranking_analysis.sql
+│   ├── 07_change_over_time_analysis.sql
+│   ├── 08_cumulative_analysis.sql
+│   ├── 09_performance_analysis.sql
+│   ├── 10_data_segmentation.sql
+│   ├── 11_part_to_whole_analysis.sql
+│   ├── 12_customer_report.sql
+│   ├── 13_product_report.sql
+│   ├── 14_brand_report.sql
+│   ├── 15_fn_store_performance.sql
+│   ├── 16_sales_report.sql
+│   ├── 17_new_vs_return.sql
+│   ├── 18_status_check.sql
+│   ├── 19_cohort_analysis.sql
+│   ├── 20_fn_inventory_summary.sql
+│   ├── 21_fn_staff_performance.sql
+│   └── README.md
+│
+├── tests/                        — SQL data quality checks (10 files)
+│   ├── 01_test_brands.sql
+│   ├── 02_test_categories.sql
+│   ├── 03_test_customers.sql
+│   ├── 04_test_order_items.sql
+│   ├── 05_test_orders.sql
+│   ├── 06_test_orphan_and_business_rules.sql
+│   ├── 07_test_products.sql
+│   ├── 08_test_staffs.sql
+│   ├── 09_test_stocks.sql
+│   ├── 10_test_stores.sql
+│   └── README.md
+│
+├── utils/                        — Shared infrastructure modules
+│   ├── connection.py             — Loads and validates credentials from .env
+│   ├── engine.py                 — Builds SQLAlchemy (Postgres) and PyMongo clients
+│   ├── logger.py                 — Stage-aware logger with console + file output
+│	└── README.md
+│
+├── .env						  —	Not commited					  
+├── .health_last_run
+├── .python-version
+├── health_check.py
+├── main.py
+├── pyproject.toml
+├── README.md
+└── uv.lock
+```
+
 ---
 
-## License
+## Data Model
 
-Distributed under the MIT License. See `LICENSE` for more information.
+The schema represents a multi-store retail business loaded into the `public` schema in PostgreSQL. It has 9 tables organised into three layers.
 
-## Contact Information
+### Reference Tables (lookup data)
 
-* **LinkedIn:** [https://www.linkedin.com/in/nitin-k-220651351/](https://www.linkedin.com/in/nitin-k-220651351/)
-* **GitHub:** [https://github.com/Nitinx12](https://github.com/Nitinx12)
-* **Email:** Nitin321x@gmail.com
+| Table | Description | Key Relationships |
+|-------|-------------|-------------------|
+| `brands` | Product brand master | Referenced by `products` |
+| `categories` | Product category master | Referenced by `products` |
+
+### Operational Master Tables
+
+| Table | Description | Key Relationships |
+|-------|-------------|-------------------|
+| `customers` | Customer master data | Referenced by `orders` |
+| `stores` | Store locations and contact info | Referenced by `orders`, `staffs`, `stocks` |
+| `staffs` | Employee records with self-referencing manager hierarchy | Referenced by `orders`; references `stores` and itself |
+| `products` | Product catalogue with pricing | Referenced by `order_items`, `stocks` |
+
+### Transactional / Junction Tables
+
+| Table | Description | Key Relationships |
+|-------|-------------|-------------------|
+| `orders` | Order header — the central table | References `customers`, `stores`, `staffs` |
+| `order_items` | Line items per order (composite PK: `order_id`, `item_id`) | References `orders`, `products`; has a generated `total_value` column |
+| `stocks` | Inventory per store/product (composite PK: `store_id`, `product_id`) | References `stores`, `products` |
+
+**Entity relationships at a glance:**
+
+```
+customers ──< orders >── staffs
+                │
+                │
+           order_items >── products >── brands
+                                   └── categories
+stores ──< orders
+stores ──< stocks >── products
+stores ──< staffs ──< staffs (manager hierarchy)
+```
+
+> All tables include an `updated_at` timestamp column used as the incremental watermark by the ETL. Every table except `order_items` has a single-column primary key following the pattern `<table_singular>_id`, which the ETL auto-detects. `order_items` is a special case — see [Known Limitations](#known-limitations).
 
 ---
 
+## ETL Pipeline
+
+The ETL script is located at `scripts/mongo_to_postgres.py`. It is a **PySpark-based pipeline** that moves data from MongoDB into PostgreSQL incrementally.
+
+### How Incremental Loading Works
+
+The script uses **PostgreSQL itself as the watermark store** — no external checkpoint files or state tables are required. On each run, for every MongoDB collection:
+
+1. **Peek** — fetch 10 sample documents to discover field names, auto-detect the primary key column and the `updated_at` timestamp column.
+2. **MongoDB stats** — query MongoDB (via PyMongo) for document count and `MAX(updated_at)`.
+3. **PostgreSQL stats** — query PostgreSQL (via SQLAlchemy) for row count and `MAX(updated_at)`.
+4. **Change detection** — compare both systems:
+   - If counts match **and** max timestamps match → **skip** the collection entirely.
+   - If either differs → proceed with an incremental load.
+5. **Filtered read** — read from MongoDB only the documents where `updated_at > pg_max_ts`. This filter runs at the source, minimising data transfer.
+6. **Transform** — slugify column names, drop `_id`, preserve nulls, add `loaded_at` audit column, deduplicate by primary key.
+7. **Stage** — write the delta to a temporary staging table (`{table}_staging_{run_id}`) via JDBC.
+8. **Upsert** — merge staging into the permanent target table:
+   - With a primary key: `ON CONFLICT (pk) DO UPDATE` — true upsert, updates existing rows.
+   - Without a primary key: `ON CONFLICT (_row_hash) DO NOTHING` — hash-based deduplication.
+9. **Cleanup** — drop the staging table regardless of success or failure.
+
+### Run Modes
+
+```bash
+# Normal scheduled run — incremental, all collections
+python -m scripts.mongo_to_postgres
+
+# Incremental load for specific collections only
+python -m scripts.mongo_to_postgres --collection staffs --collection orders
+
+# Full refresh — truncate and reload all collections from scratch
+python -m scripts.mongo_to_postgres --full-refresh
+
+# Full refresh for a specific collection only
+python -m scripts.mongo_to_postgres --collection staffs --full-refresh
+```
+
+> Use `--full-refresh` on first run, after a schema change, or to recover a table that has drifted out of sync.
+
+### Configuration
+
+The script is controlled entirely through environment variables. No config files are required.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ETL_SCHEMA` | `public` | Target PostgreSQL schema |
+| `ETL_TS_COL` | `updated_at` | Timestamp column used as the incremental watermark |
+| `ETL_PK_SUFFIX` | `_id` | Suffix used for heuristic primary key detection |
+| `JDBC_JAR_PATH` | `driver/postgresql.jar` | Path to the PostgreSQL JDBC driver JAR |
+
+Database credentials are loaded from `.env` via `utils/connection.py` (see [Environment Variables](#environment-variables)).
+
+---
+
+## Data Quality Tests
+
+The `tests/` folder contains **10 SQL files** that validate the data after every ETL run. The convention is simple: **a healthy dataset returns zero rows from every query**. Any row returned is a failing record, and it contains the exact data needed to investigate the problem.
+
+### Test Files
+
+| File | Scope |
+|------|-------|
+| `01_test_brands.sql` | Null/empty checks, PK uniqueness |
+| `02_test_categories.sql` | Null/empty checks, PK uniqueness |
+| `03_test_customers.sql` | Null/empty checks, PK uniqueness, zip code format |
+| `04_test_order_items.sql` | Composite PK uniqueness, generated column consistency |
+| `05_test_orders.sql` | Null checks, FK integrity, date logic |
+| `06_test_orphan_and_business_rules.sql` | Cross-table orphan checks + business rule validation |
+| `07_test_products.sql` | PK uniqueness, price/model year range checks |
+| `08_test_staffs.sql` | Null checks, FK integrity, active flag validity |
+| `09_test_stocks.sql` | Composite PK uniqueness, quantity range |
+| `10_test_stores.sql` | Null/empty checks, PK uniqueness |
+
+### Categories of Checks
+
+- **Not null / not empty** — required fields must contain real data
+- **Primary key uniqueness** — no duplicate or null PKs allowed
+- **Type and format validity** — values must be castable to their intended types (numeric, date, postal code pattern)
+- **Range and bounds** — prices must be non-negative; model years must be realistic
+- **Referential integrity** — every foreign key must point to an existing parent row
+- **Generated column consistency** — `order_items.total_value` is recomputed and compared against `quantity × list_price × (1 − discount)`
+- **Orphan row checks** — detects child records whose parent was deleted from MongoDB (the ETL never propagates deletes)
+- **Business logic rules** — orders must have at least one item, staff must belong to the store fulfilling their order, order totals must be greater than zero
+
+### Running the Tests
+
+```bash
+# Run a single test file
+psql -h host -U user -d database -f tests/05_test_orders.sql
+
+# Run the cross-table checks (most important after every ETL run)
+psql -h host -U user -d database -f tests/06_test_orphan_and_business_rules.sql
+```
+
+A clean run produces **no output rows** from any file. Log any returned rows with their source file and `check_name` for investigation.
+
+---
+
+## SQL Analytics Library
+
+The `sql/` folder contains **21 read-only analytical scripts** organised in a logical progression from raw data exploration through to reusable functions.
+
+### Exploration (01–04)
+Profile the database before analysing it.
+
+| Script | Purpose |
+|--------|---------|
+| `01_database_exploration.sql` | Tables, schemas, row counts, overall structure |
+| `02_dimensions_exploration.sql` | Profile categorical columns (brand, category, region) |
+| `03_date_range_exploration.sql` | Min/max dates, time coverage, gaps |
+| `04_measures_exploration.sql` | Numeric column ranges, nulls, averages, outliers |
+
+### Core Analysis (05–11)
+Reusable analytical patterns.
+
+| Script | Purpose |
+|--------|---------|
+| `05_magnitude_analysis.sql` | Scale and size of key metrics |
+| `06_ranking_analysis.sql` | Rank products, customers, stores by performance |
+| `07_change_over_time_analysis.sql` | Month-over-month and year-over-year trends |
+| `08_cumulative_analysis.sql` | Running totals and cumulative growth |
+| `09_performance_analysis.sql` | Actual vs. target or benchmark comparison |
+| `10_data_segmentation.sql` | Tier, bucket, and band groupings |
+| `11_part_to_whole_analysis.sql` | Percentage contribution per segment |
+
+### Business Reports (12–16)
+Stakeholder-ready outputs.
+
+| Script | Purpose |
+|--------|---------|
+| `12_customer_report.sql` | Customer spend, frequency, recency |
+| `13_product_report.sql` | Product performance and revenue contribution |
+| `14_brand_report.sql` | Brand-level sales and market share |
+| `15_fn_store_performance.sql` | Store-level KPIs |
+| `16_sales_report.sql` | High-level sales dashboard across all dimensions |
+
+### Advanced Analytics (17–19)
+
+| Script | Purpose |
+|--------|---------|
+| `17_new_vs_return.sql` | Revenue and behaviour: new vs. returning customers |
+| `18_status_check.sql` | Pipeline and data health checks |
+| `19_cohort_analysis.sql` | Customer retention by acquisition cohort |
+
+### Reusable Functions (20–21)
+
+| Script | Purpose |
+|--------|---------|
+| `20_fn_inventory_summary.sql` | Inventory levels and stock health metrics |
+| `21_fn_staff_performance.sql` | Staff-level performance KPIs |
+
+> **Recommended execution order:** start with scripts 01–04 to understand the data, then 05–11 for core patterns, then 12–16 for stakeholder reports.
+
+---
+
+## Health Check
+
+`health_check.py` runs automatically to verify pipeline health. It records the timestamp of the last successful check in `.health_last_run`. Run it after each ETL cycle to confirm the system is operating as expected.
+
+```bash
+python health_check.py
+```
+
+---
+
+## Reports & Charts
+
+### Reports (`reports/`)
+
+Two pre-generated Markdown reports are included:
+
+- `brand_performance.md` — aggregated brand-level revenue, units sold, and market share metrics
+- `store_performance.md` — store-level KPIs including revenue, order counts, and staff metrics
+
+### Charts (`charts/`)
+
+13 pre-generated PNG visualisations covering:
+
+| Chart | Metric |
+|-------|--------|
+| `chart_total_revenue.png` | Total revenue over time |
+| `avg_order_value.png` | Average order value trend |
+| `chart_order_breakdown.png` | Order volume by status |
+| `chart_cancellation_rate.png` | Order cancellation rate |
+| `chart_on_time_rate.png` | On-time fulfilment rate |
+| `chart_repeat_customer_rate.png` | Returning customer rate |
+| `chart_revenue_per_staff.png` | Revenue attributed per staff member |
+| `chart_stock_to_sales.png` | Stock-to-sales ratio |
+| `revenue_by_brand.png` | Revenue breakdown by brand |
+| `revenue_per_product.png` | Per-product revenue |
+| `revenue_share_donut.png` | Revenue share composition |
+| `top5_relative_performance.png` | Top 5 entity relative performance |
+| `units_vs_customers.png` | Units sold vs. unique customers |
+
+---
+
+## Setup & Installation
+
+### Prerequisites
+
+- Python 3.9+
+- Java 8+ (required by PySpark)
+- PostgreSQL database (target)
+- MongoDB database (source)
+- PostgreSQL JDBC driver JAR
+
+### 1. Clone and install dependencies
+
+```bash
+git clone <repo-url>
+cd <project-root>
+pip install -e .
+```
+
+Or install required packages directly:
+
+```bash
+pip install pandas pymongo pyspark sqlalchemy psycopg2-binary python-dotenv
+```
+
+### 2. Add the JDBC driver
+
+Download the PostgreSQL JDBC driver from https://jdbc.postgresql.org/download/ and place it at:
+
+```
+driver/postgresql.jar
+```
+
+Or point to an existing JAR via environment variable:
+
+```bash
+export JDBC_JAR_PATH=/path/to/postgresql-42.x.x.jar
+```
+
+### 3. Configure credentials
+
+Create a `.env` file at the project root:
+
+```env
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DATABASE=your_database
+POSTGRES_USERNAME=your_user
+POSTGRES_PASSWORD=your_password
+
+MONGO_URI=mongodb://localhost:27017
+MONGO_DB=your_mongo_database
+```
+
+> Never commit `.env` to version control. Add it to `.gitignore`.
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `POSTGRES_HOST` | Yes | — | PostgreSQL host |
+| `POSTGRES_PORT` | Yes | — | PostgreSQL port |
+| `POSTGRES_DATABASE` | Yes | — | PostgreSQL database name |
+| `POSTGRES_USERNAME` | Yes | — | PostgreSQL username |
+| `POSTGRES_PASSWORD` | Yes | — | PostgreSQL password |
+| `MONGO_URI` | Yes | — | MongoDB connection URI |
+| `MONGO_DB` | Yes | — | MongoDB database name |
+| `ETL_SCHEMA` | No | `public` | Target PostgreSQL schema |
+| `ETL_TS_COL` | No | `updated_at` | Watermark timestamp column name |
+| `ETL_PK_SUFFIX` | No | `_id` | Suffix for PK auto-detection |
+| `JDBC_JAR_PATH` | No | `driver/postgresql.jar` | Path to JDBC driver JAR |
+
+---
+
+## Running the Project
+
+### First-time full load
+
+```bash
+python -m scripts.mongo_to_postgres --full-refresh
+```
+
+### Scheduled incremental run
+
+```bash
+python -m scripts.mongo_to_postgres
+```
+
+### Run quality tests after every load
+
+```bash
+# Run all 10 test files in order
+for f in tests/*.sql; do
+  echo "Running $f..."
+  psql -h $POSTGRES_HOST -U $POSTGRES_USERNAME -d $POSTGRES_DATABASE -f "$f"
+done
+```
+
+### Health check
+
+```bash
+python health_check.py
+```
+
+### Run analytical reports
+
+```bash
+psql -h $POSTGRES_HOST -U $POSTGRES_USERNAME -d $POSTGRES_DATABASE -f sql/16_sales_report.sql
+```
+
+---
+
+## Troubleshooting
+
+| Symptom | Likely Cause | Fix |
+|---------|-------------|-----|
+| `FileNotFoundError` for `postgresql.jar` | JDBC driver is missing | Place JAR at `driver/postgresql.jar` or set `JDBC_JAR_PATH` |
+| `RuntimeError` about project root | Script run from outside the project tree | Run with `python -m scripts.mongo_to_postgres` from the project root |
+| Postgres connection fails at startup | Wrong credentials or unreachable host | Check all `POSTGRES_*` variables in `.env` |
+| Collection always skipped despite data changes | `updated_at` not being updated in MongoDB, or same-timestamp edge case | Run a targeted full refresh: `python -m scripts.mongo_to_postgres --collection <name> --full-refresh` |
+| Test file returns rows after a clean load | Load order issue (parent loaded after child) or stale orphan from a MongoDB delete | Re-run the relevant parent collection, then the child; orphans from deletes require a full refresh |
+| `order_items` behaves unexpectedly | Composite PK not supported by auto-detection — `order_id` alone is detected as PK | Exclude from automated runs and load with a dedicated handling path (see Known Limitations) |
+
+---
+
+## Known Limitations
+
+**No delete propagation.** The ETL only detects inserts and updates via the `updated_at` watermark. If a document is deleted from MongoDB, the corresponding row remains in PostgreSQL indefinitely. The orphan checks in `tests/06_test_orphan_and_business_rules.sql` are the only mechanism that surfaces this.
+
+**`order_items` composite PK.** The ETL auto-detects a single-column primary key. For `order_items`, it will detect `order_id` alone rather than the correct composite key `(order_id, item_id)`. Additionally, `order_items` has a generated stored column (`total_value`) that cannot be inserted directly. Until a dedicated handling path is built, it is recommended to exclude `order_items` from automated runs and manage it separately.
+
+**Same-timestamp edge case.** If a new or updated MongoDB document shares the exact same `updated_at` timestamp as the current PostgreSQL maximum, it will be missed by the incremental filter (`updated_at > pg_max_ts` is strict). Running a targeted full refresh for affected collections resolves this.
+
+**All columns stored as TEXT.** The ETL writes every column as `TEXT` in PostgreSQL regardless of its logical type. All type validation, casting, and range checking must be done explicitly — which is why the data quality test suite casts values before evaluating them.
+
+**Schema evolution adds columns but does not remove them.** If a field is removed from MongoDB documents, its column remains in PostgreSQL and will simply receive `NULL` values on future loads.
