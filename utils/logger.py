@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 def get_logger(stage: str, name: str) -> logging.Logger:
-    valid_stages = ["extraction", "transformation", "loading"]
+    valid_stages = ["extraction", "transformation", "loading", "tests"]
     if stage not in valid_stages:
         raise ValueError(
             f"Invalid stage '{stage}'. Must be one of: {valid_stages}"
