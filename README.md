@@ -20,7 +20,7 @@ flowchart LR
     D --> E["Analytics & Reports"]
 ```
 
-Only new or changed rows move on each run — Postgres itself is compared against Mongo every time, so no checkpoint files or watermark tables are needed.
+Only new or changed rows move on each run Postgres itself is compared against Mongo every time, so no checkpoint files or watermark tables are needed.
 
 ## Features
 
@@ -34,7 +34,7 @@ Only new or changed rows move on each run — Postgres itself is compared agains
 ## Quick Start
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Nitinx12/Bike-Store-Relational-Database
 cd bike-store-relational-database
 uv sync
 
