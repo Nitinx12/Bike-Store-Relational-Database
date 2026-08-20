@@ -36,7 +36,7 @@ Baldwin Bikes is the dominant performer across nearly every dimension, generatin
 
 ## 3. Revenue Distribution
 
-![alt text](../charts/chart_total_revenue.png)
+![alt text](../assets/chart_total_revenue.png)
 
 Total revenue across all stores: **$6,662,609.14**
 
@@ -46,7 +46,7 @@ Baldwin Bikes alone generates more revenue than Santa Cruz and Rowlett combined 
 
 ## 4. Order Volume Breakdown
 
-![alt text](../charts/chart_order_breakdown.png)
+![alt text](../assets/chart_order_breakdown.png)
 
 Baldwin Bikes processes substantially more total, completed, and cancelled orders in absolute terms, but the proportion of cancelled orders relative to total volume is where Rowlett stands out (see cancellation rate below).
 
@@ -54,7 +54,7 @@ Baldwin Bikes processes substantially more total, completed, and cancelled order
 
 ## 5. Cancellation Rate
 
-![alt text](../charts/chart_cancellation_rate.png)
+![alt text](../assets/chart_cancellation_rate.png)
 
 Despite having the fewest orders, Rowlett has the highest cancellation rate by a wide margin — nearly 3.2x Santa Cruz and over 8x Baldwin.
 
@@ -62,7 +62,7 @@ Despite having the fewest orders, Rowlett has the highest cancellation rate by a
 
 ## 6. Revenue Efficiency Per Staff Member
 
-![alt text](../charts/chart_revenue_per_staff.png)
+![alt text](../assets/chart_revenue_per_staff.png)
 
 Baldwin generates roughly **5x more revenue per staff member** than Santa Cruz and nearly **6.7x more** than Rowlett, despite both having the same headcount (3) as Rowlett.
 
@@ -70,7 +70,7 @@ Baldwin generates roughly **5x more revenue per staff member** than Santa Cruz a
 
 ## 7. On-Time Delivery Rate
 
-![alt text](../charts/chart_on_time_rate.png)
+![alt text](../assets/chart_on_time_rate.png)
 
 All three stores fall short of an 85% on-time benchmark (a typical target for healthy fulfillment operations). Santa Cruz lags furthest behind at 63.4%.
 
@@ -84,7 +84,7 @@ All three stores fall short of an 85% on-time benchmark (a typical target for he
 | Santa Cruz Bikes | 284 | 52 | 18.3% |
 | Rowlett Bikes | 142 | 19 | 13.4% |
 
-![alt text](../charts/chart_repeat_customer_rate.png)
+![alt text](../assets/chart_repeat_customer_rate.png)
 
 Despite Baldwin's massive order volume, its repeat customer rate is by far the lowest — suggesting a high proportion of one-time buyers and weaker long-term loyalty relative to its size.
 
@@ -98,7 +98,7 @@ Despite Baldwin's massive order volume, its repeat customer rate is by far the l
 | Santa Cruz Bikes | 4,532 | 1,236 | 3.67x |
 | Rowlett Bikes | 4,620 | 655 | 7.05x |
 
-![alt text](../charts/chart_stock_to_sales.png)
+![alt text](../assets/chart_stock_to_sales.png)
 
 Baldwin's inventory is nearly perfectly matched to demand (almost a 1:1 ratio), while Rowlett is holding more than 7x its period unit sales in stock — a sign of significant overstocking or understated demand at that location.
 

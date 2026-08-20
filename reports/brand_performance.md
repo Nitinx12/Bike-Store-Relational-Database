@@ -38,17 +38,17 @@ A second CTE (Grand_revenue) sums total_revenue across all brands to get a singl
 
 ## Revenue Distribution Across Brands
 
-![alt text](../charts/revenue_by_brand.png)
+![alt text](../assets/revenue_by_brand.png)
 
 Trek dominates total revenue at over 4.6 million dollars, nearly four times the combined revenue of every other brand. Electra and Surly form a clear second tier in the high hundred thousands to low millions, while the remaining seven brands together contribute less than 6 percent of total revenue.
 
-![alt text](../charts/revenue_share_donut.png)
+![alt text](../assets/revenue_share_donut.png)
 
 The donut chart makes the concentration explicit: Trek alone accounts for 59.86 percent of all revenue. Trek, Electra, and Surly combined account for nearly 88 percent of total revenue, meaning the remaining seven brands split the last 12 percent. Strider's 0.06 percent share is effectively negligible, and Nike contributes nothing.
 
 ## Sales Volume vs Customer Reach
 
-![alt text](../charts/units_vs_customers.png)
+![alt text](../assets/units_vs_customers.png)
 
 This chart plots units sold against unique customers, with bubble size representing total revenue. Two distinct patterns emerge.
 
@@ -58,7 +58,7 @@ The brands cluster along a roughly linear relationship between units sold and un
 
 ## Price Positioning: Average Order Value
 
-![alt text](../charts/avg_order_value.png)
+![alt text](../assets/avg_order_value.png)
 
 This chart reveals the price tier each brand operates in, independent of total volume.
 
@@ -68,7 +68,7 @@ Notably, Electra, the volume leader, has one of the lowest average order values 
 
 ## Catalog Efficiency: Revenue per Product
 
-![alt text](../charts/revenue_per_product.png)
+![alt text](../assets/revenue_per_product.png)
 
 This metric (total revenue divided by number of products in the catalog) highlights which brands generate the most revenue per catalog item, regardless of how large their catalog is.
 
@@ -80,7 +80,7 @@ Strider has both a small catalog and the lowest revenue per product ($1,440), ma
 
 ## Top 5 Brands: Relative Performance
 
-![alt text](../charts/top5_relative_performance.png)
+![alt text](../assets/top5_relative_performance.png)
 
 This chart normalizes four metrics (products, units sold, unique customers, total orders) to a 0 to 100 scale within the top 5 brands, where 100 represents whichever brand leads that specific metric. This allows comparison of shape rather than absolute scale.
 
