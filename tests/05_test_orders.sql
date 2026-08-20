@@ -33,7 +33,7 @@ WHERE (o.store_id IS NOT NULL
 SELECT *
 FROM public.orders
 WHERE order_status IS NULL
-   OR order_status NOT IN ('pending', 'processing', 'rejected', 'completed', 'cancelled', 'shipped', 'delivered');
+   OR order_status NOT IN ('Pending', 'Processing', 'Rejected', 'Completed');
 
 -- Test 5: date logic must be consistent
 -- order_date must not be null, required_date must not be before order_date,
