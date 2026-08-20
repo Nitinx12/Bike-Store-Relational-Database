@@ -50,6 +50,19 @@ from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql import functions as F
 from sqlalchemy import text
 
+from rich import box
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
+from rich.table import Table
+from rich.traceback import install as install_rich_traceback
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Project-root bootstrap  (same pattern as extract.py)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -104,14 +117,14 @@ ETL_PK_SUFFIX = os.getenv("ETL_PK_SUFFIX", "_id")       # heuristic PK suffix
 
 JDBC_JAR_PATH = os.getenv(
     "JDBC_JAR_PATH",
-    str(_root / "driver" / "postgresql.jar"),   # matches your driver/ folder
+    str(_root / "jars" / "postgresql.jar"),   # matches your jars/ folder
 )
 
 if not Path(JDBC_JAR_PATH).is_file():
     raise FileNotFoundError(
         f"\n\nPostgreSQL JDBC JAR not found at:\n  {JDBC_JAR_PATH}\n\n"
         "Fix options:\n"
-        "  1. Place the JAR at the path above (driver/postgresql.jar)\n"
+        "  1. Place the JAR at the path above (jars/postgresql.jar)\n"
         "  2. Or point to an existing JAR via env var:\n"
         "       Windows : set JDBC_JAR_PATH=C:\\path\\to\\postgresql-42.x.x.jar\n"
         "       Mac/Linux: export JDBC_JAR_PATH=/path/to/postgresql-42.x.x.jar\n"
@@ -122,6 +135,65 @@ ISO_FMT  = "%Y-%m-%dT%H:%M:%S"
 JDBC_URL = (
     f"jdbc:postgresql://{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DATABASE}"
 )
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Rich console setup — pretty tracebacks + terminal-facing banner/summary
+# (purely presentational; all utils.logger calls throughout the script are
+# left exactly as-is so file logging behaviour is unchanged)
+# ─────────────────────────────────────────────────────────────────────────────
+
+console = Console()
+install_rich_traceback(show_locals=False, suppress=[pd])
+
+
+def _print_banner(collections: list[str], mode: str) -> None:
+    """Startup banner summarising the run configuration."""
+    body = (
+        f"[bold]Mode[/bold]        : {mode}\n"
+        f"[bold]Collections[/bold] : {len(collections)}\n"
+        f"[bold]Schema[/bold]      : {ETL_SCHEMA}\n"
+        f"[bold]TS col[/bold]      : {ETL_TS_COL}\n"
+        f"[bold]JDBC JAR[/bold]    : {JDBC_JAR_PATH}"
+    )
+    console.print(
+        Panel(body, title="Mongo → Postgres ETL", border_style="cyan", box=box.ROUNDED)
+    )
+
+
+def _print_summary_table(summaries: list[dict], totals: dict, skipped_count: int) -> None:
+    """Run-summary table (replaces the old ASCII '═'/'─' block on screen)."""
+    table = Table(title="Run Summary", box=box.SIMPLE_HEAVY)
+    table.add_column("Collection", style="bold")
+    table.add_column("Status")
+    table.add_column("Mongo", justify="right")
+    table.add_column("New", justify="right")
+    table.add_column("Loaded", justify="right")
+    table.add_column("Failed", justify="right")
+
+    for s in summaries:
+        failed = s.get("failed", 0)
+        if failed:
+            status = "[red]FAILED[/red]"
+        elif s.get("skipped"):
+            status = "[yellow]SKIPPED[/yellow]"
+        else:
+            status = "[green]LOADED[/green]"
+        table.add_row(
+            s["collection"], status,
+            str(s.get("rows_mongo", 0)), str(s.get("rows_new", 0)),
+            str(s.get("rows_loaded", 0)), str(failed),
+        )
+
+    table.add_section()
+    table.add_row(
+        "TOTAL",
+        f"{len(summaries)} collections, {skipped_count} skipped",
+        str(totals["rows_mongo"]), str(totals["rows_new"]),
+        str(totals["rows_loaded"]), str(totals["failed"]),
+        style="bold",
+    )
+
+    console.print(table)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Utility helpers
@@ -756,6 +828,8 @@ def main(collections: list[str], full_load: bool = False) -> None:
     log.info("TS col      : %s", ETL_TS_COL)
     log.info("JDBC JAR    : %s", JDBC_JAR_PATH)
 
+    _print_banner(collections, mode)
+
     spark  = get_spark()
     engine = postgres_engine()
 
@@ -765,42 +839,43 @@ def main(collections: list[str], full_load: bool = False) -> None:
     log.info("Postgres connected ✓")
 
     summaries: list[dict] = []
-    for col in collections:
-        summary = process_collection(col, spark, engine, full_load=full_load)
-        summaries.append(summary)
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total}"),
+        TimeElapsedColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Processing collections", total=len(collections))
+        for col in collections:
+            progress.update(task, description=f"[cyan]{col}[/cyan]")
+            summary = process_collection(col, spark, engine, full_load=full_load)
+            summaries.append(summary)
+            progress.advance(task)
 
     spark.stop()
     engine.dispose()
     log.info("Spark stopped. Engine disposed.")
 
     # ── Run summary ────────────────────────────────────────────────────────
-    log.info("")
-    log.info("══════════════  RUN SUMMARY  ══════════════")
     totals = dict(rows_mongo=0, rows_new=0, rows_loaded=0, failed=0)
     skipped_count = 0
 
     for s in summaries:
-        status = "SKIPPED" if s.get("skipped") else "LOADED"
-        log.info(
-            "%-20s  [%s]  mongo=%-6d  new=%-6d  loaded=%-6d  failed=%d",
-            s["collection"], status,
-            s.get("rows_mongo", 0), s.get("rows_new", 0),
-            s.get("rows_loaded", 0), s.get("failed", 0),
-        )
         for k in totals:
             totals[k] += s.get(k, 0)
         if s.get("skipped"):
             skipped_count += 1
 
-    log.info("─" * 60)
     log.info(
-        "TOTAL  collections=%-3d  skipped=%-3d  mongo=%-6d  "
-        "new=%-6d  loaded=%-6d  failed=%d",
+        "RUN SUMMARY : collections=%d skipped=%d mongo=%d new=%d loaded=%d failed=%d",
         len(summaries), skipped_count,
         totals["rows_mongo"], totals["rows_new"],
         totals["rows_loaded"], totals["failed"],
     )
-    log.info("═" * 60)
+
+    _print_summary_table(summaries, totals, skipped_count)
 
     if totals["failed"]:
         sys.exit(1)
