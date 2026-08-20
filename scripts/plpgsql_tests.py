@@ -18,7 +18,7 @@ If the query itself raises an error (e.g. missing table/column), it's
 reported separately as ERROR rather than FAIL.
 
 Install requirements:
-    pip install psycopg2-binary rich
+    uv add psycopg2-binary rich
 
 Connection:
     Uses the same Postgres connection as the rest of the pipeline
@@ -56,12 +56,24 @@ import time
 from dataclasses import dataclass
 from typing import List, Optional
 
-# This script lives at the project root, alongside main.py / health_check.py,
-# so utils/ is a direct sibling of this file. Running the script from another
-# working directory only puts its own containing folder on sys.path, so
-# `import utils` would otherwise fail unless invoked from the project root.
-# Insert this file's directory explicitly so it works regardless of cwd.
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+def _find_project_root(start: str) -> str:
+    """Walk upward from `start` looking for the directory that contains
+    `utils/` (the actual project root). This script lives in scripts/,
+    one level below the root, so utils/ is NOT a direct sibling of this
+    file -- it's a sibling of the scripts/ folder. Walking up (instead of
+    hardcoding one level) also keeps this working if the script is ever
+    moved deeper, or run via a symlink."""
+    current = os.path.abspath(start)
+    while True:
+        if os.path.isdir(os.path.join(current, "utils")):
+            return current
+        parent = os.path.dirname(current)
+        if parent == current:  # hit filesystem root, give up
+            return os.path.abspath(start)
+        current = parent
+
+
+PROJECT_ROOT = _find_project_root(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
@@ -70,7 +82,7 @@ try:
     import psycopg2.extras
 except ImportError:
     print("This script requires psycopg2-binary. Install it with:\n"
-          "    pip install psycopg2-binary")
+          "    uv add psycopg2-binary")
     sys.exit(1)
 
 try:
@@ -83,7 +95,7 @@ try:
     from rich import box
 except ImportError:
     print("This script requires rich. Install it with:\n"
-          "    pip install rich")
+          "    uv add rich")
     sys.exit(1)
 
 from utils.engine import postgres_engine
@@ -358,8 +370,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="Run SQL data-quality tests against Postgres and print a rich report."
     )
-    parser.add_argument("--tests-dir", default="tests",
-                         help="Folder containing the *.sql test files (default: tests/)")
+    parser.add_argument("--tests-dir", default=os.path.join(PROJECT_ROOT, "tests"),
+                         help="Folder containing the *.sql test files "
+                              "(default: <project_root>/tests, resolved relative to "
+                              "this script's location, not your cwd)")
     parser.add_argument("--dsn",
                          help="Optional override: full libpq connection string, e.g. "
                               "postgresql://user:pass@host:5432/dbname. "
