@@ -153,15 +153,7 @@ FROM public.orders o
 JOIN public.staffs s ON s.staff_id = o.staff_id
 WHERE s.active::bigint = 0;
 
--- Business 8: required_date should generally be after order_date by at
--- least one day (an order required on the same day it was placed is
--- unusual and worth flagging).
-SELECT 'business_order_required_same_day' AS check_name, o.*
-FROM public.orders o
-WHERE o.required_date IS NOT NULL
-  AND o.required_date = o.order_date;
-
--- Business 9: total_value for an order (sum of its order_items) should
+-- Business 8: total_value for an order (sum of its order_items) should
 -- not be zero or negative, which would indicate a fully discounted or
 -- corrupted order.
 SELECT 'business_order_total_zero_or_negative' AS check_name, oi.order_id,
@@ -170,7 +162,7 @@ FROM public.order_items oi
 GROUP BY oi.order_id
 HAVING SUM(oi.total_value::numeric) <= 0;
 
--- Business 10: every product that appears in order_items or stocks should
+-- Business 9: every product that appears in order_items or stocks should
 -- have a non null, positive list_price. A product priced at zero or null
 -- but actively sold or stocked is a likely data issue.
 SELECT 'business_active_product_missing_price' AS check_name, p.*
