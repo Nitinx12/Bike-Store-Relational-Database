@@ -20,7 +20,7 @@ flowchart LR
     D --> E["Analytics & Reports"]
 ```
 
-Only new or changed rows move on each run — Postgres itself is compared against Mongo every time, so no checkpoint files or watermark tables are needed.
+Only new or changed rows move on each run Postgres itself is compared against Mongo every time, so no checkpoint files or watermark tables are needed.
 
 ## Features
 
