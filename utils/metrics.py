@@ -4,7 +4,7 @@ Prometheus Pushgateway helper for the ETL / data-quality pipeline.
 
 Why Pushgateway (not a scrape target)
 --------------------------------------
-Every script that would use this module — mongo_to_postgres.py,
+Every script that would use this module — main.py, mongo_to_postgres.py,
 plpgsql_loops_tests.py, run_gx.py — is a batch job: it starts, does its
 work, and exits. Prometheus's normal model is to *pull* metrics from a
 long-running process's `/metrics` endpoint; a script that has already
@@ -12,30 +12,30 @@ exited has nothing left to scrape. The standard fix for batch/cron-style
 jobs is the Prometheus Pushgateway: the job pushes its final metrics to
 the gateway right before exiting, the gateway holds them (it's the
 long-running piece), and Prometheus scrapes the gateway on its normal
-interval. Grafana then reads from Prometheus as usual.
+interval. Grafana then reads from Prometheus as usual.[cite: 7]
 
-    mongo_to_postgres.py   ─┐
-    plpgsql_loops_tests.py  ─┼─ push (HTTP) ─▶ Pushgateway ◀── scrape ── Prometheus ◀── query ── Grafana
-    run_gx.py               ─┘
+    main.py / mongo_to_postgres.py   ─┐
+    plpgsql_loops_tests.py            ─┼─ push (HTTP) ─▶ Pushgateway ◀── scrape ── Prometheus ◀── query ── Grafana
+    run_gx.py                         ─┘
 
 This module intentionally does NOT expose a `/metrics` HTTP endpoint of
 its own — that pattern only works for long-running services, and would
-be a dead end here.
+be a dead end here.[cite: 7]
 
 Usage
 -----
     from utils.metrics import ETLRunMetrics, ValidationRunMetrics
 
-    # mongo_to_postgres.py — one instance per run, one record_collection()
+    # main.py / mongo_to_postgres.py — one instance per run, one record_collection()
     # call per collection processed
     metrics = ETLRunMetrics(job="mongo_to_postgres")
     for col in collections:
         summary = process_collection(col, spark, engine, full_load=full_load)
         metrics.record_collection(col, summary)
     metrics.finalize(failed=bool(totals["failed"]))
-    metrics.push()   # never raises — logs and swallows push errors
+    metrics.push()   # never raises — logs and swallows push errors[cite: 7]
 
-    # plpgsql_loops_tests.py / run_gx.py — one instance per run, one
+    # main.py / plpgsql_loops_tests.py / run_gx.py — one instance per run, one
     # record_test() call per test file / expectation
     metrics = ValidationRunMetrics(job="plpgsql_loops_tests")
     for name, ok in results:
@@ -45,8 +45,8 @@ Usage
 
 Configuration (env vars)
 -------------------------
-    PUSHGATEWAY_URL       default "localhost:9091"
-    PUSHGATEWAY_TIMEOUT   default 5 (seconds)
+    PUSHGATEWAY_URL       default "localhost:9091"[cite: 7]
+    PUSHGATEWAY_TIMEOUT   default 5 (seconds)[cite: 7]
 
 Design notes
 ------------
@@ -54,14 +54,14 @@ Design notes
   never the global default registry. Pushgateway's model is "one job
   pushes one complete snapshot"; reusing a shared registry across runs
   would leak stale label combinations (e.g. a collection that no longer
-  exists) into every later push.
+  exists) into every later push.[cite: 7]
 - push() never raises. A metrics backend being down must never fail the
   pipeline it's trying to observe — it logs a warning and returns False
-  instead.
+  instead.[cite: 7]
 - Every gauge here is a *value at last run*, not a running total, which
   is the right shape for Pushgateway (it replaces, not appends, per
   job/grouping-key). Use Prometheus `increase()`/`rate()` in Grafana over
-  the `_total`-suffixed gauges if you want trends across runs.
+  the `_total`-suffixed gauges if you want trends across runs.[cite: 7]
 """
 from __future__ import annotations
 

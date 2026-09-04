@@ -3,20 +3,20 @@ main.py — single entry point for a full pipeline pass, with a combined
 Rich summary across all three stages.
 
 Runs, in one process:
-  1. Mongo -> Postgres load        (src/pipeline/runner.py :: run_pipeline)
-  2. PL/pgSQL data-quality suite   (src/validation/plpgsql_loops.py :: run_all)
-  3. Great Expectations suite      (tests/data_quality/run.py)
+  1. Mongo -> Postgres load        (src/pipeline/runner.py :: run_pipeline)[cite: 2]
+  2. PL/pgSQL data-quality suite   (src/validation/plpgsql_loops.py :: run_all)[cite: 2]
+  3. Great Expectations suite      (tests/data_quality/run.py)[cite: 2]
 
 Nothing here shells out to scripts/mongo_to_postgres.py,
 scripts/plpgsql_loops_tests.py, or tests/data_quality/run.py — it calls
-the same underlying functions/objects those scripts call, directly.
+the same underlying functions/objects those scripts call, directly.[cite: 2]
 tests/data_quality/run.py's own main() isn't called because it reads
 table names from sys.argv, which this script's own flags occupy; Stage
 3 below calls the pieces main() calls instead (get_context,
 get_datasource, validate_table, TABLE_SUITES) and writes the same JSON
-report main() would have.
+report main() would have.[cite: 2]
 
-Overall exit code is 0 only if every stage that ran succeeded.
+Overall exit code is 0 only if every stage that ran succeeded.[cite: 2]
 """
 from __future__ import annotations
 
@@ -53,13 +53,10 @@ if str(REPO_ROOT) not in sys.path:
 
 GX_DIR = REPO_ROOT / "tests" / "data_quality"
 if str(GX_DIR) not in sys.path:
-    # tests/data_quality/run.py imports `context` and `suites.validation`
-    # as top-level modules (its own bootstrap does the same thing when it
-    # runs standalone) — it needs this directory on sys.path to resolve
-    # them, and we need it on sys.path to import run.py itself as `run`.
     sys.path.insert(0, str(GX_DIR))
 
 from utils.engine import postgres_engine  # noqa: E402
+from utils.metrics import ETLRunMetrics, ValidationRunMetrics  # noqa: E402
 
 from src.pipeline.runner import run_pipeline  # noqa: E402
 from src.validation.plpgsql_loops import run_all  # noqa: E402
@@ -118,6 +115,12 @@ def run_load_stage(args: argparse.Namespace) -> dict:
         on_collection_done=on_collection_done,
     )
 
+    metrics = ETLRunMetrics(job="mongo_to_postgres")
+    for s in result["summaries"]:
+        metrics.record_collection(s["collection"], s)
+    metrics.finalize(failed=result["totals"]["failed"] > 0)
+    metrics.push()
+
     table = Table(title="Load summary")
     table.add_column("Collection")
     table.add_column("Mongo", justify="right")
@@ -146,6 +149,12 @@ def run_plpgsql_stage() -> list[dict]:
         results = run_all(engine, LOOPS_DIR)
     finally:
         engine.dispose()
+
+    metrics = ValidationRunMetrics(job="plpgsql_loops_tests")
+    for r in results:
+        metrics.record_test(r["name"], r["passed"])
+    metrics.finalize(failed=not all(r["passed"] for r in results))
+    metrics.push()
 
     table = Table(title="PL/pgSQL test results")
     table.add_column("Test file")
@@ -181,12 +190,18 @@ def run_gx_stage(tables: list[str] | None) -> list[dict] | None:
     results = [gx_run.validate_table(context, datasource, t) for t in table_names]
     run_finished = datetime.now()
 
+    metrics = ValidationRunMetrics(job="run_gx")
+    for r in results:
+        metrics.record_test(r["table"], r.get("success", False))
+    metrics.finalize(failed=not all(r.get("success", False) for r in results))
+    metrics.push()
+
     summary = {
         "run_started": run_started.isoformat(),
         "run_finished": run_finished.isoformat(),
-        "overall_success": all(r["success"] for r in results),
+        "overall_success": all(r.get("success", False) for r in results),
         "tables_validated": len(results),
-        "tables_passed": sum(1 for r in results if r["success"]),
+        "tables_passed": sum(1 for r in results if r.get("success", False)),
         "results": results,
     }
     gx_run.REPORT_DIR.mkdir(parents=True, exist_ok=True)
@@ -204,7 +219,7 @@ def run_gx_stage(tables: list[str] | None) -> list[dict] | None:
             continue
         stats = r.get("statistics", {})
         ratio = f"{stats.get('successful_expectations', 0)}/{stats.get('evaluated_expectations', 0)}"
-        status = "[green]PASS[/green]" if r["success"] else "[red]FAIL[/red]"
+        status = "[green]PASS[/green]" if r.get("success", False) else "[red]FAIL[/red]"
         table.add_row(r["table"], status, ratio)
     console.print(table)
 
@@ -232,7 +247,7 @@ def main() -> int:
     gx_ok = True
     if not args.skip_gx:
         gx_results = run_gx_stage(args.gx_tables)
-        gx_ok = gx_results is not None and all(r["success"] for r in gx_results)
+        gx_ok = gx_results is not None and all(r.get("success", False) for r in gx_results)
     else:
         console.rule("[dim]Stage 3/3 — Great Expectations suite (skipped)[/dim]")
 
@@ -243,7 +258,7 @@ def main() -> int:
         passed = sum(1 for r in plpgsql_results if r["passed"])
         lines.append(f"PL/pgSQL: {passed}/{len(plpgsql_results)} passed")
     if gx_results is not None:
-        passed = sum(1 for r in gx_results if r["success"])
+        passed = sum(1 for r in gx_results if r.get("success", False))
         lines.append(f"GX      : {passed}/{len(gx_results)} passed")
     lines.append("")
     lines.append("RESULT: " + ("PASSED" if overall_ok else "FAILED"))

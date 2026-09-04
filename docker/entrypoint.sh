@@ -13,6 +13,7 @@ set -euo pipefail
 #   docker run <image> <job> [job-specific args...]
 #
 # Examples:
+#   docker run myimg pipeline                     # full pipeline run
 #   docker run myimg etl                          # incremental, all collections
 #   docker run myimg etl --collection orders       # incremental, one collection
 #   docker run myimg etl --full-refresh
@@ -64,6 +65,9 @@ usage() {
 Usage: docker run <image> <job> [job-specific args...]
 
 Jobs:
+  pipeline [--full-refresh] [--collections ...] [--gx-tables ...] [--skip-plpgsql] [--skip-gx]
+      main.py — Runs the full Mongo -> Postgres load, PL/pgSQL suite, and GX suite in one process.
+
   etl [--collection NAME ...] [--full-refresh]
       scripts/mongo_to_postgres.py — incremental by default; pass one or
       more --collection flags to restrict to specific collections, or
@@ -74,7 +78,7 @@ Jobs:
       under tests/generic/loops/*.sql.
 
   dq-gx [table ...]
-      scripts/run_gx.py — Great Expectations suite; validates every table
+      tests/data_quality/run.py — Great Expectations suite; validates every table
       if none are named.
 
   inspect-schema
@@ -97,6 +101,10 @@ EOF
 }
 
 case "$JOB" in
+    pipeline)
+        wait_for_pushgateway
+        exec uv run python main.py "$@"
+        ;;
     etl)
         wait_for_pushgateway
         exec uv run python -m scripts.mongo_to_postgres "$@"
@@ -107,7 +115,7 @@ case "$JOB" in
         ;;
     dq-gx)
         wait_for_pushgateway
-        exec uv run python scripts/run_gx.py "$@"
+        exec uv run python tests/data_quality/run.py "$@"
         ;;
     inspect-schema)
         exec uv run python scripts/inspect_schema.py "$@"
