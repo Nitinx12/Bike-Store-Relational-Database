@@ -24,4 +24,5 @@ dependencies = [
 dev = [
     "pytest>=9.1.1",
     "ruff>=0.16.6",
+    "sqlfluff>=4.3.0",
 ]
