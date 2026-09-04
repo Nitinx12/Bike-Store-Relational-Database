@@ -15,7 +15,7 @@
 # or, once docker-compose.yml exists, just:
 #   build: { context: ., dockerfile: docker/Dockerfile }
 
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # scripts/mongo_to_postgres.py runs PySpark, which needs a JVM at runtime
 # for both the driver and the JDBC write path (jars/postgresql.jar).

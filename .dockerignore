@@ -47,7 +47,8 @@ docs/
 *.csv
 *.parquet
 *.json
-*.sql
+# *.sql excluded from build context — but keep tests/generic/loops/*.sql for dq-loops job
+!tests/generic/loops/*.sql
 
 # Docker
 docker-compose.override.yml

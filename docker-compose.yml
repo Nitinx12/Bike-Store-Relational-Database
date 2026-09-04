@@ -1,46 +1,80 @@
 # docker-compose.yml
 # ----------------------------------------------------------------------------
-# Monitoring stack (Pushgateway ← scraped by → Prometheus ← queried by → Grafana)
-# plus the app image itself, on one shared network so `app` can reach the
-# gateway at the hostname "pushgateway" — matching entrypoint.sh's
-# PUSHGATEWAY_URL default of pushgateway:9091.
+# Full stack: PostgreSQL, MongoDB, monitoring (Pushgateway/Prometheus/Grafana),
+# and the app image itself — all on one shared network so `app` can reach every
+# service by hostname (postgres, mongodb, pushgateway, prometheus, grafana).
 #
 # Usage:
-#   docker compose up -d pushgateway prometheus grafana   # bring up monitoring
-#   docker compose --profile jobs run --rm app etl
-#   docker compose --profile jobs run --rm app etl --collection orders
-#   docker compose --profile jobs run --rm app dq-loops
-#   docker compose --profile jobs run --rm app dq-gx
-#   docker compose --profile jobs run --rm app monitor-logs clean --dry-run
+#   docker compose up -d                          # bring up everything (no profiles)
+#   docker compose up -d postgres mongodb        # databases only
+#   docker compose up -d pushgateway prometheus grafana  # monitoring only
+#   docker compose --profile jobs run --rm app etl       # run ETL
+#   docker compose --profile jobs run --rm app pipeline   # full pipeline
+#   docker compose --profile jobs run --rm app dq-loops  # data quality
+#   docker compose --profile jobs run --rm app dq-gx     # Great Expectations
 #
-# `app` is a batch job, not a long-running service, so it's placed behind the
-# "jobs" profile — that keeps it out of a plain `docker compose up` (which
-# would otherwise just build it, print --help, and exit). Grafana:
-# http://localhost:3000 (default admin/admin — see GRAFANA_ADMIN_PASSWORD
-# below). Prometheus: http://localhost:9090. Pushgateway: http://localhost:9091.
-#
-# DB credentials (POSTGRES_*, MONGO_*) are read from your shell environment
-# or a .env file at the project root — Compose loads .env automatically, and
-# utils/connection.py already expects these same variable names.
+# Environment variables (set in .env):
+#   POSTGRES_DATABASE, POSTGRES_USERNAME, POSTGRES_PASSWORD  (defaults: bike_store / postgres / postgres)
+#   MONGO_DB, MONGO_URI                                     (defaults: bike_store / mongodb://mongodb:27017)
+#   GRAFANA_ADMIN_PASSWORD                                  (default: admin)
 # ----------------------------------------------------------------------------
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:-bike_store}
+      POSTGRES_USER: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DATABASE:-bike_store}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-bike_store}
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand({ ping: 1 })", "--quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build:
       context: .
       dockerfile: docker/Dockerfile
     profiles: ["jobs"]
     environment:
-      POSTGRES_HOST: ${POSTGRES_HOST:-}
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-}
-      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
-      MONGO_URI: ${MONGO_URI:-}
-      MONGO_DB: ${MONGO_DB:-}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-bike_store}
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      MONGO_URI: mongodb://mongodb:27017
+      MONGO_DB: ${MONGO_DB:-bike_store}
       PUSHGATEWAY_URL: pushgateway:9091
     depends_on:
-      - pushgateway
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      pushgateway:
+        condition: service_started
     networks:
       - monitoring
     command: ["--help"]
@@ -93,6 +127,8 @@ networks:
     driver: bridge
 
 volumes:
+  postgres_data:
+  mongodb_data:
   pushgateway_data:
   prometheus_data:
   grafana_data:
