@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir *)",
+      "Bash(uv *)",
+      "Bash(type *)",
+      "Bash(cd *)",
+      "Bash(findstr *)",
+      "Bash(find *)",
+      "Bash(@findstr *)",
+      "Bash(@echo *)",
+      "Bash(del *)",
+      "Bash(f *)",
+      "Bash(git *)",
+      "Bash(git log *)",
+      "Bash(echo *)",
+      "Bash(git status)"
+    ]
+  },
+  "$version": 4
+}
