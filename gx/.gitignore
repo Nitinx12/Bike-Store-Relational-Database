@@ -1,0 +1,7 @@
+# Great Expectations
+great_expectations/uncommitted/
+great_expectations/.gitignore
+
+# Keep GX configuration and expectations tracked
+# Ignore generated/local validation artifacts
+uncommitted/

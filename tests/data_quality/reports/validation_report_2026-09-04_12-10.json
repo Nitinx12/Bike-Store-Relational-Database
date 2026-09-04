@@ -1,0 +1,108 @@
+{
+  "run_started": "2026-09-04T12:10:34.505344",
+  "run_finished": "2026-09-04T12:10:36.593177",
+  "overall_success": true,
+  "tables_validated": 9,
+  "tables_passed": 9,
+  "results": [
+    {
+      "table": "brands",
+      "success": true,
+      "statistics": {
+        "evaluated_expectations": 5,
+        "successful_expectations": 5,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+      },
+      "failed_expectations": []
+    },
+    {
+      "table": "categories",
+      "success": true,
+      "statistics": {
+        "evaluated_expectations": 5,
+        "successful_expectations": 5,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+      },
+      "failed_expectations": []
+    },
+    {
+      "table": "customers",
+      "success": true,
+      "statistics": {
+        "evaluated_expectations": 15,
+        "successful_expectations": 15,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+      },
+      "failed_expectations": []
+    },
+    {
+      "table": "staffs",
+      "success": true,
+      "statistics": {
+        "evaluated_expectations": 14,
+        "successful_expectations": 14,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+      },
+      "failed_expectations": []
+    },
+    {
+      "table": "stores",
+      "success": true,
+      "statistics": {
+        "evaluated_expectations": 15,
+        "successful_expectations": 15,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+      },
+      "failed_expectations": []
+    },
+    {
+      "table": "products",
+      "success": true,
+      "statistics": {
+        "evaluated_expectations": 13,
+        "successful_expectations": 13,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+      },
+      "failed_expectations": []
+    },
+    {
+      "table": "stocks",
+      "success": true,
+      "statistics": {
+        "evaluated_expectations": 9,
+        "successful_expectations": 9,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+      },
+      "failed_expectations": []
+    },
+    {
+      "table": "orders",
+      "success": true,
+      "statistics": {
+        "evaluated_expectations": 16,
+        "successful_expectations": 16,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+      },
+      "failed_expectations": []
+    },
+    {
+      "table": "order_items",
+      "success": true,
+      "statistics": {
+        "evaluated_expectations": 17,
+        "successful_expectations": 17,
+        "unsuccessful_expectations": 0,
+        "success_percent": 100.0
+      },
+      "failed_expectations": []
+    }
+  ]
+}
