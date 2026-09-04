@@ -1,0 +1,75 @@
+name: "Linting (Bash, PS1, Make, SQL)"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  bash-check:
+    name: Check Bash (ShellCheck)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './'
+          # Optional: add ignore patterns if needed
+          # ignore_paths: 'vendor/**'
+
+  powershell-check:
+    name: Check PowerShell (PSScriptAnalyzer)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Run PSScriptAnalyzer
+        uses: microsoft/psscriptanalyzer-action@v1.1
+        with:
+          path: .\
+          recurse: true
+          # Fail the build on Error and Warning level violations
+          severity: '"Error", "Warning"' 
+
+  sql-check:
+    name: Check SQL (SQLFluff)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SQLFluff
+        run: pip install sqlfluff
+
+      - name: Run SQLFluff Linting
+        # Change 'ansi' to your specific dialect (e.g., postgres, mysql, snowflake)
+        run: sqlfluff lint . --dialect ansi
+
+  makefile-check:
+    name: Check Makefile (checkmake)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install checkmake
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y checkmake
+
+      - name: Run checkmake
+        # Finds all files named "Makefile" and lints them
+        run: find . -type f -name "Makefile" -exec checkmake {} +
