@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python
+.venv
+venv
+__pycache__
+*.py[cod]
+*.pyo
+
+# Python tooling
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+
+# IDE / Editor
+.vscode
+.idea
+
+# Environment / Secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test / Coverage
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Documentation
+README.md
+docs/
+
+# Local data
+*.csv
+*.parquet
+*.json
+*.sql
+
+# Docker
+docker-compose.override.yml
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.bak
