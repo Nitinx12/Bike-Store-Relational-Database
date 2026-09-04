@@ -16,7 +16,7 @@ CYAN  := \033[36m
 RESET := \033[0m
 BOLD  := \033[1m
 
-.PHONY: help build up down pipeline etl dq-loops dq-gx inspect-schema monitor-logs log-cleanup shell clean prune check-env health-check init-db backup-postgres restore-postgres backup-mongo restore-mongo
+.PHONY: help build up down pipeline etl dq-loops dq-gx seed inspect-schema monitor-logs log-cleanup shell clean prune check-env health-check init-db backup-postgres restore-postgres backup-mongo restore-mongo
 
 help: ## Show this help message
 	@echo -e "$(BOLD)Bike Store Pipeline Management$(RESET)"
@@ -76,6 +76,10 @@ dq-loops: ## Run the PL/pgSQL data quality loop tests
 dq-gx: ## Run Great Expectations suite (ARGS="orders products" to target tables)
 	@echo -e "$(CYAN)Running Great Expectations suite...$(RESET)"
 	docker compose --profile jobs run --rm app dq-gx $(ARGS)
+
+seed: ## Seed MongoDB with sample bike-store data (drops & reinserts each collection)
+	@echo -e "$(CYAN)Seeding MongoDB with sample data...$(RESET)"
+	docker compose --profile jobs run --rm app seed
 
 inspect-schema: ## Inspect PostgreSQL public schema layout
 	@echo -e "$(CYAN)Inspecting database schema...$(RESET)"

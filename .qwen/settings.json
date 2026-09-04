@@ -14,7 +14,10 @@
       "Bash(git *)",
       "Bash(git log *)",
       "Bash(echo *)",
-      "Bash(git status)"
+      "Bash(git status)",
+      "Bash(wsl *)",
+      "Read(C:\\Users\\91852\\AppData\\Local\\Temp/**)",
+      "Read(\\\\wsl$\\Ubuntu\\tmp/**)"
     ]
   },
   "$version": 4

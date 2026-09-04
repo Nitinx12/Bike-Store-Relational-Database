@@ -81,6 +81,11 @@ Jobs:
       tests/data_quality/run.py — Great Expectations suite; validates every table
       if none are named.
 
+  seed
+      scripts/seed_mongo.py — populates the MongoDB source with a realistic
+      sample dataset (brands, categories, stores, products, stocks, staffs,
+      customers, orders, order_items) suitable for a first end-to-end run.
+
   inspect-schema
       scripts/inspect_schema.py — prints the public schema's tables,
       columns, and data types.
@@ -116,6 +121,9 @@ case "$JOB" in
     dq-gx)
         wait_for_pushgateway
         exec uv run python tests/data_quality/run.py "$@"
+        ;;
+    seed)
+        exec uv run python scripts/seed_mongo.py "$@"
         ;;
     inspect-schema)
         exec uv run python scripts/inspect_schema.py "$@"

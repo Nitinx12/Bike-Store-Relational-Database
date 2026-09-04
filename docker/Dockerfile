@@ -20,7 +20,7 @@ FROM python:3.13-slim
 # scripts/mongo_to_postgres.py runs PySpark, which needs a JVM at runtime
 # for both the driver and the JDBC write path (jars/postgresql.jar).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        openjdk-17-jre-headless \
+        openjdk-21-jre-headless \
         procps \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
