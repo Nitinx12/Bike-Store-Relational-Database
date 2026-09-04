@@ -1,7 +1,7 @@
 [project]
 name = "bike-store-relational-database"
 version = "0.1.0"
-description = "Add your description here"
+description = "PySpark incremental ETL pipeline from MongoDB to PostgreSQL, with automated data quality validation, schema evolution, upserts, observability, and a 21-script SQL analytics library for retail data"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
