@@ -1,0 +1,24 @@
+# docker/prometheus.yml
+# ----------------------------------------------------------------------------
+# Prometheus scrapes the Pushgateway (not the batch jobs directly — see
+# utils/metrics.py for why). honor_labels: true matters here specifically:
+# without it, Prometheus overwrites the `job` and `instance` labels on every
+# scraped series with its own static-config values, which would collapse
+# mongo_to_postgres / plpgsql_loops_tests / run_gx into one indistinguishable
+# series. With it, the job/instance labels the scripts actually pushed
+# (via push_to_gateway(job=...)) are preserved.
+# ----------------------------------------------------------------------------
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: pushgateway
+    honor_labels: true
+    static_configs:
+      - targets: ["pushgateway:9091"]

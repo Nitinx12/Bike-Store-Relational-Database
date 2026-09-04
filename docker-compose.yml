@@ -1,27 +1,98 @@
+# docker-compose.yml
+# ----------------------------------------------------------------------------
+# Monitoring stack (Pushgateway ← scraped by → Prometheus ← queried by → Grafana)
+# plus the app image itself, on one shared network so `app` can reach the
+# gateway at the hostname "pushgateway" — matching entrypoint.sh's
+# PUSHGATEWAY_URL default of pushgateway:9091.
+#
+# Usage:
+#   docker compose up -d pushgateway prometheus grafana   # bring up monitoring
+#   docker compose --profile jobs run --rm app etl
+#   docker compose --profile jobs run --rm app etl --collection orders
+#   docker compose --profile jobs run --rm app dq-loops
+#   docker compose --profile jobs run --rm app dq-gx
+#   docker compose --profile jobs run --rm app monitor-logs clean --dry-run
+#
+# `app` is a batch job, not a long-running service, so it's placed behind the
+# "jobs" profile — that keeps it out of a plain `docker compose up` (which
+# would otherwise just build it, print --help, and exit). Grafana:
+# http://localhost:3000 (default admin/admin — see GRAFANA_ADMIN_PASSWORD
+# below). Prometheus: http://localhost:9090. Pushgateway: http://localhost:9091.
+#
+# DB credentials (POSTGRES_*, MONGO_*) are read from your shell environment
+# or a .env file at the project root — Compose loads .env automatically, and
+# utils/connection.py already expects these same variable names.
+# ----------------------------------------------------------------------------
+
 services:
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: bike-store-prometheus
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    profiles: ["jobs"]
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:-}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-}
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME:-}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      MONGO_URI: ${MONGO_URI:-}
+      MONGO_DB: ${MONGO_DB:-}
+      PUSHGATEWAY_URL: pushgateway:9091
+    depends_on:
+      - pushgateway
+    networks:
+      - monitoring
+    command: ["--help"]
+
+  pushgateway:
+    image: prom/pushgateway:v1.11.3
+    command:
+      - "--persistence.file=/data/pushgateway.data"
+      - "--persistence.interval=5m"
+    volumes:
+      - pushgateway_data:/data
+    ports:
+      - "9091:9091"
+    networks:
+      - monitoring
     restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.13.2
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
     ports:
       - "9090:9090"
-    volumes:
-      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - pushgateway
+    networks:
+      - monitoring
+    restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
-    container_name: bike-store-grafana
-    restart: unless-stopped
+    image: grafana/grafana:13.1.0
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
     ports:
       - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+networks:
+  monitoring:
+    driver: bridge
 
 volumes:
+  pushgateway_data:
   prometheus_data:
   grafana_data:
