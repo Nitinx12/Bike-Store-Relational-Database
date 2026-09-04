@@ -18,6 +18,7 @@ report main() would have.[cite: 2]
 
 Overall exit code is 0 only if every stage that ran succeeded.[cite: 2]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -55,13 +56,12 @@ GX_DIR = REPO_ROOT / "tests" / "data_quality"
 if str(GX_DIR) not in sys.path:
     sys.path.insert(0, str(GX_DIR))
 
-from utils.engine import postgres_engine  # noqa: E402
-from utils.metrics import ETLRunMetrics, ValidationRunMetrics  # noqa: E402
+import run as gx_run
 
-from src.pipeline.runner import run_pipeline  # noqa: E402
-from src.validation.plpgsql_loops import run_all  # noqa: E402
-
-import run as gx_run  # noqa: E402  (tests/data_quality/run.py)
+from src.pipeline.runner import run_pipeline
+from src.validation.plpgsql_loops import run_all
+from utils.engine import postgres_engine
+from utils.metrics import ETLRunMetrics, ValidationRunMetrics
 
 LOOPS_DIR = REPO_ROOT / "tests" / "generic" / "loops"
 
@@ -74,23 +74,35 @@ def parse_args() -> argparse.Namespace:
         "and the GX suite, in one process."
     )
     p.add_argument(
-        "--full-refresh", action="store_true",
+        "--full-refresh",
+        action="store_true",
         help="Truncate and reload every collection instead of an incremental load.",
     )
     p.add_argument(
-        "--collections", nargs="+", default=None,
+        "--collections",
+        nargs="+",
+        default=None,
         help="Only load these collections (default: every collection in MongoDB).",
     )
     p.add_argument(
-        "--gx-tables", nargs="+", default=None,
+        "--gx-tables",
+        nargs="+",
+        default=None,
         help="Only run the GX suite against these tables (default: every table in TABLE_SUITES).",
     )
-    p.add_argument("--skip-plpgsql", action="store_true", help="Skip the PL/pgSQL data-quality suite.")
-    p.add_argument("--skip-gx", action="store_true", help="Skip the Great Expectations suite.")
+    p.add_argument(
+        "--skip-plpgsql",
+        action="store_true",
+        help="Skip the PL/pgSQL data-quality suite.",
+    )
+    p.add_argument(
+        "--skip-gx", action="store_true", help="Skip the Great Expectations suite."
+    )
     return p.parse_args()
 
 
 # ── Stage 1: Mongo -> Postgres load ─────────────────────────────────────────
+
 
 def run_load_stage(args: argparse.Namespace) -> dict:
     console.rule("[bold]Stage 1/3 — Mongo -> Postgres load[/bold]")
@@ -100,8 +112,10 @@ def run_load_stage(args: argparse.Namespace) -> dict:
 
     def on_collection_done(col, summary):
         status = (
-            "[red]failed[/red]" if summary["failed"]
-            else "[yellow]skipped[/yellow]" if summary["skipped"]
+            "[red]failed[/red]"
+            if summary["failed"]
+            else "[yellow]skipped[/yellow]"
+            if summary["skipped"]
             else "[green]loaded[/green]"
         )
         console.print(
@@ -130,7 +144,10 @@ def run_load_stage(args: argparse.Namespace) -> dict:
     table.add_column("Skipped", justify="center")
     for s in result["summaries"]:
         table.add_row(
-            s["collection"], str(s["rows_mongo"]), str(s["rows_new"]), str(s["rows_loaded"]),
+            s["collection"],
+            str(s["rows_mongo"]),
+            str(s["rows_new"]),
+            str(s["rows_loaded"]),
             f"[red]{s['failed']}[/red]" if s["failed"] else "0",
             "yes" if s["skipped"] else "",
         )
@@ -140,6 +157,7 @@ def run_load_stage(args: argparse.Namespace) -> dict:
 
 
 # ── Stage 2: PL/pgSQL data-quality suite ────────────────────────────────────
+
 
 def run_plpgsql_stage() -> list[dict]:
     console.rule("[bold]Stage 2/3 — PL/pgSQL data-quality suite[/bold]")
@@ -169,6 +187,7 @@ def run_plpgsql_stage() -> list[dict]:
 
 
 # ── Stage 3: Great Expectations suite ───────────────────────────────────────
+
 
 def run_gx_stage(tables: list[str] | None) -> list[dict] | None:
     console.rule("[bold]Stage 3/3 — Great Expectations suite[/bold]")
@@ -205,7 +224,10 @@ def run_gx_stage(tables: list[str] | None) -> list[dict] | None:
         "results": results,
     }
     gx_run.REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    report_path = gx_run.REPORT_DIR / f"validation_report_{run_started.strftime('%Y-%m-%d_%H-%M')}.json"
+    report_path = (
+        gx_run.REPORT_DIR
+        / f"validation_report_{run_started.strftime('%Y-%m-%d_%H-%M')}.json"
+    )
     report_path.write_text(json.dumps(summary, indent=2, default=str))
     console.print(f"[dim]Report written to {report_path}[/dim]")
 
@@ -228,6 +250,7 @@ def run_gx_stage(tables: list[str] | None) -> list[dict] | None:
 
 # ── Orchestration ────────────────────────────────────────────────────────────
 
+
 def main() -> int:
     args = parse_args()
     console.print(Panel.fit("Bike Store pipeline — full run", style="bold blue"))
@@ -247,13 +270,17 @@ def main() -> int:
     gx_ok = True
     if not args.skip_gx:
         gx_results = run_gx_stage(args.gx_tables)
-        gx_ok = gx_results is not None and all(r.get("success", False) for r in gx_results)
+        gx_ok = gx_results is not None and all(
+            r.get("success", False) for r in gx_results
+        )
     else:
         console.rule("[dim]Stage 3/3 — Great Expectations suite (skipped)[/dim]")
 
     overall_ok = load_ok and plpgsql_ok and gx_ok
     totals = load_result["totals"]
-    lines = [f"Load    : loaded={totals['rows_loaded']} new={totals['rows_new']} failed={totals['failed']}"]
+    lines = [
+        f"Load    : loaded={totals['rows_loaded']} new={totals['rows_new']} failed={totals['failed']}"
+    ]
     if plpgsql_results is not None:
         passed = sum(1 for r in plpgsql_results if r["passed"])
         lines.append(f"PL/pgSQL: {passed}/{len(plpgsql_results)} passed")
@@ -263,7 +290,13 @@ def main() -> int:
     lines.append("")
     lines.append("RESULT: " + ("PASSED" if overall_ok else "FAILED"))
 
-    console.print(Panel("\n".join(lines), title="Pipeline summary", style="bold green" if overall_ok else "bold red"))
+    console.print(
+        Panel(
+            "\n".join(lines),
+            title="Pipeline summary",
+            style="bold green" if overall_ok else "bold red",
+        )
+    )
 
     return 0 if overall_ok else 1
 

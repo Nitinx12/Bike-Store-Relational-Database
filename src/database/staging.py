@@ -6,6 +6,7 @@ table, truncate for full-refresh runs, and cleanup.
 
 Moved out of scripts/mongo_to_postgres.py unchanged in behaviour.
 """
+
 from __future__ import annotations
 
 from sqlalchemy import text
@@ -16,9 +17,13 @@ def staging_name(table: str, run_id: str) -> str:
 
 
 def merge_staging_to_target(
-    conn, schema: str, table: str,
-    staging: str, columns: list[str],
-    pk_col: str | None, log,
+    conn,
+    schema: str,
+    table: str,
+    staging: str,
+    columns: list[str],
+    pk_col: str | None,
+    log,
 ) -> int:
     """
     INSERT … SELECT from staging into the target table.
@@ -29,9 +34,10 @@ def merge_staging_to_target(
     col_list = ", ".join(f'"{c}"' for c in columns)
 
     if pk_col and pk_col in columns:
-        update_set = ", ".join(
-            f'"{c}" = EXCLUDED."{c}"' for c in columns if c != pk_col
-        ) or f'"{pk_col}" = EXCLUDED."{pk_col}"'
+        update_set = (
+            ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in columns if c != pk_col)
+            or f'"{pk_col}" = EXCLUDED."{pk_col}"'
+        )
         sql = f"""
             INSERT INTO "{schema}"."{table}" ({col_list})
             SELECT {col_list} FROM "{schema}"."{staging}"

@@ -81,25 +81,29 @@ def main():
         engine = postgres_engine()
     except Exception as exc:
         logger.error(f"Could not create Postgres engine: {exc}")
-        console.print(Panel(
-            str(exc),
-            title="[bold red]Postgres engine failed[/bold red]",
-            border_style="red",
-        ))
+        console.print(
+            Panel(
+                str(exc),
+                title="[bold red]Postgres engine failed[/bold red]",
+                border_style="red",
+            )
+        )
         sys.exit(2)
 
     try:
         test_files = discover_test_files(LOOPS_DIR)
     except FileNotFoundError as exc:
         logger.error(f"Loops directory not found: {exc}")
-        console.print(Panel(
-            f"Expected folder does not exist:\n  {exc}\n\n"
-            "Create it and add your *.sql loop-test files, e.g. in PowerShell:\n\n"
-            f"  New-Item -ItemType Directory -Force -Path \"{LOOPS_DIR}\"\n\n"
-            "then copy your 01_test_*.sql ... 10_test_*.sql files into it.",
-            title="[bold red]Loops directory not found[/bold red]",
-            border_style="red",
-        ))
+        console.print(
+            Panel(
+                f"Expected folder does not exist:\n  {exc}\n\n"
+                "Create it and add your *.sql loop-test files, e.g. in PowerShell:\n\n"
+                f'  New-Item -ItemType Directory -Force -Path "{LOOPS_DIR}"\n\n'
+                "then copy your 01_test_*.sql ... 10_test_*.sql files into it.",
+                title="[bold red]Loops directory not found[/bold red]",
+                border_style="red",
+            )
+        )
         sys.exit(2)
 
     if not test_files:
@@ -135,23 +139,31 @@ def main():
 
     console.print(table)
 
-    summary = f"Passed: {len(passed)}   Failed: {len(failed)}   Total: {len(test_files)}"
+    summary = (
+        f"Passed: {len(passed)}   Failed: {len(failed)}   Total: {len(test_files)}"
+    )
     logger.info(summary)
 
     if failed:
         logger.error("Failing files: " + ", ".join(failed))
-        console.print(Panel(
-            summary + "\n\nFailing files:\n" + "\n".join(f"  - {f}" for f in failed),
-            title="[bold red]Some tests failed[/bold red]",
-            border_style="red",
-        ))
+        console.print(
+            Panel(
+                summary
+                + "\n\nFailing files:\n"
+                + "\n".join(f"  - {f}" for f in failed),
+                title="[bold red]Some tests failed[/bold red]",
+                border_style="red",
+            )
+        )
         sys.exit(1)
 
-    console.print(Panel(
-        summary,
-        title="[bold green]All tests passed[/bold green]",
-        border_style="green",
-    ))
+    console.print(
+        Panel(
+            summary,
+            title="[bold green]All tests passed[/bold green]",
+            border_style="green",
+        )
+    )
     sys.exit(0)
 
 

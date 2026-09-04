@@ -63,15 +63,14 @@ Design notes
   job/grouping-key). Use Prometheus `increase()`/`rate()` in Grafana over
   the `_total`-suffixed gauges if you want trends across runs.[cite: 7]
 """
+
 from __future__ import annotations
 
 import logging
+import os
 import time
-from typing import Optional
 
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
-
-import os
 
 PUSHGATEWAY_URL = os.getenv("PUSHGATEWAY_URL", "localhost:9091")
 PUSHGATEWAY_TIMEOUT = float(os.getenv("PUSHGATEWAY_TIMEOUT", "5"))
@@ -82,7 +81,7 @@ _module_logger = logging.getLogger("metrics")
 class _BaseRunMetrics:
     """Shared timing/outcome gauges and push machinery for a single batch-job run."""
 
-    def __init__(self, job: str, extra_grouping: Optional[dict] = None):
+    def __init__(self, job: str, extra_grouping: dict | None = None):
         self.job = job
         self.registry = CollectorRegistry()
         self.extra_grouping = extra_grouping or {}
@@ -142,7 +141,9 @@ class _BaseRunMetrics:
         except Exception as exc:
             _module_logger.warning(
                 "Could not push metrics for job '%s' to %s: %s",
-                self.job, PUSHGATEWAY_URL, exc,
+                self.job,
+                PUSHGATEWAY_URL,
+                exc,
             )
             return False
 
@@ -154,33 +155,40 @@ class ETLRunMetrics(_BaseRunMetrics):
     once per collection with the dict returned by process_collection().
     """
 
-    def __init__(self, job: str = "mongo_to_postgres", extra_grouping: Optional[dict] = None):
+    def __init__(
+        self, job: str = "mongo_to_postgres", extra_grouping: dict | None = None
+    ):
         super().__init__(job, extra_grouping)
 
         self.rows_source = Gauge(
             "etl_rows_source",
             "Row count in the source collection/table at read time.",
-            ["collection"], registry=self.registry,
+            ["collection"],
+            registry=self.registry,
         )
         self.rows_new = Gauge(
             "etl_rows_new",
             "Rows identified as new/changed since the last run.",
-            ["collection"], registry=self.registry,
+            ["collection"],
+            registry=self.registry,
         )
         self.rows_loaded = Gauge(
             "etl_rows_loaded",
             "Rows successfully merged into the target table.",
-            ["collection"], registry=self.registry,
+            ["collection"],
+            registry=self.registry,
         )
         self.rows_failed = Gauge(
             "etl_rows_failed",
             "Rows that failed to load for this collection.",
-            ["collection"], registry=self.registry,
+            ["collection"],
+            registry=self.registry,
         )
         self.collection_skipped = Gauge(
             "etl_collection_skipped",
             "1 if this collection was skipped (no changes detected), else 0.",
-            ["collection"], registry=self.registry,
+            ["collection"],
+            registry=self.registry,
         )
         self.collections_total = Gauge(
             "etl_collections_total",
@@ -200,9 +208,13 @@ class ETLRunMetrics(_BaseRunMetrics):
         """summary is the per-collection dict produced by process_collection()."""
         self.rows_source.labels(collection=collection).set(summary.get("rows_mongo", 0))
         self.rows_new.labels(collection=collection).set(summary.get("rows_new", 0))
-        self.rows_loaded.labels(collection=collection).set(summary.get("rows_loaded", 0))
+        self.rows_loaded.labels(collection=collection).set(
+            summary.get("rows_loaded", 0)
+        )
         self.rows_failed.labels(collection=collection).set(summary.get("failed", 0))
-        self.collection_skipped.labels(collection=collection).set(1 if summary.get("skipped") else 0)
+        self.collection_skipped.labels(collection=collection).set(
+            1 if summary.get("skipped") else 0
+        )
 
         self._collections_seen += 1
         if summary.get("skipped"):
@@ -221,22 +233,29 @@ class ValidationRunMetrics(_BaseRunMetrics):
     file / expectation.
     """
 
-    def __init__(self, job: str, extra_grouping: Optional[dict] = None):
+    def __init__(self, job: str, extra_grouping: dict | None = None):
         super().__init__(job, extra_grouping)
 
         self.test_result = Gauge(
             "dq_test_passed",
             "1 if this individual test passed, 0 if it failed.",
-            ["test_name"], registry=self.registry,
+            ["test_name"],
+            registry=self.registry,
         )
         self.tests_total = Gauge(
-            "dq_tests_total", "Total tests run.", registry=self.registry,
+            "dq_tests_total",
+            "Total tests run.",
+            registry=self.registry,
         )
         self.tests_passed_total = Gauge(
-            "dq_tests_passed_total", "Total tests passed.", registry=self.registry,
+            "dq_tests_passed_total",
+            "Total tests passed.",
+            registry=self.registry,
         )
         self.tests_failed_total = Gauge(
-            "dq_tests_failed_total", "Total tests failed.", registry=self.registry,
+            "dq_tests_failed_total",
+            "Total tests failed.",
+            registry=self.registry,
         )
 
         self._total = 0
@@ -248,7 +267,7 @@ class ValidationRunMetrics(_BaseRunMetrics):
         if passed:
             self._passed += 1
 
-    def finalize(self, failed: Optional[bool] = None) -> None:
+    def finalize(self, failed: bool | None = None) -> None:
         self.tests_total.set(self._total)
         self.tests_passed_total.set(self._passed)
         self.tests_failed_total.set(self._total - self._passed)

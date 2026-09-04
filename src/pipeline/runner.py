@@ -12,6 +12,7 @@ terminal UI along with it.
 Optional on_start / on_collection_done callbacks let a caller (like the
 CLI script) hook in a progress bar without this module knowing Rich exists.
 """
+
 from __future__ import annotations
 
 import traceback
@@ -23,19 +24,23 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from sqlalchemy import text
 
-from utils.connection import MONGO_URI, MONGO_DB, POSTGRES_USERNAME, POSTGRES_PASSWORD
-from utils.engine import postgres_engine
-from utils.logger import get_logger
-
 from src.database.jdbc_writer import write_to_staging
 from src.database.schema import ensure_schema, ensure_target_table
-from src.database.staging import staging_name, merge_staging_to_target, drop_staging, truncate_table
+from src.database.staging import (
+    drop_staging,
+    merge_staging_to_target,
+    staging_name,
+    truncate_table,
+)
 from src.database.stats import get_postgres_stats
 from src.pipeline.config import ETL_SCHEMA, ISO_FMT, JDBC_URL
 from src.pipeline.decision import needs_load
 from src.pipeline.mongo_source import mongo_collection_stats, read_mongo_incremental
 from src.pipeline.spark_session import get_spark
 from src.pipeline.transform import add_row_hash, detect_pk_col, detect_ts_col, slugify
+from utils.connection import MONGO_DB, MONGO_URI, POSTGRES_PASSWORD, POSTGRES_USERNAME
+from utils.engine import postgres_engine
+from utils.logger import get_logger
 
 
 def process_collection(
@@ -57,16 +62,19 @@ def process_collection(
       7. Merge staging → target table (upsert / dedup)
       8. Drop staging
     """
-    log     = get_logger(stage="extraction", name=collection)
-    table   = slugify(collection)
-    schema  = ETL_SCHEMA
-    run_id  = datetime.now().strftime("%Y%m%d%H%M%S")
+    log = get_logger(stage="extraction", name=collection)
+    table = slugify(collection)
+    schema = ETL_SCHEMA
+    run_id = datetime.now().strftime("%Y%m%d%H%M%S")
     staging = staging_name(table, run_id)
 
     base = dict(
         collection=collection,
-        rows_mongo=0, rows_new=0, rows_loaded=0,
-        skipped=False, failed=0,
+        rows_mongo=0,
+        rows_new=0,
+        rows_loaded=0,
+        skipped=False,
+        failed=0,
     )
 
     log.info("=" * 65)
@@ -89,7 +97,7 @@ def process_collection(
         base["skipped"] = True
         return base
 
-    raw_columns  = list(pd.DataFrame(sample).columns)
+    raw_columns = list(pd.DataFrame(sample).columns)
     slug_columns = [slugify(c) for c in raw_columns]
 
     pk_col = detect_pk_col(slug_columns, collection, log)
@@ -144,27 +152,28 @@ def process_collection(
     # Dedup on pk_col (guard against duplicate source docs)
     if pk_col and pk_col in columns:
         before = sdf.count()
-        sdf    = sdf.dropDuplicates([pk_col])
-        dupes  = before - sdf.count()
+        sdf = sdf.dropDuplicates([pk_col])
+        dupes = before - sdf.count()
         if dupes > 0:
             log.warning(
                 "DEDUP       : removed %d duplicate '%s' values in '%s'",
-                dupes, pk_col, collection,
+                dupes,
+                pk_col,
+                collection,
             )
             rows_new = sdf.count()
             base["rows_new"] = rows_new
 
     # Row-hash dedup for no-PK collections
     if pk_col is None:
-        sdf     = add_row_hash(sdf, exclude_cols=["loaded_at"])
+        sdf = add_row_hash(sdf, exclude_cols=["loaded_at"])
         columns = sdf.columns
         log.info("ROW HASH    : added _row_hash column for no-PK dedup")
 
     # ── Ensure schema exists before JDBC write ──────────────────────────────
     try:
-        with engine.connect() as _conn:
-            with _conn.begin():
-                ensure_schema(_conn, schema, log)
+        with engine.connect() as _conn, _conn.begin():
+            ensure_schema(_conn, schema, log)
     except Exception as exc:
         log.error("Could not create schema '%s': %s", schema, exc)
         base["failed"] = rows_new
@@ -172,7 +181,16 @@ def process_collection(
 
     # ── Step 6: Write to staging via JDBC ───────────────────────────────────
     try:
-        write_to_staging(sdf, schema, staging, rows_new, JDBC_URL, POSTGRES_USERNAME, POSTGRES_PASSWORD, log)
+        write_to_staging(
+            sdf,
+            schema,
+            staging,
+            rows_new,
+            JDBC_URL,
+            POSTGRES_USERNAME,
+            POSTGRES_PASSWORD,
+            log,
+        )
     except Exception as exc:
         log.error("JDBC staging write failed: %s", exc)
         log.debug(traceback.format_exc())
@@ -181,19 +199,18 @@ def process_collection(
 
     # ── Step 7: Merge staging → target table ────────────────────────────────
     try:
-        with engine.connect() as conn:
-            with conn.begin():
-                ensure_schema(conn, schema, log)
-                ensure_target_table(conn, schema, table, list(columns), pk_col, log)
+        with engine.connect() as conn, conn.begin():
+            ensure_schema(conn, schema, log)
+            ensure_target_table(conn, schema, table, list(columns), pk_col, log)
 
-                if full_load and pg_stats["table_exists"]:
-                    truncate_table(conn, schema, table, log)
+            if full_load and pg_stats["table_exists"]:
+                truncate_table(conn, schema, table, log)
 
-                rows_loaded = merge_staging_to_target(
-                    conn, schema, table, staging, list(columns), pk_col, log
-                )
-                # ── Step 8: Drop staging ────────────────────────────────────
-                drop_staging(conn, schema, staging, log)
+            rows_loaded = merge_staging_to_target(
+                conn, schema, table, staging, list(columns), pk_col, log
+            )
+            # ── Step 8: Drop staging ────────────────────────────────────
+            drop_staging(conn, schema, staging, log)
 
         base["rows_loaded"] = rows_loaded
 
@@ -201,9 +218,8 @@ def process_collection(
         log.error("Merge failed for '%s': %s", collection, exc)
         log.debug(traceback.format_exc())
         try:
-            with engine.connect() as conn:
-                with conn.begin():
-                    drop_staging(conn, schema, staging, log)
+            with engine.connect() as conn, conn.begin():
+                drop_staging(conn, schema, staging, log)
         except Exception:
             pass
         base["failed"] = rows_new
@@ -211,7 +227,10 @@ def process_collection(
 
     log.info(
         "DONE        : mongo=%d  new=%d  loaded=%d  failed=%d",
-        base["rows_mongo"], base["rows_new"], base["rows_loaded"], base["failed"],
+        base["rows_mongo"],
+        base["rows_new"],
+        base["rows_loaded"],
+        base["failed"],
     )
     log.info("=" * 65)
     return base
@@ -249,7 +268,7 @@ def run_pipeline(
     if on_start:
         on_start(collections, mode)
 
-    spark  = get_spark()
+    spark = get_spark()
     engine = postgres_engine()
 
     with engine.connect() as c:
@@ -277,9 +296,12 @@ def run_pipeline(
 
     log.info(
         "RUN SUMMARY : collections=%d skipped=%d mongo=%d new=%d loaded=%d failed=%d",
-        len(summaries), skipped_count,
-        totals["rows_mongo"], totals["rows_new"],
-        totals["rows_loaded"], totals["failed"],
+        len(summaries),
+        skipped_count,
+        totals["rows_mongo"],
+        totals["rows_new"],
+        totals["rows_loaded"],
+        totals["failed"],
     )
 
     return {

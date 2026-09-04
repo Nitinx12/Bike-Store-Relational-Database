@@ -7,6 +7,7 @@ don't carry a schema, so this is the pipeline's substitute for one.
 
 Moved out of scripts/mongo_to_postgres.py unchanged in behaviour.
 """
+
 from __future__ import annotations
 
 import re
@@ -36,7 +37,7 @@ def detect_pk_col(columns: list[str], collection: str, log) -> str | None:
 
     Returns the column name or None if nothing matches.
     """
-    slug  = slugify(collection)
+    slug = slugify(collection)
     exact = f"{slug}_id"
 
     if exact in columns:
@@ -52,7 +53,9 @@ def detect_pk_col(columns: list[str], collection: str, log) -> str | None:
         log.info("PK DETECT : 'id'  (fallback)")
         return "id"
 
-    log.warning("PK DETECT : no PK column found in %s — will use row-hash dedup", collection)
+    log.warning(
+        "PK DETECT : no PK column found in %s — will use row-hash dedup", collection
+    )
     return None
 
 
@@ -76,7 +79,7 @@ def add_row_hash(sdf: DataFrame, exclude_cols: list[str] | None = None) -> DataF
     Used as a surrogate unique key for no-PK collections so
     ON CONFLICT (_row_hash) DO NOTHING prevents duplicates on re-runs.
     """
-    skip      = set(exclude_cols or []) | {"_row_hash"}
+    skip = set(exclude_cols or []) | {"_row_hash"}
     hash_cols = [c for c in sdf.columns if c not in skip]
     concat_expr = F.concat_ws(
         "|",

@@ -11,6 +11,7 @@ folder - handy for a Makefile target, a CI step, or an IDE run
 configuration - without needing to know the tests/data_quality/ internal
 package layout.
 """
+
 from __future__ import annotations
 
 import sys

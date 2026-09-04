@@ -9,6 +9,7 @@ validation report alongside the GX suite, or a test.
 
 Moved out of scripts/plpgsql_loops_tests.py unchanged in behaviour.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -63,7 +64,9 @@ def run_all(engine, loops_dir: Path) -> list[dict]:
     try:
         for sql_path in test_files:
             passed, message = run_test_file(dbapi_conn, sql_path)
-            results.append({"name": sql_path.name, "passed": passed, "message": message})
+            results.append(
+                {"name": sql_path.name, "passed": passed, "message": message}
+            )
     finally:
         raw_conn.close()
 

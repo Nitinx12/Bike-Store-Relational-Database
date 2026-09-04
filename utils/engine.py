@@ -1,14 +1,15 @@
+from pymongo import MongoClient
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
-from pymongo import MongoClient
+
 from utils.connection import (
-    POSTGRES_HOST,
-    POSTGRES_PORT,
-    POSTGRES_DATABASE,
-    POSTGRES_USERNAME,
-    POSTGRES_PASSWORD,
+    MONGO_DB,
     MONGO_URI,
-    MONGO_DB
+    POSTGRES_DATABASE,
+    POSTGRES_HOST,
+    POSTGRES_PASSWORD,
+    POSTGRES_PORT,
+    POSTGRES_USERNAME,
 )
 from utils.logger import get_logger
 
@@ -18,6 +19,7 @@ logger = get_logger("extraction", "engines")
 # =========================================================
 # POSTGRES
 # =========================================================
+
 
 def postgres_engine():
     try:
@@ -48,6 +50,7 @@ def postgres_engine():
 # =========================================================
 # MONGODB
 # =========================================================
+
 
 def mongo_client():
     try:

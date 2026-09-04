@@ -7,6 +7,7 @@ retried, mocked, or swapped independently. Takes connection details as
 plain arguments rather than importing pipeline config, so this module
 has no dependency on src/pipeline/.
 """
+
 from __future__ import annotations
 
 from pyspark.sql import DataFrame
@@ -25,8 +26,7 @@ def write_to_staging(
     """Overwrites (creates) the staging table with `sdf`'s rows via JDBC."""
     log.info("JDBC WRITE  : %d rows → %s.%s", row_count, schema, staging)
     (
-        sdf.write
-        .format("jdbc")
+        sdf.write.format("jdbc")
         .option("url", jdbc_url)
         .option("dbtable", f'"{schema}"."{staging}"')
         .option("user", user)

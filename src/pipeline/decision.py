@@ -7,6 +7,7 @@ plain dicts without a live Mongo or Postgres connection.
 
 Moved out of scripts/mongo_to_postgres.py unchanged in behaviour.
 """
+
 from __future__ import annotations
 
 
@@ -25,7 +26,8 @@ def needs_load(mongo_stats: dict, pg_stats: dict, ts_col: str | None, log) -> bo
     if mongo_stats["count"] > pg_stats["count"]:
         log.info(
             "DECISION    : Mongo count (%d) > PG count (%d) → LOAD",
-            mongo_stats["count"], pg_stats["count"],
+            mongo_stats["count"],
+            pg_stats["count"],
         )
         return True
 
@@ -33,12 +35,14 @@ def needs_load(mongo_stats: dict, pg_stats: dict, ts_col: str | None, log) -> bo
         if mongo_stats["max_ts"] > pg_stats["max_ts"]:
             log.info(
                 "DECISION    : Mongo max_ts (%s) > PG max_ts (%s) → LOAD",
-                mongo_stats["max_ts"], pg_stats["max_ts"],
+                mongo_stats["max_ts"],
+                pg_stats["max_ts"],
             )
             return True
 
     log.info(
         "DECISION    : no changes detected (Mongo count=%d, PG count=%d) → SKIP",
-        mongo_stats["count"], pg_stats["count"],
+        mongo_stats["count"],
+        pg_stats["count"],
     )
     return False

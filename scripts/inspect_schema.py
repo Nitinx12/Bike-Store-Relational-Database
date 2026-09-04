@@ -13,11 +13,11 @@ from sqlalchemy import create_engine
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from utils.connection import (
-    POSTGRES_HOST,
-    POSTGRES_PORT,
     POSTGRES_DATABASE,
-    POSTGRES_USERNAME,
+    POSTGRES_HOST,
     POSTGRES_PASSWORD,
+    POSTGRES_PORT,
+    POSTGRES_USERNAME,
 )
 
 engine = create_engine(

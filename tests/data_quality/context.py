@@ -10,6 +10,7 @@ It doesn't duplicate any connection logic: it reuses utils.engine's
 postgres_engine() to build the connection string, exactly like the rest
 of the pipeline does.
 """
+
 from __future__ import annotations
 
 import os
@@ -81,7 +82,9 @@ def get_context() -> AbstractDataContext:
             DATASOURCE_NAME, connection_string=_connection_string()
         )
     except Exception as e:
-        logger.error(f"Could not register Postgres data source with Great Expectations: {e}")
+        logger.error(
+            f"Could not register Postgres data source with Great Expectations: {e}"
+        )
         raise
 
     logger.info("Great Expectations context ready, Postgres data source registered.")

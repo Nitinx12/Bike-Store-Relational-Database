@@ -9,12 +9,13 @@ NOTE: this module imports utils.connection at load time, so whatever
 calls it first (a scripts/ entry point) must already have added the
 repo root to sys.path — same bootstrap pattern the scripts already use.
 """
+
 from __future__ import annotations
 
 import os
 from pathlib import Path
 
-from utils.connection import POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DATABASE
+from utils.connection import POSTGRES_DATABASE, POSTGRES_HOST, POSTGRES_PORT
 
 
 def _repo_root() -> Path:
@@ -37,16 +38,16 @@ def _repo_root() -> Path:
 
 REPO_ROOT = _repo_root()
 
-ETL_SCHEMA    = os.getenv("ETL_SCHEMA",  "public")      # target schema
-ETL_TS_COL    = os.getenv("ETL_TS_COL",  "updated_at")  # incremental timestamp
-ETL_PK_SUFFIX = os.getenv("ETL_PK_SUFFIX", "_id")       # heuristic PK suffix
+ETL_SCHEMA = os.getenv("ETL_SCHEMA", "public")  # target schema
+ETL_TS_COL = os.getenv("ETL_TS_COL", "updated_at")  # incremental timestamp
+ETL_PK_SUFFIX = os.getenv("ETL_PK_SUFFIX", "_id")  # heuristic PK suffix
 
 JDBC_JAR_PATH = os.getenv(
     "JDBC_JAR_PATH",
     str(REPO_ROOT / "jars" / "postgresql.jar"),
 )
 
-ISO_FMT  = "%Y-%m-%dT%H:%M:%S"
+ISO_FMT = "%Y-%m-%dT%H:%M:%S"
 JDBC_URL = f"jdbc:postgresql://{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DATABASE}"
 
 

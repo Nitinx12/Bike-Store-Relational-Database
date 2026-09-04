@@ -1,7 +1,7 @@
 """
 mongo_to_postgres.py
 PySpark incremental ETL: MongoDB → PostgreSQL
- 
+
 Watermark strategy — Postgres-native, zero config files:
   ┌──────────────────────────────────────────────────────────────────────┐
   │  1. Peek MongoDB (1 doc)  →  auto-detect PK col + TS col             │
@@ -17,20 +17,20 @@ Watermark strategy — Postgres-native, zero config files:
   │     No-PK  : ON CONFLICT (_row_hash) DO NOTHING                      │
   │  9. DROP staging                                                     │
   └──────────────────────────────────────────────────────────────────────┘
- 
+
 PK  : auto-detected as the first column ending in '_id'
 TS  : ETL_TS_COL env var  (default: updated_at)
- 
+
 Run modes
   python -m scripts.mongo_to_postgres
       Incremental — all collections
- 
+
   python -m scripts.mongo_to_postgres --collection staffs [--collection orders]
       Incremental — named collection(s) only
- 
+
   python -m scripts.mongo_to_postgres --full-refresh
       Full refresh — truncate all tables, reload everything
- 
+
   python -m scripts.mongo_to_postgres --collection staffs --full-refresh
       Full refresh — named collection(s) only
 """
@@ -38,18 +38,16 @@ Run modes
 from __future__ import annotations
 
 import os
-import sys
 import re
+import sys
 import traceback
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 from pymongo import MongoClient
-from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
-from sqlalchemy import text
-
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
@@ -62,10 +60,12 @@ from rich.progress import (
 )
 from rich.table import Table
 from rich.traceback import install as install_rich_traceback
+from sqlalchemy import text
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Project-root bootstrap  (same pattern as extract.py)
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _find_project_root() -> Path | None:
     """
@@ -96,13 +96,13 @@ if str(_root) not in sys.path:
 
 # Project imports  (utils/ lives at the project root)
 from utils.connection import (
-    MONGO_URI,
     MONGO_DB,
-    POSTGRES_HOST,
-    POSTGRES_PORT,
+    MONGO_URI,
     POSTGRES_DATABASE,
-    POSTGRES_USERNAME,
+    POSTGRES_HOST,
     POSTGRES_PASSWORD,
+    POSTGRES_PORT,
+    POSTGRES_USERNAME,
 )
 from utils.engine import postgres_engine
 from utils.logger import get_logger
@@ -111,13 +111,13 @@ from utils.logger import get_logger
 # Config
 # ─────────────────────────────────────────────────────────────────────────────
 
-ETL_SCHEMA    = os.getenv("ETL_SCHEMA",  "public")      # ← public schema
-ETL_TS_COL    = os.getenv("ETL_TS_COL",  "updated_at")  # incremental timestamp
-ETL_PK_SUFFIX = os.getenv("ETL_PK_SUFFIX", "_id")       # heuristic PK suffix
+ETL_SCHEMA = os.getenv("ETL_SCHEMA", "public")  # ← public schema
+ETL_TS_COL = os.getenv("ETL_TS_COL", "updated_at")  # incremental timestamp
+ETL_PK_SUFFIX = os.getenv("ETL_PK_SUFFIX", "_id")  # heuristic PK suffix
 
 JDBC_JAR_PATH = os.getenv(
     "JDBC_JAR_PATH",
-    str(_root / "jars" / "postgresql.jar"),   # matches your jars/ folder
+    str(_root / "jars" / "postgresql.jar"),  # matches your jars/ folder
 )
 
 if not Path(JDBC_JAR_PATH).is_file():
@@ -131,10 +131,8 @@ if not Path(JDBC_JAR_PATH).is_file():
         "  Download from: https://jdbc.postgresql.org/download/\n"
     )
 
-ISO_FMT  = "%Y-%m-%dT%H:%M:%S"
-JDBC_URL = (
-    f"jdbc:postgresql://{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DATABASE}"
-)
+ISO_FMT = "%Y-%m-%dT%H:%M:%S"
+JDBC_URL = f"jdbc:postgresql://{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DATABASE}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Rich console setup — pretty tracebacks + terminal-facing banner/summary
@@ -160,7 +158,9 @@ def _print_banner(collections: list[str], mode: str) -> None:
     )
 
 
-def _print_summary_table(summaries: list[dict], totals: dict, skipped_count: int) -> None:
+def _print_summary_table(
+    summaries: list[dict], totals: dict, skipped_count: int
+) -> None:
     """Run-summary table (replaces the old ASCII '═'/'─' block on screen)."""
     table = Table(title="Run Summary", box=box.SIMPLE_HEAVY)
     table.add_column("Collection", style="bold")
@@ -179,25 +179,32 @@ def _print_summary_table(summaries: list[dict], totals: dict, skipped_count: int
         else:
             status = "[green]LOADED[/green]"
         table.add_row(
-            s["collection"], status,
-            str(s.get("rows_mongo", 0)), str(s.get("rows_new", 0)),
-            str(s.get("rows_loaded", 0)), str(failed),
+            s["collection"],
+            status,
+            str(s.get("rows_mongo", 0)),
+            str(s.get("rows_new", 0)),
+            str(s.get("rows_loaded", 0)),
+            str(failed),
         )
 
     table.add_section()
     table.add_row(
         "TOTAL",
         f"{len(summaries)} collections, {skipped_count} skipped",
-        str(totals["rows_mongo"]), str(totals["rows_new"]),
-        str(totals["rows_loaded"]), str(totals["failed"]),
+        str(totals["rows_mongo"]),
+        str(totals["rows_new"]),
+        str(totals["rows_loaded"]),
+        str(totals["failed"]),
         style="bold",
     )
 
     console.print(table)
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Utility helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _slugify(s: str) -> str:
     """Normalise a field name to a safe Postgres column identifier."""
@@ -210,9 +217,11 @@ def _slugify(s: str) -> str:
 def _staging_name(table: str, run_id: str) -> str:
     return f"{table}_staging_{run_id}"
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Column detection
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def detect_pk_col(columns: list[str], collection: str, log) -> str | None:
     """
@@ -226,7 +235,7 @@ def detect_pk_col(columns: list[str], collection: str, log) -> str | None:
 
     Returns the column name or None if nothing matches.
     """
-    slug  = _slugify(collection)
+    slug = _slugify(collection)
     exact = f"{slug}_id"
 
     if exact in columns:
@@ -242,7 +251,9 @@ def detect_pk_col(columns: list[str], collection: str, log) -> str | None:
         log.info("PK DETECT : 'id'  (fallback)")
         return "id"
 
-    log.warning("PK DETECT : no PK column found in %s — will use row-hash dedup", collection)
+    log.warning(
+        "PK DETECT : no PK column found in %s — will use row-hash dedup", collection
+    )
     return None
 
 
@@ -262,9 +273,11 @@ def detect_ts_col(columns: list[str], log) -> str | None:
     )
     return None
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Row-hash helper  (for no-PK collections)
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _add_row_hash(sdf: DataFrame, exclude_cols: list[str] | None = None) -> DataFrame:
     """
@@ -272,7 +285,7 @@ def _add_row_hash(sdf: DataFrame, exclude_cols: list[str] | None = None) -> Data
     Used as a surrogate unique key for no-PK collections so ON CONFLICT
     (_row_hash) DO NOTHING prevents duplicates on re-runs.
     """
-    skip      = set(exclude_cols or []) | {"_row_hash"}
+    skip = set(exclude_cols or []) | {"_row_hash"}
     hash_cols = [c for c in sdf.columns if c not in skip]
     concat_expr = F.concat_ws(
         "|",
@@ -283,21 +296,24 @@ def _add_row_hash(sdf: DataFrame, exclude_cols: list[str] | None = None) -> Data
     )
     return sdf.withColumn("_row_hash", F.md5(concat_expr))
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Spark session
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 def get_spark(app_name: str = "MongoToPublicETL") -> SparkSession:
-    os.environ["PYSPARK_PYTHON"]        = os.getenv("PYSPARK_PYTHON",        sys.executable)
-    os.environ["PYSPARK_DRIVER_PYTHON"] = os.getenv("PYSPARK_DRIVER_PYTHON", sys.executable)
+    os.environ["PYSPARK_PYTHON"] = os.getenv("PYSPARK_PYTHON", sys.executable)
+    os.environ["PYSPARK_DRIVER_PYTHON"] = os.getenv(
+        "PYSPARK_DRIVER_PYTHON", sys.executable
+    )
 
     spark = (
-        SparkSession.builder
-        .appName(app_name)
+        SparkSession.builder.appName(app_name)
         .master("local[*]")
-        .config("spark.driver.extraClassPath",     JDBC_JAR_PATH)
-        .config("spark.executor.extraClassPath",   JDBC_JAR_PATH)
-        .config("spark.driver.extraJavaOptions",   "--add-modules jdk.incubator.vector")
+        .config("spark.driver.extraClassPath", JDBC_JAR_PATH)
+        .config("spark.executor.extraClassPath", JDBC_JAR_PATH)
+        .config("spark.driver.extraJavaOptions", "--add-modules jdk.incubator.vector")
         .config("spark.executor.extraJavaOptions", "--add-modules jdk.incubator.vector")
         .config("spark.sql.legacy.timeParserPolicy", "LEGACY")
         .config("spark.driver.memory", "2g")
@@ -307,9 +323,11 @@ def get_spark(app_name: str = "MongoToPublicETL") -> SparkSession:
     spark.sparkContext.setLogLevel("WARN")
     return spark
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # MongoDB helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def _mongo_collection_stats(collection: str, ts_col_raw: str | None, log) -> dict:
     """
@@ -321,21 +339,22 @@ def _mongo_collection_stats(collection: str, ts_col_raw: str | None, log) -> dic
     """
     try:
         client = MongoClient(MONGO_URI)
-        coll   = client[MONGO_DB][collection]
-        count  = coll.count_documents({})
+        coll = client[MONGO_DB][collection]
+        count = coll.count_documents({})
         max_ts = None
 
         if ts_col_raw:
             # Aggregate pipeline: $group → $max
             pipeline = [{"$group": {"_id": None, "max_ts": {"$max": f"${ts_col_raw}"}}}]
-            result   = list(coll.aggregate(pipeline))
+            result = list(coll.aggregate(pipeline))
             if result and result[0].get("max_ts"):
                 max_ts = result[0]["max_ts"]
 
         client.close()
         log.info(
             "MONGO STATS : %s  count=%d  max_ts=%s",
-            collection, count,
+            collection,
+            count,
             max_ts.strftime(ISO_FMT) if max_ts else "N/A",
         )
         return {"count": count, "max_ts": max_ts}
@@ -361,14 +380,16 @@ def read_mongo_incremental(
     """
     try:
         client = MongoClient(MONGO_URI)
-        coll   = client[MONGO_DB][collection]
+        coll = client[MONGO_DB][collection]
 
         mongo_filter: dict = {}
         if ts_col_raw and pg_max_ts:
             mongo_filter = {ts_col_raw: {"$gt": pg_max_ts}}
             log.info(
                 "MONGO READ  : %s  filter → %s > %s",
-                collection, ts_col_raw, pg_max_ts.strftime(ISO_FMT),
+                collection,
+                ts_col_raw,
+                pg_max_ts.strftime(ISO_FMT),
             )
         else:
             log.info("MONGO READ  : %s  filter → none (full snapshot)", collection)
@@ -390,7 +411,9 @@ def read_mongo_incremental(
         sdf = spark.createDataFrame(pdf)
         log.info(
             "MONGO READ  : %s  →  %d docs  |  cols: %s",
-            collection, len(docs), sdf.columns,
+            collection,
+            len(docs),
+            sdf.columns,
         )
         return sdf
 
@@ -399,9 +422,11 @@ def read_mongo_incremental(
         log.debug(traceback.format_exc())
         return None
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # PostgreSQL comparison helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def get_postgres_stats(
     engine, schema: str, table: str, ts_col: str | None, log
@@ -417,42 +442,53 @@ def get_postgres_stats(
     try:
         with engine.connect() as conn:
             # Check whether the table exists in the target schema
-            exists = conn.execute(text("""
+            exists = conn.execute(
+                text("""
                 SELECT 1
                 FROM   information_schema.tables
                 WHERE  table_schema = :schema
                 AND    table_name   = :table
-            """), {"schema": schema, "table": table}).fetchone()
+            """),
+                {"schema": schema, "table": table},
+            ).fetchone()
 
             if not exists:
                 log.info("PG STATS    : %s.%s does not exist yet", schema, table)
                 return result
 
             result["table_exists"] = True
-            result["count"] = conn.execute(
-                text(f'SELECT COUNT(*) FROM "{schema}"."{table}"')
-            ).scalar() or 0
+            result["count"] = (
+                conn.execute(
+                    text(f'SELECT COUNT(*) FROM "{schema}"."{table}"')
+                ).scalar()
+                or 0
+            )
 
             if ts_col:
                 # Check that the ts_col column actually exists in Postgres
-                col_exists = conn.execute(text("""
+                col_exists = conn.execute(
+                    text("""
                     SELECT 1
                     FROM   information_schema.columns
                     WHERE  table_schema  = :schema
                     AND    table_name    = :table
                     AND    column_name   = :col
-                """), {"schema": schema, "table": table, "col": ts_col}).fetchone()
+                """),
+                    {"schema": schema, "table": table, "col": ts_col},
+                ).fetchone()
 
                 if col_exists:
                     row = conn.execute(
                         text(f'SELECT MAX("{ts_col}") FROM "{schema}"."{table}"')
                     ).fetchone()
                     if row and row[0]:
-                        result["max_ts"] = row[0]   # returns a datetime object
+                        result["max_ts"] = row[0]  # returns a datetime object
 
         log.info(
             "PG STATS    : %s.%s  count=%d  max_ts=%s",
-            schema, table, result["count"],
+            schema,
+            table,
+            result["count"],
             result["max_ts"].strftime(ISO_FMT) if result["max_ts"] else "N/A",
         )
     except Exception as exc:
@@ -483,7 +519,8 @@ def needs_load(
     if mongo_stats["count"] > pg_stats["count"]:
         log.info(
             "DECISION    : Mongo count (%d) > PG count (%d) → LOAD",
-            mongo_stats["count"], pg_stats["count"],
+            mongo_stats["count"],
+            pg_stats["count"],
         )
         return True
 
@@ -491,19 +528,23 @@ def needs_load(
         if mongo_stats["max_ts"] > pg_stats["max_ts"]:
             log.info(
                 "DECISION    : Mongo max_ts (%s) > PG max_ts (%s) → LOAD",
-                mongo_stats["max_ts"], pg_stats["max_ts"],
+                mongo_stats["max_ts"],
+                pg_stats["max_ts"],
             )
             return True
 
     log.info(
         "DECISION    : no changes detected (Mongo count=%d, PG count=%d) → SKIP",
-        mongo_stats["count"], pg_stats["count"],
+        mongo_stats["count"],
+        pg_stats["count"],
     )
     return False
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PostgreSQL write helpers
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def ensure_schema(conn, schema: str, log) -> None:
     conn.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema}"'))
@@ -511,8 +552,12 @@ def ensure_schema(conn, schema: str, log) -> None:
 
 
 def ensure_target_table(
-    conn, schema: str, table: str,
-    columns: list[str], pk_col: str | None, log,
+    conn,
+    schema: str,
+    table: str,
+    columns: list[str],
+    pk_col: str | None,
+    log,
 ) -> None:
     """
     CREATE TABLE IF NOT EXISTS with a UNIQUE constraint on pk_col (or _row_hash
@@ -522,36 +567,37 @@ def ensure_target_table(
     col_defs = ",\n    ".join(f'"{c}" TEXT' for c in columns)
 
     if pk_col and pk_col in columns:
-        unique_clause = (
-            f',\n    CONSTRAINT "{table}_{pk_col}_uq" UNIQUE ("{pk_col}")'
-        )
+        unique_clause = f',\n    CONSTRAINT "{table}_{pk_col}_uq" UNIQUE ("{pk_col}")'
     else:
-        unique_clause = (
-            f',\n    CONSTRAINT "{table}_row_hash_uq" UNIQUE ("_row_hash")'
-        )
+        unique_clause = f',\n    CONSTRAINT "{table}_row_hash_uq" UNIQUE ("_row_hash")'
 
-    conn.execute(text(f"""
+    conn.execute(
+        text(f"""
         CREATE TABLE IF NOT EXISTS "{schema}"."{table}" (
             _etl_id  SERIAL,
             {col_defs}{unique_clause}
         )
-    """))
+    """)
+    )
 
     # Schema evolution: add any columns that are new since the last run
     existing = {
         row[0]
-        for row in conn.execute(text("""
+        for row in conn.execute(
+            text("""
             SELECT column_name
             FROM   information_schema.columns
             WHERE  table_schema = :schema
             AND    table_name   = :table
-        """), {"schema": schema, "table": table})
+        """),
+            {"schema": schema, "table": table},
+        )
     }
     for col in columns:
         if col not in existing:
-            conn.execute(text(
-                f'ALTER TABLE "{schema}"."{table}" ADD COLUMN "{col}" TEXT'
-            ))
+            conn.execute(
+                text(f'ALTER TABLE "{schema}"."{table}" ADD COLUMN "{col}" TEXT')
+            )
             log.info(
                 "Schema evolution → added column '%s' to %s.%s", col, schema, table
             )
@@ -560,9 +606,13 @@ def ensure_target_table(
 
 
 def merge_staging_to_target(
-    conn, schema: str, table: str,
-    staging: str, columns: list[str],
-    pk_col: str | None, log,
+    conn,
+    schema: str,
+    table: str,
+    staging: str,
+    columns: list[str],
+    pk_col: str | None,
+    log,
 ) -> int:
     """
     INSERT … SELECT from staging into the target table.
@@ -573,9 +623,10 @@ def merge_staging_to_target(
     col_list = ", ".join(f'"{c}"' for c in columns)
 
     if pk_col and pk_col in columns:
-        update_set = ", ".join(
-            f'"{c}" = EXCLUDED."{c}"' for c in columns if c != pk_col
-        ) or f'"{pk_col}" = EXCLUDED."{pk_col}"'
+        update_set = (
+            ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in columns if c != pk_col)
+            or f'"{pk_col}" = EXCLUDED."{pk_col}"'
+        )
         sql = f"""
             INSERT INTO "{schema}"."{table}" ({col_list})
             SELECT {col_list} FROM "{schema}"."{staging}"
@@ -589,9 +640,7 @@ def merge_staging_to_target(
         """
 
     conn.execute(text(sql))
-    count = conn.execute(
-        text(f'SELECT COUNT(*) FROM "{schema}"."{staging}"')
-    ).scalar()
+    count = conn.execute(text(f'SELECT COUNT(*) FROM "{schema}"."{staging}"')).scalar()
     log.info("MERGE       : %d rows → %s.%s", count, schema, table)
     return count
 
@@ -605,9 +654,11 @@ def truncate_table(conn, schema: str, table: str, log) -> None:
     conn.execute(text(f'TRUNCATE TABLE "{schema}"."{table}" RESTART IDENTITY'))
     log.info("TRUNCATED   → %s.%s  (full-refresh)", schema, table)
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Core per-collection function
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def process_collection(
     collection: str,
@@ -628,16 +679,19 @@ def process_collection(
       7. Merge staging → target table (upsert / dedup)
       8. Drop staging
     """
-    log    = get_logger(stage="extraction", name=collection)
-    table  = _slugify(collection)
+    log = get_logger(stage="extraction", name=collection)
+    table = _slugify(collection)
     schema = ETL_SCHEMA
     run_id = datetime.now().strftime("%Y%m%d%H%M%S")
     staging = _staging_name(table, run_id)
 
     base = dict(
         collection=collection,
-        rows_mongo=0, rows_new=0, rows_loaded=0,
-        skipped=False, failed=0,
+        rows_mongo=0,
+        rows_new=0,
+        rows_loaded=0,
+        skipped=False,
+        failed=0,
     )
 
     log.info("=" * 65)
@@ -660,12 +714,12 @@ def process_collection(
         base["skipped"] = True
         return base
 
-    raw_columns  = list(pd.DataFrame(sample).columns)
+    raw_columns = list(pd.DataFrame(sample).columns)
     slug_columns = [_slugify(c) for c in raw_columns]
 
     # Detect PK and TS column from slugified names
-    pk_col  = detect_pk_col(slug_columns, collection, log)
-    ts_col  = detect_ts_col(slug_columns, log)
+    pk_col = detect_pk_col(slug_columns, collection, log)
+    ts_col = detect_ts_col(slug_columns, log)
 
     # Map back to the original (raw) field name for Mongo queries
     ts_col_raw: str | None = None
@@ -721,27 +775,28 @@ def process_collection(
     # Dedup on pk_col (guard against duplicate source docs)
     if pk_col and pk_col in columns:
         before = sdf.count()
-        sdf    = sdf.dropDuplicates([pk_col])
-        dupes  = before - sdf.count()
+        sdf = sdf.dropDuplicates([pk_col])
+        dupes = before - sdf.count()
         if dupes > 0:
             log.warning(
                 "DEDUP       : removed %d duplicate '%s' values in '%s'",
-                dupes, pk_col, collection,
+                dupes,
+                pk_col,
+                collection,
             )
             rows_new = sdf.count()
             base["rows_new"] = rows_new
 
     # Row-hash dedup for no-PK collections
     if pk_col is None:
-        sdf     = _add_row_hash(sdf, exclude_cols=["loaded_at"])
+        sdf = _add_row_hash(sdf, exclude_cols=["loaded_at"])
         columns = sdf.columns
         log.info("ROW HASH    : added _row_hash column for no-PK dedup")
 
     # ── Ensure schema exists before JDBC write ─────────────────────────────
     try:
-        with engine.connect() as _conn:
-            with _conn.begin():
-                ensure_schema(_conn, schema, log)
+        with engine.connect() as _conn, _conn.begin():
+            ensure_schema(_conn, schema, log)
     except Exception as exc:
         log.error("Could not create schema '%s': %s", schema, exc)
         base["failed"] = rows_new
@@ -751,14 +806,13 @@ def process_collection(
     log.info("JDBC WRITE  : %d rows → %s.%s", rows_new, schema, staging)
     try:
         (
-            sdf.write
-            .format("jdbc")
-            .option("url",           JDBC_URL)
-            .option("dbtable",       f'"{schema}"."{staging}"')
-            .option("user",          POSTGRES_USERNAME)
-            .option("password",      POSTGRES_PASSWORD)
-            .option("driver",        "org.postgresql.Driver")
-            .option("batchsize",     "5000")
+            sdf.write.format("jdbc")
+            .option("url", JDBC_URL)
+            .option("dbtable", f'"{schema}"."{staging}"')
+            .option("user", POSTGRES_USERNAME)
+            .option("password", POSTGRES_PASSWORD)
+            .option("driver", "org.postgresql.Driver")
+            .option("batchsize", "5000")
             .option("numPartitions", "4")
             .mode("overwrite")
             .save()
@@ -772,19 +826,18 @@ def process_collection(
 
     # ── Step 7: Merge staging → target table ──────────────────────────────
     try:
-        with engine.connect() as conn:
-            with conn.begin():
-                ensure_schema(conn, schema, log)
-                ensure_target_table(conn, schema, table, list(columns), pk_col, log)
+        with engine.connect() as conn, conn.begin():
+            ensure_schema(conn, schema, log)
+            ensure_target_table(conn, schema, table, list(columns), pk_col, log)
 
-                if full_load and pg_stats["table_exists"]:
-                    truncate_table(conn, schema, table, log)
+            if full_load and pg_stats["table_exists"]:
+                truncate_table(conn, schema, table, log)
 
-                rows_loaded = merge_staging_to_target(
-                    conn, schema, table, staging, list(columns), pk_col, log
-                )
-                # ── Step 8: Drop staging ───────────────────────────────────
-                drop_staging(conn, schema, staging, log)
+            rows_loaded = merge_staging_to_target(
+                conn, schema, table, staging, list(columns), pk_col, log
+            )
+            # ── Step 8: Drop staging ───────────────────────────────────
+            drop_staging(conn, schema, staging, log)
 
         base["rows_loaded"] = rows_loaded
 
@@ -793,9 +846,8 @@ def process_collection(
         log.debug(traceback.format_exc())
         # Best-effort cleanup
         try:
-            with engine.connect() as conn:
-                with conn.begin():
-                    drop_staging(conn, schema, staging, log)
+            with engine.connect() as conn, conn.begin():
+                drop_staging(conn, schema, staging, log)
         except Exception:
             pass
         base["failed"] = rows_new
@@ -803,14 +855,19 @@ def process_collection(
 
     log.info(
         "DONE        : mongo=%d  new=%d  loaded=%d  failed=%d",
-        base["rows_mongo"], base["rows_new"], base["rows_loaded"], base["failed"],
+        base["rows_mongo"],
+        base["rows_new"],
+        base["rows_loaded"],
+        base["failed"],
     )
     log.info("=" * 65)
     return base
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Entry point
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 def main(collections: list[str], full_load: bool = False) -> None:
     log = get_logger(stage="extraction", name="mongo_public_main")
@@ -830,7 +887,7 @@ def main(collections: list[str], full_load: bool = False) -> None:
 
     _print_banner(collections, mode)
 
-    spark  = get_spark()
+    spark = get_spark()
     engine = postgres_engine()
 
     # Verify Postgres connectivity before processing any collection
@@ -870,9 +927,12 @@ def main(collections: list[str], full_load: bool = False) -> None:
 
     log.info(
         "RUN SUMMARY : collections=%d skipped=%d mongo=%d new=%d loaded=%d failed=%d",
-        len(summaries), skipped_count,
-        totals["rows_mongo"], totals["rows_new"],
-        totals["rows_loaded"], totals["failed"],
+        len(summaries),
+        skipped_count,
+        totals["rows_mongo"],
+        totals["rows_new"],
+        totals["rows_loaded"],
+        totals["failed"],
     )
 
     _print_summary_table(summaries, totals, skipped_count)

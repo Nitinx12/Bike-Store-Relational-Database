@@ -13,6 +13,7 @@ Usage:
 Exit code is 0 if every requested table's suite passed, 1 otherwise, so
 this plugs straight into a CI job or orchestrator step.
 """
+
 from __future__ import annotations
 
 import json
@@ -27,9 +28,9 @@ for p in (THIS_DIR, ROOT_DIR):
         sys.path.insert(0, str(p))
 
 import great_expectations as gx
-
 from context import get_context, get_datasource
 from suites.validation import TABLE_SUITES
+
 from utils.logger import get_logger
 
 logger = get_logger("tests", "validation")
@@ -46,7 +47,9 @@ def validate_table(context, datasource, table_name: str) -> dict:
         suite_builder = TABLE_SUITES[table_name]
 
         data_asset = datasource.add_table_asset(name=table_name, table_name=table_name)
-        batch_definition = data_asset.add_batch_definition_whole_table(f"{table_name}_batch")
+        batch_definition = data_asset.add_batch_definition_whole_table(
+            f"{table_name}_batch"
+        )
 
         suite = context.suites.add(gx.ExpectationSuite(name=f"{table_name}_suite"))
         for expectation in suite_builder():
@@ -121,7 +124,9 @@ def main() -> int:
     }
 
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    report_path = REPORT_DIR / f"validation_report_{run_started.strftime('%Y-%m-%d_%H-%M')}.json"
+    report_path = (
+        REPORT_DIR / f"validation_report_{run_started.strftime('%Y-%m-%d_%H-%M')}.json"
+    )
     report_path.write_text(json.dumps(summary, indent=2, default=str))
     logger.info(f"Report written to {report_path}")
 
@@ -130,7 +135,9 @@ def main() -> int:
         return 0
 
     failed_tables = [r["table"] for r in results if not r["success"]]
-    logger.error(f"{len(failed_tables)}/{len(results)} table suite(s) failed: {failed_tables}")
+    logger.error(
+        f"{len(failed_tables)}/{len(results)} table suite(s) failed: {failed_tables}"
+    )
     return 1
 
 
