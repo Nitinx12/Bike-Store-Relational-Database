@@ -62,10 +62,10 @@ services:
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
-      POSTGRES_DATABASE: ${POSTGRES_DATABASE:- Bike Store Relational Database}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE:-bike_store}
       POSTGRES_USERNAME: ${POSTGRES_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      MONGO_URI: mongodb://mongodb:27017
+      MONGO_URI: ${MONGO_URI:-mongodb://mongodb:27017}
       MONGO_DB: ${MONGO_DB:-bike_store}
       PUSHGATEWAY_URL: pushgateway:9091
     depends_on:

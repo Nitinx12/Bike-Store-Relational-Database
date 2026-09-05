@@ -39,12 +39,25 @@ info() { printf "${BLUE}[INFO]${RESET} %s\n" "$1"; }
 pass() { printf "${GREEN}[PASS]${RESET} %s\n" "$1"; }
 fail() { printf "${RED}[FAIL]${RESET} %s\n" "$1" >&2; }
 
-MONGO_URI="${MONGO_URI:-mongodb://localhost:27017}"
+MONGO_URI="${MONGO_URI:-mongodb://127.0.0.1:27017}"
 MONGO_DB="${MONGO_DB:-bike_store}"
 BACKUP_DIR="${PROJECT_ROOT}/backups/mongo"
 
 use_docker() {
     command -v docker >/dev/null 2>&1 && docker compose ps mongodb 2>/dev/null | grep -q "running"
+}
+
+mongodump_native() {
+    local out_dir="$1"
+    local native_bin=""
+    if [[ -x "/mnt/c/Program Files/MongoDB/Tools/100/bin/mongodump.exe" ]]; then
+        native_bin="/mnt/c/Program Files/MongoDB/Tools/100/bin/mongodump.exe"
+    elif command -v mongodump >/dev/null 2>&1; then
+        native_bin="mongodump"
+    else
+        return 1
+    fi
+    "$native_bin" --uri "$MONGO_URI" --db "$MONGO_DB" --out "$out_dir"
 }
 
 run_mongodump() {
@@ -54,8 +67,7 @@ run_mongodump() {
             && docker compose cp mongodb:/tmp/mongodump "$out_dir" >/dev/null 2>&1 \
             && docker compose exec -T mongodb rm -rf /tmp/mongodump >/dev/null 2>&1
     else
-        command -v mongodump >/dev/null 2>&1 || { fail "mongodump not installed locally and docker service is not running"; return 1; }
-        mongodump --uri "$MONGO_URI" --db "$MONGO_DB" --out "$out_dir"
+        mongodump_native "$out_dir" || { fail "mongodump not installed locally and docker service is not running"; return 1; }
     fi
 }
 

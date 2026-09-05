@@ -39,11 +39,24 @@ pass() { printf "${GREEN}[PASS]${RESET} %s\n" "$1"; }
 warn() { printf "${YELLOW}[WARN]${RESET} %s\n" "$1" >&2; }
 fail() { printf "${RED}[FAIL]${RESET} %s\n" "$1" >&2; }
 
-MONGO_URI="${MONGO_URI:-mongodb://localhost:27017}"
+MONGO_URI="${MONGO_URI:-mongodb://127.0.0.1:27017}"
 MONGO_DB="${MONGO_DB:-bike_store}"
 
 use_docker() {
     command -v docker >/dev/null 2>&1 && docker compose ps mongodb 2>/dev/null | grep -q "running"
+}
+
+mongorestore_native() {
+    local src="$1"
+    local native_bin=""
+    if [[ -x "/mnt/c/Program Files/MongoDB/Tools/100/bin/mongorestore.exe" ]]; then
+        native_bin="/mnt/c/Program Files/MongoDB/Tools/100/bin/mongorestore.exe"
+    elif command -v mongorestore >/dev/null 2>&1; then
+        native_bin="mongorestore"
+    else
+        return 1
+    fi
+    "$native_bin" --uri "$MONGO_URI" --drop --db "$MONGO_DB" "${src}/${MONGO_DB}"
 }
 
 run_mongorestore() {
@@ -53,8 +66,7 @@ run_mongorestore() {
             && docker compose exec -T mongodb mongorestore --drop --db "$MONGO_DB" "/tmp/mongorestore/${MONGO_DB}" >/dev/null 2>&1 \
             && docker compose exec -T mongodb rm -rf /tmp/mongorestore >/dev/null 2>&1
     else
-        command -v mongorestore >/dev/null 2>&1 || { fail "mongorestore not installed locally and docker service is not running"; return 1; }
-        mongorestore --uri "$MONGO_URI" --drop --db "$MONGO_DB" "${src}/${MONGO_DB}"
+        mongorestore_native "$src" || { fail "mongorestore not installed locally and docker service is not running"; return 1; }
     fi
 }
 
