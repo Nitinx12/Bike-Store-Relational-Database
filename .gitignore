@@ -284,3 +284,10 @@ great_expectations/.gitignore
 # Ignore generated/local validation artifacts
 
 tests/data_quality/reports/
+.qwen
+.ruff_cache/
+
+# =============================================================================
+# BACKUPS (DATABASE DUMPS)
+# =============================================================================
+backups/
