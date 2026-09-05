@@ -1,10 +1,18 @@
 # Bike Store Pipeline — Fix Log & Current Status
 
-**Overall status:** 3 of 3 root causes fixed. Data migration (steps 3–7) pending user execution.
+**Overall status:** All root causes fixed. Migration complete for MongoDB, partial for PostgreSQL (data mismatch found). ETL pipeline `pipeline` job is broken — needs one-line entrypoint fix. Remaining: fix entrypoint, re-run ETL, verify both run paths.
 
 ---
 
 ## Summary of Changes Made
+
+### Committed in `769246a`
+
+| File | Change |
+|------|--------|
+| `scripts/check_mongo.py` | New permanent utility to inspect any MongoDB instance — reports all databases, collections, doc counts; reads `MONGO_URI` from `.env`; masks credentials in output |
+| `.gitignore` | Added `backups/` to prevent accidental commit of database dumps |
+| `fix.md` | This comprehensive fix log |
 
 ### Committed in `606d04e`
 
@@ -13,7 +21,7 @@
 | `docker-compose.yml` | Fixed `MONGO_URI` default: `host.docker.internal` → `mongodb://mongodb:27017` |
 | `docker-compose.yml` | Fixed broken `POSTGRES_DATABASE` default (had literal space character) |
 | `scripts/backup_mongo.sh` | Default `MONGO_URI`: `localhost` → `127.0.0.1` to avoid dual-listener ambiguity on Windows |
-| `scripts/backup_mongo.sh` | Added `mongodump` detection at standard Windows path (`C:\Program Files\MongoDB\Tools\100\bin\`) |
+| `scripts/backup_mongo.sh` | Added `mongodump` detection at standard Windows path |
 | `scripts/restore_mongo.sh` | Default `MONGO_URI`: `localhost` → `127.0.0.1` |
 | `scripts/restore_mongo.sh` | Added `mongorestore` detection at standard Windows path |
 
@@ -51,11 +59,7 @@ The apparent silent failure was caused by the app dying before any output — th
 
 ## Issue #4 — Two separate databases (native vs. Docker)
 
-**Status:** ⚠️ Partial — backups secured, migration pending
-
-**Root cause:** Native PostgreSQL (PID 7408) and MongoDB (PID 18568) Windows Services were binding ports 5432/27017 alongside Docker's proxies. Both `uv run main.py` and `docker compose run` worked — they just talked to different databases.
-
----
+**Status:** ⚠️ Migration in progress — MongoDB fully restored, PostgreSQL data mismatch found
 
 ### Pre-Migration Discovery: mongodump `localhost` Resolution Bug
 
@@ -71,95 +75,165 @@ While running `make backup-mongo`, a secondary bug was found and fixed in the sa
 
 ---
 
-### What Was Done
+### Migration Progress
 
-#### Backups secured (Step 1 ✅)
+#### Backups secured ✅
 
-| Database | File | Size | Tables/Collections | Status |
-|----------|------|------|---------------------|--------|
-| PostgreSQL | `backups/postgres/bike_store_20260905_101833.sql.gz` | 103 KB | 9 tables | ✅ 9 COPY statements confirmed |
-| MongoDB | `backups/mongo/bike_store_native/bike_store/` | 1.5 MB | 9 collections, 9072 docs | ✅ All 9 collections dumped |
+| Database | File | Size | Content | Status |
+|----------|------|------|---------|--------|
+| PostgreSQL | `backups/postgres/bike_store_20260905_101833.sql.gz` | 103 KB | 9 tables (9 COPY statements) | ✅ Confirmed |
+| MongoDB | `backups/mongo/bike_store_native/bike_store/` | 1.5 MB | 9 collections, 9072 docs | ✅ Confirmed |
 
 MongoDB collections: `brands` (10), `categories` (7), `customers` (1445), `order_items` (4722), `orders` (1615), `products` (321), `staffs` (10), `stocks` (939), `stores` (3)
+
+#### Native services ✅
+
+| Service | Status | Notes |
+|---------|--------|-------|
+| MongoDB | Running as Windows Service `MongoDB` | PID 18568, port 27017 |
+| PostgreSQL | Running as Windows Service `postgresql-x64-17` | PID 7408, port 5432 |
+
+Both still running — **requires elevation to stop**. Backups are the safety net.
+
+#### Docker MongoDB ✅ Restored
+
+All 9 collections, 9072 docs confirmed in Docker container:
+```
+brands: 10 | categories: 7 | customers: 1445 | order_items: 4722
+orders: 1615 | products: 321 | staffs: 10 | stocks: 939 | stores: 3
+```
+
+#### Docker PostgreSQL ⚠️ Data Mismatch Found
+
+Restored from backup — but the backup was from an **older pipeline run**, so counts are wrong:
+
+| Table | In Backup (wrong) | In MongoDB (correct) |
+|-------|-------------------|----------------------|
+| order_items | 1,615 | 4,722 |
+| stocks | 3 | 939 |
+| orders | 1,615 | 1,615 ✅ |
+| brands | 10 | 10 ✅ |
+| categories | 7 | 7 ✅ |
+| customers | 1,445 | 1,445 ✅ |
+| products | 321 | 321 ✅ |
+| staffs | 10 | 10 ✅ |
+| stores | 3 | 3 ✅ |
+
+**Fix:** Re-run the ETL pipeline to populate PostgreSQL with the correct counts from MongoDB.
+
+---
+
+## Issue #5 — `entrypoint.sh` `pipeline` job broken (NEW)
+
+**Status:** 🔴 Found — needs fix
+
+**Root cause:** `docker/entrypoint.sh` dispatches the `pipeline` job like this:
+```bash
+pipeline)
+    wait_for_pushgateway
+    exec uv run python main.py "$@"
+    ;;
+```
+This passes `"$@"` (all arguments after the job name) to `main.py`. If a user runs `docker compose run app pipeline --full-refresh`, the word `pipeline` is included in `$@`, but `main.py` doesn't accept `pipeline` as an argument — it only accepts `--full-refresh`, `--collections`, etc. Result:
+```
+main.py: error: unrecognized arguments: pipeline
+```
+
+**Fix needed (one line):**
+```bash
+# before
+pipeline)
+    wait_for_pushgateway
+    exec uv run python main.py "$@"
+    ;;
+
+# after
+pipeline)
+    wait_for_pushgateway
+    exec uv run python main.py "${@}"
+    ;;
+```
 
 ---
 
 ## Current Pipeline State
 
 ### Test/query logic
-- ✅ `06_test_orphan_and_business_rules.sql` — fixed (removed invalid regex on bigint)
+- ✅ `06_test_orphan_and_business_rules.sql` — fixed
 - ✅ `08_test_staffs.sql` — fixed (added actual self-management check)
-- ✅ All 10 SQL loop tests (01–10) — committed
+- ✅ All 10 SQL loop tests (01–10)
 
 ### Docker networking
 - ✅ `docker-compose.yml` `MONGO_URI` default fixed
 - ✅ `backup_mongo.sh` / `restore_mongo.sh` patched for Windows path detection
 
-### Data source of truth
-- ⚠️ **Still split** — native Windows services (PostgreSQL PID 7408, MongoDB PID 18568) vs Docker containers
-- Until migration steps 3–7 are executed, `docker compose run` and `uv run main.py` will report different results
+### Data source
+- ✅ Docker MongoDB: fully restored with correct data
+- ⚠️ Docker PostgreSQL: tables exist but `order_items` and `stocks` have stale counts
+
+### Pipeline runner
+- 🔴 `entrypoint.sh pipeline` job is broken (passes `pipeline` as argument to `main.py`)
+- Workaround: run `docker exec <app-container> uv run python main.py --full-refresh` directly
 
 ---
 
-## Next Steps (Steps 3–7 — User Manual Execution)
+## Next Steps
 
-These must be done manually with verification at each step:
-
-### Step 3 — Stop native Windows services
-```powershell
-# Find service names
-Get-Service | Where-Object {$_.Name -match 'MongoDB|PostgreSQL'}
-
-# Stop each (replace <name> with actual service name)
-Stop-Service -Name "<name>" -Force
-
-# Verify only Docker remains listening
-netstat -ano | findstr ":5432 :27017"
-```
-Expected: Only PID 8244 (Docker) on `0.0.0.0` for each port.
-
-### Step 4 — Confirm `localhost` is now unambiguous
+### Step 1 — Fix `entrypoint.sh` pipeline dispatcher (one line)
 ```bash
-# Should show only Docker's proxy
-netstat -ano | findstr ":5432 :27017"
+# In docker/entrypoint.sh, change:
+exec uv run python main.py "$@"
+# to:
+exec uv run python main.py "${@}"
 ```
+This prevents the job name from being passed as an argument to `main.py`.
 
-### Step 5 — Restore real data into Docker containers (DESTRUCTIVE)
+### Step 2 — Rebuild Docker image
 ```bash
-# Restore MongoDB
-make restore-mongo ARGS="backups/mongo/bike_store_native"
-
-# Restore PostgreSQL
-make restore-postgres ARGS="backups/postgres/bike_store_20260905_101833.sql.gz"
+docker compose -f docker-compose.yml build app
 ```
-⚠️ Both prompts will ask for confirmation — this is expected for destructive operations.
+Required for the entrypoint fix to take effect in compose runs.
 
-### Step 6 — Verify both run paths agree
+### Step 3 — Re-run ETL pipeline to fix PostgreSQL counts
 ```bash
-# Docker run
+# Via compose (after entrypoint fix):
+docker compose --profile jobs run --rm app pipeline --full-refresh
+
+# Or directly in container:
+docker exec <app-container> bash -c "cd /app && uv run python main.py --full-refresh"
+```
+This will re-populate PostgreSQL from MongoDB's correct data (order_items: 4722, stocks: 939).
+
+### Step 4 — Verify both run paths agree
+```bash
+# Docker:
 docker compose --profile jobs run --rm app pipeline
 
-# Local run
+# Local:
 uv run main.py
 ```
 Expected: 10/10 PL/pgSQL checks + 9/9 GX suites passing on both.
 
-### Step 7 — Prevent port conflict recurrence
+### Step 5 — Stop native Windows services (REQUIRES ELEVATION)
 ```powershell
-# Set native services to Manual startup
-Set-Service -Name "<MongoDB_service>" -StartupType Manual
-Set-Service -Name "<PostgreSQL_service>" -StartupType Manual
+# Run PowerShell as Administrator:
+Stop-Service -Name 'MongoDB' -Force
+Stop-Service -Name 'postgresql-x64-17' -Force
+```
+Until done, `localhost` on ports 5432/27017 will continue resolving to native services instead of Docker.
+
+### Step 6 — Lock in fix: set native services to Manual startup
+```powershell
+# After stopping (requires elevation):
+Set-Service -Name 'MongoDB' -StartupType Manual
+Set-Service -Name 'postgresql-x64-17' -StartupType Manual
 ```
 
 ---
 
 ## Optional Cleanup
 
-The `backups/` directory is not currently in `.gitignore`. Consider adding:
-```
-backups/
-```
-to prevent accidentally committing dump files.
+- ✅ `backups/` added to `.gitignore`
 
 ---
 

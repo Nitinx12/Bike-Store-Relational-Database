@@ -108,7 +108,7 @@ EOF
 case "$JOB" in
     pipeline)
         wait_for_pushgateway
-        exec uv run python main.py "$@"
+        exec uv run python main.py "${@}"
         ;;
     etl)
         wait_for_pushgateway
