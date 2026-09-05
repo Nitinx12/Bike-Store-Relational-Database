@@ -6,7 +6,7 @@ DECLARE
         ARRAY['first/last name not null/empty', $q$SELECT * FROM public.staffs WHERE first_name IS NULL OR TRIM(first_name) = '' OR last_name IS NULL OR TRIM(last_name) = ''$q$],
         ARRAY['store_id references stores', $q$SELECT s.* FROM public.staffs s WHERE s.store_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.stores st WHERE st.store_id = s.store_id)$q$],
         ARRAY['manager_id valid, no self-management', $q$SELECT s.* FROM public.staffs s WHERE s.manager_id IS NOT NULL AND (s.manager_id = s.staff_id OR NOT EXISTS (SELECT 1 FROM public.staffs m WHERE m.staff_id = s.manager_id))$q$],
-        ARRAY['active/updated_at valid', $q$SELECT * FROM public.staffs WHERE active IS NULL OR active NOT IN (0, 1) OR updated_at IS NULL OR updated_at > CURRENT_TIMESTAMP$q$]
+        ARRAY['active/updated_at valid', $q$SELECT * FROM public.staffs WHERE active IS NULL OR active::integer NOT IN (0, 1) OR updated_at IS NULL OR updated_at::timestamptz > CURRENT_TIMESTAMP$q$]
     ];
     v_name  text;
     v_query text;

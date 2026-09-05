@@ -61,6 +61,7 @@ from rich.progress import (
 from rich.table import Table
 from rich.traceback import install as install_rich_traceback
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Project-root bootstrap  (same pattern as extract.py)
@@ -133,6 +134,82 @@ if not Path(JDBC_JAR_PATH).is_file():
 
 ISO_FMT = "%Y-%m-%dT%H:%M:%S"
 JDBC_URL = f"jdbc:postgresql://{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DATABASE}"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Column type map  (table_slug, column) → Postgres type string
+# Columns not in this map default to TEXT.
+# ─────────────────────────────────────────────────────────────────────────────
+
+COLUMN_TYPE_MAP: dict[tuple[str, str], str] = {
+    # timestamps / dates
+    ("categories", "updated_at"): "TIMESTAMPTZ",
+    ("customers", "updated_at"): "TIMESTAMPTZ",
+    ("orders", "order_date"): "DATE",
+    ("orders", "required_date"): "DATE",
+    ("orders", "shipped_date"): "DATE",
+    ("orders", "updated_at"): "TIMESTAMPTZ",
+    ("products", "updated_at"): "TIMESTAMPTZ",
+    ("staffs", "updated_at"): "TIMESTAMPTZ",
+    ("stocks", "updated_at"): "TIMESTAMPTZ",
+    ("stores", "updated_at"): "TIMESTAMPTZ",
+    # numeric / boolean
+    ("staffs", "active"): "SMALLINT",
+    # order_items totals
+    ("order_items", "total_value"): "NUMERIC(14,2)",
+}
+
+
+# Composite (multi-column) primary key overrides — (table_slug, columns)
+COMPOSITE_PK: dict[str, tuple[str, ...]] = {
+    "stocks": ("store_id", "product_id"),
+}
+
+
+def _pg_type_for(table: str, col: str) -> str:
+    """Return the Postgres type for (table, column), or 'TEXT' as safe fallback."""
+    return COLUMN_TYPE_MAP.get((table, col), "TEXT")
+
+
+# Map Postgres type name → Spark DataFrame cast type (SQL type string).
+# DATE and TIMESTAMPTZ are parsed from the ISO-8601 string produced by MongoDB.
+_PG_TO_SPARK_CAST: dict[str, str] = {
+    "TIMESTAMPTZ": "TIMESTAMP",
+    "DATE": "DATE",
+    "SMALLINT": "SMALLINT",
+    "INTEGER": "INTEGER",
+    "BIGINT": "BIGINT",
+    "NUMERIC": "DECIMAL(20,6)",
+    "NUMERIC(14,2)": "DECIMAL(14,2)",
+    "DOUBLE PRECISION": "DOUBLE",
+    "REAL": "FLOAT",
+}
+
+
+def _cast_typed_columns(
+    sdf: DataFrame, table: str, log
+) -> DataFrame:
+    """
+    Apply per-column type casts so JDBC writes typed values, not blind strings.
+
+    Only columns listed in COLUMN_TYPE_MAP are cast; all others stay as strings.
+    Casting failures (e.g. malformed timestamp strings) fall back to NULL so the
+    pipeline never aborts on a single bad row.
+    """
+    result = sdf
+    for col in sdf.columns:
+        pg_type = _pg_type_for(table, col)
+        spark_cast = _PG_TO_SPARK_CAST.get(pg_type)
+        if spark_cast is None:
+            continue  # stays as string
+        try:
+            result = result.withColumn(col, F.col(col).cast(spark_cast))
+            log.debug("TYPE CAST  : %s.%s → %s", table, col, spark_cast)
+        except (ValueError, TypeError) as exc:
+            log.warning(
+                "TYPE CAST FAILED for %s.%s (%s → %s): %s — column left as string",
+                table, col, pg_type, spark_cast, exc,
+            )
+    return result
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Rich console setup — pretty tracebacks + terminal-facing banner/summary
@@ -218,38 +295,71 @@ def _staging_name(table: str, run_id: str) -> str:
     return f"{table}_staging_{run_id}"
 
 
+def _fmt_ts(val: object) -> str:
+    """Format a timestamp value (datetime or str) for logging, or 'N/A'."""
+    if val is None:
+        return "N/A"
+    if hasattr(val, "strftime"):
+        return val.strftime(ISO_FMT)
+    return str(val)
+
+
+def _to_datetime(val: object) -> datetime | None:
+    """Coerce a datetime/str to a datetime for comparison, or None."""
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val
+    try:
+        return datetime.fromisoformat(str(val).replace("Z", "+00:00"))
+    except (ValueError, TypeError):
+        return None
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Column detection
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def detect_pk_col(columns: list[str], collection: str, log) -> str | None:
+def detect_pk_col(
+    columns: list[str], collection: str, log
+) -> list[str] | None:
     """
     Heuristic PK detection from slugified column names.
 
     Priority:
-      1. Exact match for the collection name + '_id'
+      1. Explicit composite-PK override in COMPOSITE_PK (e.g. stocks)
+      2. Exact match for the collection name + '_id'
          e.g.  collection='artist'  → 'artist_id'
-      2. Any column that ends with '_id'
-      3. Exact column named 'id'
+      3. Any column that ends with '_id'
+      4. Exact column named 'id'
 
-    Returns the column name or None if nothing matches.
+    Returns a list of PK column names (1 for single-key, 2+ for composite),
+    or None if nothing matches.
     """
     slug = _slugify(collection)
+
+    composite = COMPOSITE_PK.get(slug)
+    if composite and all(c in columns for c in composite):
+        log.info(
+            "PK DETECT : %s  (composite key from COMPOSITE_PK)", list(composite)
+        )
+        return list(composite)
+
     exact = f"{slug}_id"
 
     if exact in columns:
         log.info("PK DETECT : '%s'  (exact match for collection name)", exact)
-        return exact
+        return [exact]
 
     candidates = [c for c in columns if c.endswith("_id")]
     if candidates:
         log.info("PK DETECT : '%s'  (first *_id column)", candidates[0])
-        return candidates[0]
+        return [candidates[0]]
 
     if "id" in columns:
         log.info("PK DETECT : 'id'  (fallback)")
-        return "id"
+        return ["id"]
 
     log.warning(
         "PK DETECT : no PK column found in %s — will use row-hash dedup", collection
@@ -355,7 +465,7 @@ def _mongo_collection_stats(collection: str, ts_col_raw: str | None, log) -> dic
             "MONGO STATS : %s  count=%d  max_ts=%s",
             collection,
             count,
-            max_ts.strftime(ISO_FMT) if max_ts else "N/A",
+            _fmt_ts(max_ts),
         )
         return {"count": count, "max_ts": max_ts}
 
@@ -368,7 +478,7 @@ def read_mongo_incremental(
     spark: SparkSession,
     collection: str,
     ts_col_raw: str | None,
-    pg_max_ts: datetime | None,
+    pg_max_ts: datetime | str | None,
     log,
 ) -> DataFrame | None:
     """
@@ -384,12 +494,14 @@ def read_mongo_incremental(
 
         mongo_filter: dict = {}
         if ts_col_raw and pg_max_ts:
-            mongo_filter = {ts_col_raw: {"$gt": pg_max_ts}}
+            ts_val = _to_datetime(pg_max_ts) if isinstance(pg_max_ts, str) else pg_max_ts
+            if ts_val:
+                mongo_filter = {ts_col_raw: {"$gt": ts_val}}
             log.info(
                 "MONGO READ  : %s  filter → %s > %s",
                 collection,
                 ts_col_raw,
-                pg_max_ts.strftime(ISO_FMT),
+                _fmt_ts(pg_max_ts),
             )
         else:
             log.info("MONGO READ  : %s  filter → none (full snapshot)", collection)
@@ -404,7 +516,9 @@ def read_mongo_incremental(
         pdf = pd.DataFrame(docs)
         pdf.columns = [_slugify(c) for c in pdf.columns]
 
-        # Preserve NaN/None as SQL NULL  (do not cast None → string "None")
+        # Preserve NaN/None as SQL NULL. Only non-null values are coerced to
+        # string; typed columns (date, timestamp, numeric) get re-cast by the
+        # caller via _cast_typed_columns() right after this DataFrame is built.
         for col in pdf.columns:
             pdf[col] = pdf[col].where(pdf[col].isna(), pdf[col].astype(str))
 
@@ -489,7 +603,7 @@ def get_postgres_stats(
             schema,
             table,
             result["count"],
-            result["max_ts"].strftime(ISO_FMT) if result["max_ts"] else "N/A",
+            _fmt_ts(result["max_ts"]),
         )
     except Exception as exc:
         log.error("Failed to get Postgres stats for %s.%s: %s", schema, table, exc)
@@ -525,11 +639,13 @@ def needs_load(
         return True
 
     if ts_col and mongo_stats["max_ts"] and pg_stats["max_ts"]:
-        if mongo_stats["max_ts"] > pg_stats["max_ts"]:
+        mongo_ts = _to_datetime(mongo_stats["max_ts"])
+        pg_ts = _to_datetime(pg_stats["max_ts"])
+        if mongo_ts and pg_ts and mongo_ts > pg_ts:
             log.info(
                 "DECISION    : Mongo max_ts (%s) > PG max_ts (%s) → LOAD",
-                mongo_stats["max_ts"],
-                pg_stats["max_ts"],
+                _fmt_ts(mongo_ts),
+                _fmt_ts(pg_ts),
             )
             return True
 
@@ -556,18 +672,29 @@ def ensure_target_table(
     schema: str,
     table: str,
     columns: list[str],
-    pk_col: str | None,
+    pk_col: list[str] | None,
     log,
 ) -> None:
     """
     CREATE TABLE IF NOT EXISTS with a UNIQUE constraint on pk_col (or _row_hash
     for no-PK collections).  Also applies schema evolution (ALTER TABLE ADD COLUMN)
     so new MongoDB fields are automatically added to the Postgres table.
-    """
-    col_defs = ",\n    ".join(f'"{c}" TEXT' for c in columns)
 
-    if pk_col and pk_col in columns:
-        unique_clause = f',\n    CONSTRAINT "{table}_{pk_col}_uq" UNIQUE ("{pk_col}")'
+    Per-column Postgres types are looked up via _pg_type_for(table, col); columns
+    not in COLUMN_TYPE_MAP default to TEXT, so existing schemas are unaffected.
+    """
+    col_defs = ",\n    ".join(
+        f'"{c}" {_pg_type_for(table, c)}' for c in columns
+    )
+
+    pk_list = pk_col
+    if pk_list:
+        pk_quoted = ", ".join(f'"{c}"' for c in pk_list)
+        constraint_name = "_".join(pk_list)
+        unique_clause = (
+            f',\n    CONSTRAINT "{table}_{constraint_name}_uq" '
+            f'UNIQUE ({pk_quoted})'
+        )
     else:
         unique_clause = f',\n    CONSTRAINT "{table}_row_hash_uq" UNIQUE ("_row_hash")'
 
@@ -595,14 +722,68 @@ def ensure_target_table(
     }
     for col in columns:
         if col not in existing:
+            pg_type = _pg_type_for(table, col)
             conn.execute(
-                text(f'ALTER TABLE "{schema}"."{table}" ADD COLUMN "{col}" TEXT')
+                text(
+                    f'ALTER TABLE "{schema}"."{table}" '
+                    f'ADD COLUMN "{col}" {pg_type}'
+                )
             )
             log.info(
-                "Schema evolution → added column '%s' to %s.%s", col, schema, table
+                "Schema evolution → added column '%s' (%s) to %s.%s",
+                col, pg_type, schema, table,
             )
 
-    log.info("Table ready → %s.%s  (pk=%s)", schema, table, pk_col or "row_hash")
+    # Type migration: promote existing TEXT columns to their target Postgres
+    # type.  This is a one-time fix-up for tables that were created before the
+    # COLUMN_TYPE_MAP existed and now hold typed data in TEXT columns.
+    # Wrapped per-column in a savepoint so one bad column doesn't abort the
+    # whole migration.
+    type_rows = conn.execute(
+        text("""
+            SELECT column_name, data_type
+            FROM   information_schema.columns
+            WHERE  table_schema = :schema
+            AND    table_name   = :table
+        """),
+        {"schema": schema, "table": table},
+    ).fetchall()
+
+    for col, actual_type in type_rows:
+        if col == "_etl_id":
+            continue
+        target_type = _pg_type_for(table, col)
+        if target_type == "TEXT":
+            continue  # nothing to migrate
+        # Normalise for comparison: TEXT vs character varying, etc.
+        actual_norm = actual_type.lower().split("(")[0].strip()
+        target_norm = target_type.lower().split("(")[0].strip()
+        if actual_norm == target_norm:
+            continue  # already correct
+
+        savepoint = f"sp_mig_{col}"
+        try:
+            conn.execute(text(f"SAVEPOINT {savepoint}"))
+            conn.execute(
+                text(
+                    f'ALTER TABLE "{schema}"."{table}" '
+                    f'ALTER COLUMN "{col}" TYPE {target_type} '
+                    f'USING "{col}"::{target_type}'
+                )
+            )
+            conn.execute(text(f"RELEASE SAVEPOINT {savepoint}"))
+            log.info(
+                "Type migration → %s.%s  %s → %s",
+                schema, table, actual_type, target_type,
+            )
+        except SQLAlchemyError as exc:
+            conn.execute(text(f"ROLLBACK TO SAVEPOINT {savepoint}"))
+            log.warning(
+                "Type migration FAILED for %s.%s (%s → %s): %s — column left as %s",
+                schema, table, actual_type, target_type, exc, actual_type,
+            )
+
+    log.info("Table ready → %s.%s  (pk=%s)", schema, table, pk_list or "row_hash")
 
 
 def merge_staging_to_target(
@@ -611,7 +792,7 @@ def merge_staging_to_target(
     table: str,
     staging: str,
     columns: list[str],
-    pk_col: str | None,
+    pk_col: list[str] | None,
     log,
 ) -> int:
     """
@@ -619,23 +800,37 @@ def merge_staging_to_target(
       Has-PK  → ON CONFLICT (pk_col)   DO UPDATE SET …   (upsert)
       No-PK   → ON CONFLICT (_row_hash) DO NOTHING        (dedup)
     Returns the row count of the staging table (= rows attempted).
-    """
-    col_list = ", ".join(f'"{c}"' for c in columns)
 
-    if pk_col and pk_col in columns:
+    Per-column `::type` casts are added on the SELECT side so the TEXT
+    columns written by the JDBC writer line up with the typed target
+    columns. Columns that are TEXT in both staging and target stay as-is.
+    """
+    def _select_expr(col: str) -> str:
+        target_type = _pg_type_for(table, col)
+        if target_type == "TEXT":
+            return f'"{col}"'
+        return f'NULLIF("{col}", \'\')::{target_type}'
+
+    col_list = ", ".join(f'"{c}"' for c in columns)
+    select_list = ", ".join(_select_expr(c) for c in columns)
+
+    pk_list = pk_col
+    if pk_list:
+        conflict_cols = ", ".join(f'"{c}"' for c in pk_list)
+        pk_set = set(pk_list)
         update_set = (
-            ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in columns if c != pk_col)
-            or f'"{pk_col}" = EXCLUDED."{pk_col}"'
+            ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in columns if c not in pk_set)
+            or ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in pk_list)
         )
         sql = f"""
             INSERT INTO "{schema}"."{table}" ({col_list})
-            SELECT {col_list} FROM "{schema}"."{staging}"
-            ON CONFLICT ("{pk_col}") DO UPDATE SET {update_set}
+            SELECT {select_list} FROM "{schema}"."{staging}"
+            ON CONFLICT ({conflict_cols}) DO UPDATE SET {update_set}
         """
     else:
         sql = f"""
             INSERT INTO "{schema}"."{table}" ({col_list})
-            SELECT {col_list} FROM "{schema}"."{staging}"
+            SELECT {select_list} FROM "{schema}"."{staging}"
             ON CONFLICT ("_row_hash") DO NOTHING
         """
 
@@ -651,7 +846,9 @@ def drop_staging(conn, schema: str, staging: str, log) -> None:
 
 
 def truncate_table(conn, schema: str, table: str, log) -> None:
-    conn.execute(text(f'TRUNCATE TABLE "{schema}"."{table}" RESTART IDENTITY'))
+    conn.execute(
+        text(f'TRUNCATE TABLE "{schema}"."{table}" RESTART IDENTITY CASCADE')
+    )
     log.info("TRUNCATED   → %s.%s  (full-refresh)", schema, table)
 
 
@@ -770,18 +967,24 @@ def process_collection(
         "loaded_at",
         F.lit(datetime.now().strftime(ISO_FMT)).cast("timestamp"),
     )
-    columns = sdf.columns  # refresh after adding loaded_at
 
-    # Dedup on pk_col (guard against duplicate source docs)
-    if pk_col and pk_col in columns:
+    # Apply per-column type casts so JDBC writes typed values
+    # (e.g. updated_at → TIMESTAMPTZ, active → SMALLINT, total_value → DECIMAL)
+    sdf = _cast_typed_columns(sdf, table, log)
+
+    columns = sdf.columns  # refresh after adding loaded_at + casts
+
+    # Dedup on PK columns (guard against duplicate source docs)
+    pk_list = [c for c in (pk_col or []) if c in columns]
+    if pk_list:
         before = sdf.count()
-        sdf = sdf.dropDuplicates([pk_col])
+        sdf = sdf.dropDuplicates(pk_list)
         dupes = before - sdf.count()
         if dupes > 0:
             log.warning(
-                "DEDUP       : removed %d duplicate '%s' values in '%s'",
+                "DEDUP       : removed %d duplicate rows on %s in '%s'",
                 dupes,
-                pk_col,
+                pk_list,
                 collection,
             )
             rows_new = sdf.count()
@@ -803,6 +1006,8 @@ def process_collection(
         return base
 
     # ── Step 6: Write to staging via JDBC ──────────────────────────────────
+    # JDBC writes all columns as TEXT (Spark default). Type alignment
+    # is handled via explicit casts in merge_staging_to_target.
     log.info("JDBC WRITE  : %d rows → %s.%s", rows_new, schema, staging)
     try:
         (

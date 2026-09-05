@@ -6,7 +6,7 @@ DECLARE
         ARRAY['store_id references stores', $q$SELECT s.* FROM public.stocks s WHERE s.store_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.stores st WHERE st.store_id = s.store_id)$q$],
         ARRAY['product_id references products', $q$SELECT s.* FROM public.stocks s WHERE s.product_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.products p WHERE p.product_id = s.product_id)$q$],
         ARRAY['quantity not null/negative', $q$SELECT * FROM public.stocks WHERE quantity IS NULL OR quantity::bigint < 0$q$],
-        ARRAY['updated_at valid', $q$SELECT * FROM public.stocks WHERE updated_at IS NULL OR updated_at > CURRENT_TIMESTAMP$q$]
+        ARRAY['updated_at valid', $q$SELECT * FROM public.stocks WHERE updated_at IS NULL OR updated_at::timestamptz > CURRENT_TIMESTAMP$q$]
     ];
     v_name  text;
     v_query text;

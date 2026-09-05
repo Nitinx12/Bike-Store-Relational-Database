@@ -13,7 +13,7 @@ DECLARE
         ARRAY['orphan_staffs_manager', $q$SELECT s.* FROM public.staffs s WHERE s.manager_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.staffs m WHERE m.staff_id = s.manager_id)$q$],
         ARRAY['orphan_stocks_store_or_product', $q$SELECT st.* FROM public.stocks st WHERE (st.store_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.stores s WHERE s.store_id = st.store_id)) OR (st.product_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM public.products p WHERE p.product_id = st.product_id))$q$],
         ARRAY['business_order_with_no_items', $q$SELECT o.order_id FROM public.orders o WHERE NOT EXISTS (SELECT 1 FROM public.order_items oi WHERE oi.order_id = o.order_id)$q$],
-        ARRAY['business_shipped_order_missing_or_future_date', $q$SELECT o.* FROM public.orders o WHERE o.order_status IN ('shipped', 'delivered') AND (o.shipped_date IS NULL OR o.shipped_date > CURRENT_DATE)$q$],
+        ARRAY['business_shipped_order_missing_or_future_date', $q$SELECT o.* FROM public.orders o WHERE o.order_status IN ('shipped', 'delivered') AND (o.shipped_date IS NULL OR o.shipped_date::date > CURRENT_DATE)$q$],
         ARRAY['business_unshipped_order_has_shipped_date', $q$SELECT o.* FROM public.orders o WHERE o.order_status IN ('pending', 'processing') AND o.shipped_date IS NOT NULL$q$],
         ARRAY['business_staff_store_mismatch', $q$SELECT o.* FROM public.orders o JOIN public.staffs s ON s.staff_id = o.staff_id WHERE o.store_id IS NOT NULL AND s.store_id IS NOT NULL AND o.store_id <> s.store_id$q$],
         ARRAY['business_stock_quantity_outlier', $q$SELECT s.* FROM public.stocks s WHERE s.quantity::bigint > 100000$q$],

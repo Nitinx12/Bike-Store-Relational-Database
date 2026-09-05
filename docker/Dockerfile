@@ -46,6 +46,7 @@ RUN uv sync --frozen --no-install-project --no-dev
 COPY utils/   ./utils/
 COPY scripts/ ./scripts/
 COPY tests/   ./tests/
+COPY src/     ./src/
 COPY jars/    ./jars/
 COPY main.py  ./
 

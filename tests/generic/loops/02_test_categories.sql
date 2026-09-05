@@ -5,7 +5,7 @@ DECLARE
         ARRAY['category_id not null', $q$SELECT * FROM public.categories WHERE category_id IS NULL$q$],
         ARRAY['category_id unique', $q$SELECT category_id FROM public.categories GROUP BY category_id HAVING COUNT(*) > 1$q$],
         ARRAY['category_name not null/empty', $q$SELECT * FROM public.categories WHERE category_name IS NULL OR TRIM(category_name) = ''$q$],
-        ARRAY['updated_at valid', $q$SELECT * FROM public.categories WHERE updated_at IS NULL OR updated_at > CURRENT_TIMESTAMP$q$],
+        ARRAY['updated_at valid', $q$SELECT * FROM public.categories WHERE updated_at IS NULL OR updated_at::timestamptz > CURRENT_TIMESTAMP$q$],
         ARRAY['category_id positive numeric', $q$SELECT * FROM public.categories WHERE category_id::text !~ '^[0-9]+$' OR category_id::bigint <= 0$q$]
     ];
     v_name  text;

@@ -1,0 +1,55 @@
+name: "Docker Build & Smoke Test"
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "docker/Dockerfile"
+      - "docker-compose.yml"
+      - "src/**"
+      - "scripts/**"
+      - "utils/**"
+      - "main.py"
+      - "pyproject.toml"
+      - "uv.lock"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "docker/Dockerfile"
+      - "docker-compose.yml"
+      - "src/**"
+      - "scripts/**"
+      - "utils/**"
+      - "main.py"
+      - "pyproject.toml"
+      - "uv.lock"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-smoke-test:
+    name: Build image and verify imports
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build app image
+        run: docker build -f docker/Dockerfile -t bike-store-app:ci .
+
+      - name: Verify entrypoint responds
+        run: docker run --rm bike-store-app:ci --help
+
+      - name: Verify all expected modules import cleanly
+        run: |
+          docker run --rm --entrypoint bash bike-store-app:ci -c "
+            uv run python -c '
+          import src.pipeline.runner
+          import src.database
+          import src.validation
+          import scripts.mongo_to_postgres
+          import utils
+          print(\"All imports OK\")
+          '
+          "

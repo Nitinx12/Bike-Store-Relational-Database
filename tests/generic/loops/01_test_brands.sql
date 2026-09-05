@@ -1,12 +1,12 @@
--- Dynamic data quality tests for public.categories (loops checks, raises exception on failure)
+-- Dynamic data quality tests for public.brands (loops checks, raises exception on failure)
 DO $do$
 DECLARE
     v_checks text[][] := ARRAY[
-        ARRAY['category_id not null', $q$SELECT * FROM public.categories WHERE category_id IS NULL$q$],
-        ARRAY['category_id unique', $q$SELECT category_id FROM public.categories GROUP BY category_id HAVING COUNT(*) > 1$q$],
-        ARRAY['category_name not null/empty', $q$SELECT * FROM public.categories WHERE category_name IS NULL OR TRIM(category_name) = ''$q$],
-        ARRAY['updated_at valid', $q$SELECT * FROM public.categories WHERE updated_at IS NULL OR updated_at > CURRENT_TIMESTAMP$q$],
-        ARRAY['category_id positive numeric', $q$SELECT * FROM public.categories WHERE category_id::text !~ '^[0-9]+$' OR category_id::bigint <= 0$q$]
+        ARRAY['brand_id not null', $q$SELECT * FROM public.brands WHERE brand_id IS NULL$q$],
+        ARRAY['brand_id unique', $q$SELECT brand_id FROM public.brands GROUP BY brand_id HAVING COUNT(*) > 1$q$],
+        ARRAY['brand_name not null/empty', $q$SELECT * FROM public.brands WHERE brand_name IS NULL OR TRIM(brand_name) = ''$q$],
+        ARRAY['updated_at valid', $q$SELECT * FROM public.brands WHERE updated_at IS NULL OR updated_at::timestamptz > CURRENT_TIMESTAMP$q$],
+        ARRAY['brand_id positive numeric', $q$SELECT * FROM public.brands WHERE brand_id::text !~ '^[0-9]+$' OR brand_id::bigint <= 0$q$]
     ];
     v_name  text;
     v_query text;
@@ -23,9 +23,9 @@ BEGIN
     END LOOP;
 
     IF v_fail <> '' THEN
-        RAISE EXCEPTION 'Data quality FAILED for public.categories:%', v_fail;
+        RAISE EXCEPTION 'Data quality FAILED for public.brands:%', v_fail;
     ELSE
-        RAISE NOTICE 'All data quality tests PASSED for public.categories';
+        RAISE NOTICE 'All data quality tests PASSED for public.brands';
     END IF;
 END
 $do$;

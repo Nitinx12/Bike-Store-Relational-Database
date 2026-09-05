@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
         with:
@@ -30,14 +30,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Run PSScriptAnalyzer
         uses: microsoft/psscriptanalyzer-action@v1.1
         with:
           path: .\
           recurse: true
           # Fail the build on Error and Warning level violations
-          severity: '"Error", "Warning"' 
+          severity: '"Error", "Warning"'
 
   sql-check:
     name: Check SQL (SQLFluff)
@@ -49,14 +49,13 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.13'
 
       - name: Install SQLFluff
         run: pip install sqlfluff
 
       - name: Run SQLFluff Linting
-        # Change 'ansi' to your specific dialect (e.g., postgres, mysql, snowflake)
-        run: sqlfluff lint . --dialect ansi
+        run: sqlfluff lint . --dialect postgres
 
   makefile-check:
     name: Check Makefile (checkmake)
@@ -71,5 +70,4 @@ jobs:
           sudo apt-get install -y checkmake
 
       - name: Run checkmake
-        # Finds all files named "Makefile" and lints them
         run: find . -type f -name "Makefile" -exec checkmake {} +

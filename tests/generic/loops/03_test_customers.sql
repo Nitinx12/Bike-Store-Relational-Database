@@ -6,7 +6,7 @@ DECLARE
         ARRAY['first/last name not null/empty', $q$SELECT * FROM public.customers WHERE first_name IS NULL OR TRIM(first_name) = '' OR last_name IS NULL OR TRIM(last_name) = ''$q$],
         ARRAY['email valid pattern', $q$SELECT * FROM public.customers WHERE email IS NOT NULL AND email !~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'$q$],
         ARRAY['zip_code valid', $q$SELECT * FROM public.customers WHERE zip_code IS NOT NULL AND (zip_code::text !~ '^[0-9]+$' OR LENGTH(zip_code::text) NOT BETWEEN 3 AND 10)$q$],
-        ARRAY['updated_at valid', $q$SELECT * FROM public.customers WHERE updated_at IS NULL OR updated_at > CURRENT_TIMESTAMP$q$]
+        ARRAY['updated_at valid', $q$SELECT * FROM public.customers WHERE updated_at IS NULL OR updated_at::timestamptz > CURRENT_TIMESTAMP$q$]
     ];
     v_name  text;
     v_query text;
