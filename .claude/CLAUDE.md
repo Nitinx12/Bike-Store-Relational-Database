@@ -5,7 +5,7 @@ Guidance for Claude Code when working in **Bike-Store-Relational-Database** (Mon
 ## Project Snapshot
 - Pipeline: `mongo_to_postgres.py` — PySpark, incremental loads, Rich terminal output
 - Data quality: `plpgsql_tests.py` (PL/pgSQL test runner) + Great Expectations
-- Orchestration: `run_pipeline.ps1` — color-coded summary table, `uv run`, UTF-8 fixes, `find_project_root()`
+- Orchestration: `scripts/ps1/local_runner.ps1` — color-coded summary table, `uv run`, UTF-8 fixes, `find_project_root()`
 - Docs: `ARCHITECTURE.md` (Mermaid diagrams), `README.md` (~60 lines, skillicons.dev badges)
 - CI: `.github/workflows/linting.yml`, `docker-build.yml`, `python-ci.yml`, `deploy.yml`
 - Package manager: `uv` only — never call `pip install` directly

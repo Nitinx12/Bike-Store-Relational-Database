@@ -142,8 +142,10 @@ JDBC_URL = f"jdbc:postgresql://{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DATABAS
 
 COLUMN_TYPE_MAP: dict[tuple[str, str], str] = {
     # timestamps / dates
+    ("brands", "updated_at"): "TIMESTAMPTZ",
     ("categories", "updated_at"): "TIMESTAMPTZ",
     ("customers", "updated_at"): "TIMESTAMPTZ",
+    ("order_items", "updated_at"): "TIMESTAMPTZ",
     ("orders", "order_date"): "DATE",
     ("orders", "required_date"): "DATE",
     ("orders", "shipped_date"): "DATE",
@@ -806,10 +808,7 @@ def merge_staging_to_target(
     columns. Columns that are TEXT in both staging and target stay as-is.
     """
     def _select_expr(col: str) -> str:
-        target_type = _pg_type_for(table, col)
-        if target_type == "TEXT":
-            return f'"{col}"'
-        return f'NULLIF("{col}", \'\')::{target_type}'
+        return f'"{col}"'
 
     col_list = ", ".join(f'"{c}"' for c in columns)
     select_list = ", ".join(_select_expr(c) for c in columns)

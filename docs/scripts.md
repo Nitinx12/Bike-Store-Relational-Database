@@ -8,14 +8,21 @@ All executable scripts in the project — ETL, data quality, inspection, and inf
 
 ```
 scripts/
-├── __init__.py                  — Package marker (enables `python -m scripts`)
-├── mongo_to_postgres.py         — PySpark incremental ETL: MongoDB → PostgreSQL
-├── plpgsql_loops_tests.py       — PL/pgSQL DO-block data quality suite
-├── run_gx.py                    — Great Expectations validation runner
-├── inspect_schema.py            — Print Postgres public schema to stdout
-├── docker_dev.sh                — Docker Compose lifecycle manager
-├── monitor_logs.sh              — Operational log monitoring & health checks
-└── log_cleanup.sh               — Age/size-based log cleanup utility
+├── python/                   — PySpark ETL, DQ, and inspection scripts
+│   ├── mongo_to_postgres.py   — PySpark incremental ETL: MongoDB → PostgreSQL
+│   ├── plpgsql_loops_tests.py — PL/pgSQL DO-block data quality suite
+│   ├── run_gx.py              — Great Expectations validation runner
+│   └── inspect_schema.py      — Print Postgres public schema to stdout
+├── ps1/                      — Orchestration & runner scripts
+│   └── local_runner.ps1       — End-to-end pipeline orchestrator
+└── shell/                    — Operational & infrastructure shell scripts
+    ├── docker_dev.sh          — Docker Compose lifecycle manager
+    ├── monitor_logs.sh        — Operational log monitoring & health checks
+    ├── log_cleanup.sh         — Age/size-based log cleanup utility
+    ├── backup_mongo.sh         — MongoDB backup utility
+    ├── restore_mongo.sh       — MongoDB restore utility
+    ├── backup_postgres.sh     — Postgres backup utility
+    └── restore_postgres.sh    — Postgres restore utility
 ```
 
 ---
@@ -62,11 +69,11 @@ flowchart TD
 ### Run modes
 
 ```bash
-python -m scripts.mongo_to_postgres                                    # incremental, all collections
-python -m scripts.mongo_to_postgres --collection staffs               # incremental, one collection
-python -m scripts.mongo_to_postgres --collection staffs --collection orders
-python -m scripts.mongo_to_postgres --full-refresh                     # truncate + reload everything
-python -m scripts.mongo_to_postgres --collection staffs --full-refresh # truncate + reload one collection
+python scripts/python/mongo_to_postgres.py                                # incremental, all collections
+python scripts/python/mongo_to_postgres.py --collection staffs           # incremental, one collection
+python scripts/python/mongo_to_postgres.py --collection staffs --collection orders
+python scripts/python/mongo_to_postgres.py --full-refresh                 # truncate + reload everything
+python scripts/python/mongo_to_postgres.py --collection staffs --full-refresh # truncate + reload one collection
 ```
 
 ### Configuration
@@ -122,10 +129,10 @@ Uses the same Postgres connection as the rest of the pipeline (`utils/connection
 ### Run modes
 
 ```bash
-python scripts/plpgsql_loops_tests.py                                # run all 10 SQL files
-python scripts/plpgsql_loops_tests.py --show-failures --max-rows 5  # preview failing rows
-python scripts/plpgsql_loops_tests.py --tests-dir ./tests            # custom folder
-python scripts/plpgsql_loops_tests.py --dsn "postgresql://user:pass@host:5432/dbname"  # DB override
+python scripts/python/plpgsql_loops_tests.py                                # run all 10 SQL files
+python scripts/python/plpgsql_loops_tests.py --show-failures --max-rows 5  # preview failing rows
+python scripts/python/plpgsql_loops_tests.py --tests-dir ./tests            # custom folder
+python scripts/python/plpgsql_loops_tests.py --dsn "postgresql://user:pass@host:5432/dbname"  # DB override
 ```
 
 ### Logs
@@ -141,9 +148,9 @@ Runs Great Expectations suites against Postgres tables. Suites are defined in `g
 ### Run modes
 
 ```bash
-python scripts/run_gx.py                           # all 9 tables
-python scripts/run_gx.py orders products           # specific tables
-python scripts/run_gx.py --verbose                # full expectation output
+python scripts/python/run_gx.py                           # all 9 tables
+python scripts/python/run_gx.py orders products           # specific tables
+python scripts/python/run_gx.py --verbose                # full expectation output
 ```
 
 Results are written to `tests/data_quality/reports/validation_report_<timestamp>.json`.
@@ -155,7 +162,7 @@ Results are written to `tests/data_quality/reports/validation_report_<timestamp>
 Prints the Postgres `public` schema (tables, columns, types, nullable, defaults) as a formatted table. Useful for quick schema verification without a GUI client.
 
 ```bash
-python scripts/inspect_schema.py
+python scripts/python/inspect_schema.py
 ```
 
 ---
@@ -166,12 +173,12 @@ Manages the Docker Compose stack for local development. Requires Docker CLI + da
 
 | Command | Description |
 |---|---|
-| `./docker_dev.sh up` | Start all containers in background + verify health |
-| `./docker_dev.sh down` | Stop and remove containers |
-| `./docker_dev.sh restart` | Restart all containers |
-| `./docker_dev.sh status` | Show container status + resource usage |
-| `./docker_dev.sh logs [svc]` | Tail logs (all or a specific service) |
-| `./docker_dev.sh reset` | Stop + purge all named volumes (interactive) |
+| `./scripts/shell/docker_dev.sh up` | Start all containers in background + verify health |
+| `./scripts/shell/docker_dev.sh down` | Stop and remove containers |
+| `./scripts/shell/docker_dev.sh restart` | Restart all containers |
+| `./scripts/shell/docker_dev.sh status` | Show container status + resource usage |
+| `./scripts/shell/docker_dev.sh logs [svc]` | Tail logs (all or a specific service) |
+| `./scripts/shell/docker_dev.sh reset` | Stop + purge all named volumes (interactive) |
 
 ---
 
@@ -180,10 +187,10 @@ Manages the Docker Compose stack for local development. Requires Docker CLI + da
 Operational health check script that verifies logs, git status, database connectivity, and service availability.
 
 ```bash
-./monitor_logs.sh                  # run checks only (default)
-./monitor_logs.sh --check         # same as above
-./monitor_logs.sh --cleanup       # delete logs older than retention period
-./monitor_logs.sh --full          # run checks AND cleanup
+./scripts/shell/monitor_logs.sh                  # run checks only (default)
+./scripts/shell/monitor_logs.sh --check         # same as above
+./scripts/shell/monitor_logs.sh --cleanup       # delete logs older than retention period
+./scripts/shell/monitor_logs.sh --full          # run checks AND cleanup
 ```
 
 Exit codes: `0` = healthy, `1` = warnings, `2` = critical failures.
@@ -205,11 +212,11 @@ Checks performed:
 Age and size based log file cleanup. Always preserves the most recently modified file.
 
 ```bash
-./log_cleanup.sh                   # read-only summary
-./log_cleanup.sh summary          # same as above
-./log_cleanup.sh clean            # interactive deletion
-./log_cleanup.sh clean --dry-run  # preview what would be deleted
-./log_cleanup.sh clean -y         # force deletion (no prompt)
+./scripts/shell/log_cleanup.sh                   # read-only summary
+./scripts/shell/log_cleanup.sh summary          # same as above
+./scripts/shell/log_cleanup.sh clean            # interactive deletion
+./scripts/shell/log_cleanup.sh clean --dry-run  # preview what would be deleted
+./scripts/shell/log_cleanup.sh clean -y         # force deletion (no prompt)
 ```
 
 Configuration via environment variables:

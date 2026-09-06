@@ -88,7 +88,7 @@ function Find-ProjectRoot {
 
 $PipelineDir = $PSScriptRoot
 $ProjectRoot = Find-ProjectRoot -StartPath $PipelineDir
-$ScriptsDir  = Join-Path $ProjectRoot "scripts"
+$ScriptsDir  = Join-Path $ProjectRoot "scripts\python"
 $LogsDir     = Join-Path $ProjectRoot "logs\pipeline"
 
 if (-not (Test-Path -LiteralPath $LogsDir)) {
