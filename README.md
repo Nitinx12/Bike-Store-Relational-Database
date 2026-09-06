@@ -33,9 +33,26 @@ Only new or changed rows move on each run. Postgres itself is compared against M
 - **Upsert logic** — updated records are refreshed in place, never duplicated
 - **10-file PL/pgSQL data quality suite** — nulls, uniqueness, types, referential integrity, business rules
 - **21-script SQL analytics library** — exploration, reporting, cohort analysis, reusable functions
-- **One-command pipeline automation** — `ps1/local_runner.ps1` runs ETL + tests with logging
+- **One-command pipeline automation** — `scripts/ps1/local_runner.ps1` runs ETL + tests with logging
+
+## Makefile Commands
+
+The project includes a `Makefile` for streamlined infrastructure and job management.
+
+| Command | Description |
+|---|---|
+| `make build` | Build the main batch application Docker image |
+| `make up` | Start the full stack (Postgres, MongoDB, monitoring) |
+| `make pipeline` | Run the full end-to-end pipeline (ETL $\rightarrow$ PL/pgSQL $\rightarrow$ GX) |
+| `make etl` | Run MongoDB $\rightarrow$ PostgreSQL ETL |
+| `make dq-loops` | Run the PL/pgSQL data quality tests |
+| `make dq-gx` | Run Great Expectations suite |
+| `make seed` | Seed MongoDB with sample data |
+| `make down` | Stop the Docker stack |
+| `make clean` | Stop and remove all containers and volumes |
 
 ## Quick Start
+
 
 ```bash
 git clone https://github.com/Nitinx12/Bike-Store-Relational-Database

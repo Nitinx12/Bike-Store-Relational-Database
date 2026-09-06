@@ -91,7 +91,7 @@ monitor-logs: ## Manage pipeline logs (ARGS="summary" or "clean --dry-run")
 
 log-cleanup: ## Run local log cleanup (ARGS="clean --dry-run")
 	@echo -e "$(CYAN)Running local log cleanup...$(RESET)"
-	./scripts/log_cleanup.sh $(ARGS)
+	./scripts/shell/log_cleanup.sh $(ARGS)
 
 shell: ## Open an interactive bash shell inside the app container for debugging
 	@echo -e "$(CYAN)Dropping into container shell...$(RESET)"
@@ -103,27 +103,27 @@ shell: ## Open an interactive bash shell inside the app container for debugging
 
 init-db: up ## First-run DB initializer: create bike_store database and verify connectivity
 	@echo -e "$(CYAN)Initializing databases for first run...$(RESET)"
-	./scripts/init_db.sh
+	./scripts/shell/init_db.sh
 
 health-check: up ## One-shot liveness probe for Postgres, Mongo, Prometheus, Pushgateway
 	@echo -e "$(CYAN)Running health check...$(RESET)"
-	./scripts/health_check.sh
+	./scripts/shell/health_check.sh
 
 backup-postgres: ## Dump the bike_store database to backups/postgres/ (ARGS="<dir> --schema-only")
 	@echo -e "$(CYAN)Backing up Postgres...$(RESET)"
-	./scripts/backup_postgres.sh $(ARGS)
+	./scripts/shell/backup_postgres.sh $(ARGS)
 
 restore-postgres: ## DESTRUCTIVE: drop + restore from a backup file (ARGS="<file.sql.gz>")
 	@echo -e "$(CYAN)Restoring Postgres from backup...$(RESET)"
-	./scripts/restore_postgres.sh $(ARGS)
+	./scripts/shell/restore_postgres.sh $(ARGS)
 
 backup-mongo: ## Dump the Mongo database to backups/mongo/ (ARGS="<dir>")
 	@echo -e "$(CYAN)Backing up MongoDB...$(RESET)"
-	./scripts/backup_mongo.sh $(ARGS)
+	./scripts/shell/backup_mongo.sh $(ARGS)
 
 restore-mongo: ## DESTRUCTIVE: drop + restore from a mongodump directory (ARGS="<dir>")
 	@echo -e "$(CYAN)Restoring MongoDB from backup...$(RESET)"
-	./scripts/restore_mongo.sh $(ARGS)
+	./scripts/shell/restore_mongo.sh $(ARGS)
 
 # ----------------------------------------------------------------------------
 # Maintenance & Cleanup
