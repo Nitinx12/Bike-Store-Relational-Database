@@ -5,134 +5,140 @@
 #   make help          - Show available commands and descriptions
 #   make build         - Build the main batch job Docker image
 #   make up            - Spin up the full stack (Postgres, MongoDB, monitoring)
-#   make pipeline      - Run the full end-to-end pipeline (ETL + PL/pgSQL + GX)
+#   make pipeline      - Run the full end-to-end pipeline (Docker)
+#   make local-pipeline - Run the full end-to-end pipeline (Local)
 # ============================================================================
 
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
 
-# Colors for terminal output
+# Colors
 CYAN  := \033[36m
 RESET := \033[0m
 BOLD  := \033[1m
 
-.PHONY: help build up down pipeline etl dq-loops dq-gx seed inspect-schema monitor-logs log-cleanup shell clean prune check-env health-check init-db backup-postgres restore-postgres backup-mongo restore-mongo
+.PHONY: help build up down pipeline local-pipeline etl local-etl dq-loops local-dq-loops dq-gx local-dq-gx seed local-seed inspect-schema local-inspect-schema monitor-logs log-cleanup shell clean prune check-env health-check init-db backup-postgres restore-postgres backup-mongo restore-mongo lint test format
 
 help: ## Show this help message
 	@echo -e "$(BOLD)Bike Store Pipeline Management$(RESET)"
 	@echo -e "Usage: $(CYAN)make <target> [ARGS=\"...\"]$(RESET)"
 	@echo ""
-	@echo -e "$(BOLD)Targets:$(RESET)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-22s$(RESET) %s\n", $$1, $$2}'
+	@echo -e "$(BOLD)General Targets:$(RESET)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -v 'local-' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-22s$(RESET) %s\n", $$1, $$2}'
+	@echo ""
+	@echo -e "$(BOLD)Local-Only Targets:$(RESET)"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep 'local-' | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-22s$(RESET) %s\n", $$1, $$2}'
 
-# ----------------------------------------------------------------------------
-# Environment bootstrap
-# ----------------------------------------------------------------------------
-
-check-env: ## Verify .env exists; copy from .env.example if missing
+check-env: ## Verify .env exists
 	@if [[ ! -f .env ]]; then \
 		echo -e "$(CYAN)No .env file found — copying from .env.example$(RESET)"; \
 		cp .env.example .env; \
-		echo -e "$(CYAN)Edit .env with your DB credentials before running jobs$(RESET)"; \
 	fi
 
 # ----------------------------------------------------------------------------
-# Infrastructure & Docker Lifecycle
+# Infrastructure
 # ----------------------------------------------------------------------------
 
-build: check-env ## Build the main batch application Docker image
-	@echo -e "$(CYAN)Building Docker image via Compose...$(RESET)"
+build: check-env ## Build Docker image
 	docker compose build app
 
-up: check-env ## Start the full stack (Postgres, MongoDB, Pushgateway, Prometheus, Grafana)
-	@echo -e "$(CYAN)Starting full stack...$(RESET)"
+up: check-env ## Start full stack
 	docker compose up -d postgres mongodb pushgateway prometheus grafana
-	@echo -e ""
-	@echo -e "$(BOLD)Endpoints:$(RESET)"
-	@echo -e "  Grafana:     http://localhost:3000  (admin / \$$GRAFANA_ADMIN_PASSWORD)"
-	@echo -e "  Prometheus:  http://localhost:9090"
-	@echo -e "  Pushgateway: http://localhost:9091"
 
-down: ## Stop the stack (keeps volumes)
-	@echo -e "$(CYAN)Stopping stack...$(RESET)"
+down: ## Stop stack
 	docker compose down
 
 # ----------------------------------------------------------------------------
-# Job Orchestration Targets
+# Job Orchestration (Docker vs Local)
 # ----------------------------------------------------------------------------
 
-pipeline: ## Run the full unified pipeline (ETL -> PL/pgSQL -> GX)
-	@echo -e "$(CYAN)Running full pipeline orchestration...$(RESET)"
+pipeline: ## Full pipeline (Docker)
 	docker compose --profile jobs run --rm app pipeline $(ARGS)
 
-etl: ## Run MongoDB -> PostgreSQL ETL (ARGS="--full-refresh" or "--collection orders")
-	@echo -e "$(CYAN)Running ETL stage...$(RESET)"
+local-pipeline: ## Full pipeline (Local)
+	pwsh scripts/ps1/local_runner.ps1 $(ARGS)
+
+etl: ## MongoDB -> PostgreSQL ETL (Docker)
 	docker compose --profile jobs run --rm app etl $(ARGS)
 
-dq-loops: ## Run the PL/pgSQL data quality loop tests
-	@echo -e "$(CYAN)Running PL/pgSQL data quality tests...$(RESET)"
+local-etl: ## MongoDB -> PostgreSQL ETL (Local)
+	uv run python scripts/python/mongo_to_postgres.py $(ARGS)
+
+dq-loops: ## PL/pgSQL DQ tests (Docker)
 	docker compose --profile jobs run --rm app dq-loops $(ARGS)
 
-dq-gx: ## Run Great Expectations suite (ARGS="orders products" to target tables)
-	@echo -e "$(CYAN)Running Great Expectations suite...$(RESET)"
+local-dq-loops: ## PL/pgSQL DQ tests (Local)
+	uv run python scripts/python/plpgsql_loops_tests.py $(ARGS)
+
+dq-gx: ## GX suite (Docker)
 	docker compose --profile jobs run --rm app dq-gx $(ARGS)
 
-seed: ## Seed MongoDB with sample bike-store data (drops & reinserts each collection)
-	@echo -e "$(CYAN)Seeding MongoDB with sample data...$(RESET)"
+local-dq-gx: ## GX suite (Local)
+	uv run python scripts/python/run_gx.py $(ARGS)
+
+seed: ## Seed MongoDB (Docker)
 	docker compose --profile jobs run --rm app seed
 
-inspect-schema: ## Inspect PostgreSQL public schema layout
-	@echo -e "$(CYAN)Inspecting database schema...$(RESET)"
+local-seed: ## Seed MongoDB (Local)
+	uv run python scripts/python/seed_mongo.py $(ARGS)
+
+inspect-schema: ## Inspect schema (Docker)
 	docker compose --profile jobs run --rm app inspect-schema $(ARGS)
 
-monitor-logs: ## Manage pipeline logs (ARGS="summary" or "clean --dry-run")
-	@echo -e "$(CYAN)Running log manager...$(RESET)"
+local-inspect-schema: ## Inspect schema (Local)
+	uv run python scripts/python/inspect_schema.py $(ARGS)
+
+# ----------------------------------------------------------------------------
+# Quality Assurance (Production Grade)
+# ----------------------------------------------------------------------------
+
+lint: ## Run all linters (Ruff, Mypy, SQLFluff)
+	@echo -e "$(CYAN)Running Ruff...$(RESET)"
+	uv run ruff check .
+	@echo -e "$(CYAN)Running Mypy...$(RESET)"
+	uv run mypy .
+	@echo -e "$(CYAN)Running SQLFluff...$(RESET)"
+	uv run sqlfluff lint sql/
+
+test: ## Run Python tests
+	uv run pytest
+
+format: ## Format code with Ruff
+	uv run ruff format .
+
+# ----------------------------------------------------------------------------
+# Utilities
+# ----------------------------------------------------------------------------
+
+monitor-logs: ## Manage logs (Docker)
 	docker compose --profile jobs run --rm app monitor-logs $(ARGS)
 
-log-cleanup: ## Run local log cleanup (ARGS="clean --dry-run")
-	@echo -e "$(CYAN)Running local log cleanup...$(RESET)"
-	./scripts/shell/log_cleanup.sh $(ARGS)
+log-cleanup: ## Local log cleanup
+	bash scripts/shell/log_cleanup.sh $(ARGS)
 
-shell: ## Open an interactive bash shell inside the app container for debugging
-	@echo -e "$(CYAN)Dropping into container shell...$(RESET)"
+shell: ## Container shell
 	docker compose --profile jobs run --rm app shell
 
-# ----------------------------------------------------------------------------
-# Database Lifecycle (first run, backup, restore)
-# ----------------------------------------------------------------------------
+init-db: up ## Initialize DB
+	bash scripts/shell/init_db.sh
 
-init-db: up ## First-run DB initializer: create bike_store database and verify connectivity
-	@echo -e "$(CYAN)Initializing databases for first run...$(RESET)"
-	./scripts/shell/init_db.sh
+health-check: up ## Infrastructure liveness probe
+	bash scripts/shell/health_check.sh
 
-health-check: up ## One-shot liveness probe for Postgres, Mongo, Prometheus, Pushgateway
-	@echo -e "$(CYAN)Running health check...$(RESET)"
-	./scripts/shell/health_check.sh
+backup-postgres: ## Backup Postgres
+	bash scripts/shell/backup_postgres.sh $(ARGS)
 
-backup-postgres: ## Dump the bike_store database to backups/postgres/ (ARGS="<dir> --schema-only")
-	@echo -e "$(CYAN)Backing up Postgres...$(RESET)"
-	./scripts/shell/backup_postgres.sh $(ARGS)
+restore-postgres: ## Restore Postgres
+	bash scripts/shell/restore_postgres.sh $(ARGS)
 
-restore-postgres: ## DESTRUCTIVE: drop + restore from a backup file (ARGS="<file.sql.gz>")
-	@echo -e "$(CYAN)Restoring Postgres from backup...$(RESET)"
-	./scripts/shell/restore_postgres.sh $(ARGS)
+backup-mongo: ## Backup MongoDB
+	bash scripts/shell/backup_mongo.sh $(ARGS)
 
-backup-mongo: ## Dump the Mongo database to backups/mongo/ (ARGS="<dir>")
-	@echo -e "$(CYAN)Backing up MongoDB...$(RESET)"
-	./scripts/shell/backup_mongo.sh $(ARGS)
+restore-mongo: ## Restore MongoDB
+	bash scripts/shell/restore_mongo.sh $(ARGS)
 
-restore-mongo: ## DESTRUCTIVE: drop + restore from a mongodump directory (ARGS="<dir>")
-	@echo -e "$(CYAN)Restoring MongoDB from backup...$(RESET)"
-	./scripts/shell/restore_mongo.sh $(ARGS)
-
-# ----------------------------------------------------------------------------
-# Maintenance & Cleanup
-# ----------------------------------------------------------------------------
-
-clean: ## Stop and remove all containers, networks, and ephemeral volumes
-	@echo -e "$(CYAN)Cleaning up containers and volumes...$(RESET)"
+clean: ## Clean containers/volumes
 	docker compose down -v
 
-prune: clean ## Deep clean: remove unused docker images, build cache, and volumes
-	@echo -e "$(CYAN)Pruning unused Docker assets...$(RESET)"
+prune: clean ## Deep prune Docker
 	docker system prune -af --volumes

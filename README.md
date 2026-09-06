@@ -35,23 +35,36 @@ Only new or changed rows move on each run. Postgres itself is compared against M
 - **21-script SQL analytics library** — exploration, reporting, cohort analysis, reusable functions
 - **One-command pipeline automation** — `scripts/ps1/local_runner.ps1` runs ETL + tests with logging
 
-## Makefile Commands
+## Developer Workflow
 
-The project includes a `Makefile` for streamlined infrastructure and job management.
+This project supports dual-mode execution: **Local** (fast development) and **Docker** (consistent environment).
 
-| Command | Description |
-|---|---|
-| `make build` | Build the main batch application Docker image |
-| `make up` | Start the full stack (Postgres, MongoDB, monitoring) |
-| `make pipeline` | Run the full end-to-end pipeline (ETL $\rightarrow$ PL/pgSQL $\rightarrow$ GX) |
-| `make etl` | Run MongoDB $\rightarrow$ PostgreSQL ETL |
-| `make dq-loops` | Run the PL/pgSQL data quality tests |
-| `make dq-gx` | Run Great Expectations suite |
-| `make seed` | Seed MongoDB with sample data |
-| `make down` | Stop the Docker stack |
-| `make clean` | Stop and remove all containers and volumes |
+### Local Development (Non-Docker)
+Requires `uv` and `PowerShell` installed.
+1. **Setup**: `uv sync` and configure `.env`.
+2. **Execution**: Use `local-` targets in the Makefile.
+   - Example: `make local-pipeline` (runs the full orchestrator).
+   - Example: `make local-etl ARGS="--full-refresh"` (runs the ETL).
+3. **Quality**: `make lint` (Ruff, Mypy, SQLFluff) and `make test` (Pytest).
+
+### Dockerized Development
+1. **Setup**: `make up` to start the infrastructure.
+2. **Execution**: Use standard Makefile targets.
+   - Example: `make pipeline` (runs in a container).
+   - Example: `make etl` (runs in a container).
+
+### Summary Table
+
+| Action | Docker Target | Local Target | Tool Used |
+| :--- | :--- | :--- | :--- |
+| Run Pipeline | `make pipeline` | `make local-pipeline` | `uv` / `pwsh` |
+| Run ETL | `make etl` | `make local-etl` | `uv` / `python` |
+| Run Tests | `make dq-loops` | `make local-dq-loops` | `uv` / `python` |
+| Lint Code | `make lint` | `make lint` | `ruff` / `sqlfluff` |
+| Health Check| `make health-check` | `make local-health` | `bash` |
 
 ## Quick Start
+
 
 
 ```bash
