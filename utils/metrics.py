@@ -138,7 +138,7 @@ class _BaseRunMetrics:
                 timeout=PUSHGATEWAY_TIMEOUT,
             )
             return True
-        except Exception as exc:
+        except (OSError, ValueError, TimeoutError) as exc:
             _module_logger.warning(
                 "Could not push metrics for job '%s' to %s: %s",
                 self.job,

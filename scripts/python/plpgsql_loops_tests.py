@@ -13,9 +13,11 @@ import logging
 import sys
 from pathlib import Path
 
+import psycopg2
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from sqlalchemy.exc import SQLAlchemyError
 
 # This file lives in scripts/, so the repo root is one level up. Add it to
 # sys.path so `utils.*` resolves no matter where this script is invoked from.
@@ -66,7 +68,7 @@ def run_test_file(dbapi_conn, sql_path: Path):
         dbapi_conn.commit()
         message = "".join(dbapi_conn.notices).strip()
         return True, message
-    except Exception as exc:
+    except (psycopg2.Error, SQLAlchemyError) as exc:
         dbapi_conn.rollback()
         message = getattr(exc, "pgerror", None) or str(exc)
         return False, message.strip()
@@ -79,7 +81,7 @@ def main():
 
     try:
         engine = postgres_engine()
-    except Exception as exc:
+    except SQLAlchemyError as exc:
         logger.error(f"Could not create Postgres engine: {exc}")
         console.print(
             Panel(

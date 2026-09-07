@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 
 
 def get_logger(stage: str, name: str) -> logging.Logger:
@@ -13,7 +13,7 @@ def get_logger(stage: str, name: str) -> logging.Logger:
     os.makedirs(log_dir, exist_ok=True)
 
     # Log file: logs/extraction/extraction_2024-06-01_12-00.log
-    run_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
+    run_time = datetime.now(UTC).strftime("%Y-%m-%d_%H-%M")
     log_file = os.path.join(log_dir, f"{name}_{run_time}.log")
 
     # Unique logger key per stage+name

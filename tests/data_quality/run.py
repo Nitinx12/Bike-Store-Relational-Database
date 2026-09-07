@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 THIS_DIR = Path(__file__).resolve().parent
@@ -88,7 +88,7 @@ def validate_table(context, datasource, table_name: str) -> dict:
             "failed_expectations": failed,
         }
 
-    except Exception as e:
+    except (OSError, ValueError, TypeError, RuntimeError) as e:
         logger.error(f"[{table_name}] ERROR while validating: {e}")
         return {"table": table_name, "success": False, "error": str(e)}
 
@@ -105,13 +105,13 @@ def main() -> int:
     try:
         context = get_context()
         datasource = get_datasource()
-    except Exception:
+    except (OSError, ValueError, TypeError, AttributeError):
         # get_context() already logged the specific error
         return 1
 
-    run_started = datetime.now()
+    run_started = datetime.now(UTC)
     results = [validate_table(context, datasource, table) for table in tables]
-    run_finished = datetime.now()
+    run_finished = datetime.now(UTC)
 
     all_passed = all(r["success"] for r in results)
     summary = {

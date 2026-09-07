@@ -41,11 +41,12 @@ import os
 import re
 import sys
 import traceback
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from rich import box
@@ -313,7 +314,7 @@ def _to_datetime(val: object) -> datetime | None:
     if isinstance(val, datetime):
         return val
     try:
-        return datetime.fromisoformat(str(val).replace("Z", "+00:00"))
+        return datetime.fromisoformat(str(val).removesuffix("Z"))
     except (ValueError, TypeError):
         return None
 
@@ -471,7 +472,7 @@ def _mongo_collection_stats(collection: str, ts_col_raw: str | None, log) -> dic
         )
         return {"count": count, "max_ts": max_ts}
 
-    except Exception as exc:
+    except PyMongoError as exc:
         log.error("Failed to get Mongo stats for '%s': %s", collection, exc)
         return {"count": 0, "max_ts": None}
 
@@ -533,7 +534,7 @@ def read_mongo_incremental(
         )
         return sdf
 
-    except Exception as exc:
+    except PyMongoError as exc:
         log.error("Failed to read collection '%s': %s", collection, exc)
         log.debug(traceback.format_exc())
         return None
@@ -607,7 +608,7 @@ def get_postgres_stats(
             result["count"],
             _fmt_ts(result["max_ts"]),
         )
-    except Exception as exc:
+    except (SQLAlchemyError, PyMongoError) as exc:
         log.error("Failed to get Postgres stats for %s.%s: %s", schema, table, exc)
 
     return result
@@ -878,17 +879,17 @@ def process_collection(
     log = get_logger(stage="extraction", name=collection)
     table = _slugify(collection)
     schema = ETL_SCHEMA
-    run_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    run_id = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
     staging = _staging_name(table, run_id)
 
-    base = dict(
-        collection=collection,
-        rows_mongo=0,
-        rows_new=0,
-        rows_loaded=0,
-        skipped=False,
-        failed=0,
-    )
+    base = {
+        "collection": collection,
+        "rows_mongo": 0,
+        "rows_new": 0,
+        "rows_loaded": 0,
+        "skipped": False,
+        "failed": 0,
+    }
 
     log.info("=" * 65)
     log.info("COLLECTION  : %s", collection)
@@ -900,7 +901,7 @@ def process_collection(
         client = MongoClient(MONGO_URI)
         sample = list(client[MONGO_DB][collection].find({}, {"_id": 0}).limit(10))
         client.close()
-    except Exception as exc:
+    except PyMongoError as exc:
         log.error("Cannot connect to Mongo for '%s': %s", collection, exc)
         base["failed"] = 1
         return base
@@ -964,7 +965,7 @@ def process_collection(
     # Add loaded_at audit timestamp
     sdf = sdf.withColumn(
         "loaded_at",
-        F.lit(datetime.now().strftime(ISO_FMT)).cast("timestamp"),
+        F.lit(datetime.now(UTC).strftime(ISO_FMT)).cast("timestamp"),
     )
 
     # Apply per-column type casts so JDBC writes typed values
@@ -999,7 +1000,7 @@ def process_collection(
     try:
         with engine.connect() as _conn, _conn.begin():
             ensure_schema(_conn, schema, log)
-    except Exception as exc:
+    except SQLAlchemyError as exc:
         log.error("Could not create schema '%s': %s", schema, exc)
         base["failed"] = rows_new
         return base
@@ -1022,7 +1023,7 @@ def process_collection(
             .save()
         )
         log.info("Staging write ✓")
-    except Exception as exc:
+    except SQLAlchemyError as exc:
         log.error("JDBC staging write failed: %s", exc)
         log.debug(traceback.format_exc())
         base["failed"] = rows_new
@@ -1045,15 +1046,15 @@ def process_collection(
 
         base["rows_loaded"] = rows_loaded
 
-    except Exception as exc:
+    except SQLAlchemyError as exc:
         log.error("Merge failed for '%s': %s", collection, exc)
         log.debug(traceback.format_exc())
         # Best-effort cleanup
         try:
             with engine.connect() as conn, conn.begin():
                 drop_staging(conn, schema, staging, log)
-        except Exception:
-            pass
+        except SQLAlchemyError:
+            log.warning("Could not drop staging after merge failure")
         base["failed"] = rows_new
         return base
 
@@ -1120,7 +1121,7 @@ def main(collections: list[str], full_load: bool = False) -> None:
     log.info("Spark stopped. Engine disposed.")
 
     # ── Run summary ────────────────────────────────────────────────────────
-    totals = dict(rows_mongo=0, rows_new=0, rows_loaded=0, failed=0)
+    totals = {"rows_mongo": 0, "rows_new": 0, "rows_loaded": 0, "failed": 0}
     skipped_count = 0
 
     for s in summaries:

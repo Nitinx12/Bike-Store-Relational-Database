@@ -16,7 +16,11 @@ from pathlib import Path
 
 try:
     from pymongo import MongoClient
-    from pymongo.errors import ServerSelectionTimeoutError, ConnectionFailure
+    from pymongo.errors import (
+        ConnectionFailure,
+        OperationFailure,
+        ServerSelectionTimeoutError,
+    )
 except ImportError as exc:
     print(f"[FAIL] pymongo is required: {exc}")
     print("       Install with: uv add pymongo")
@@ -73,7 +77,7 @@ def probe(uri: str) -> bool:
         db = client[db_name]
         try:
             coll_names = sorted(db.list_collection_names())
-        except Exception as exc:
+        except (ConnectionFailure, OperationFailure, ServerSelectionTimeoutError) as exc:
             print(f"  [!] Could not list collections for '{db_name}': {exc}")
             continue
 
