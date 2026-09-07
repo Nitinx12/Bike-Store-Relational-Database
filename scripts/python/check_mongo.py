@@ -9,6 +9,7 @@ Usage:
 
 Defaults to MONGO_URI from .env if not provided.
 """
+
 from __future__ import annotations
 
 import sys
@@ -77,7 +78,11 @@ def probe(uri: str) -> bool:
         db = client[db_name]
         try:
             coll_names = sorted(db.list_collection_names())
-        except (ConnectionFailure, OperationFailure, ServerSelectionTimeoutError) as exc:
+        except (
+            ConnectionFailure,
+            OperationFailure,
+            ServerSelectionTimeoutError,
+        ) as exc:
             print(f"  [!] Could not list collections for '{db_name}': {exc}")
             continue
 
@@ -97,7 +102,11 @@ def probe(uri: str) -> bool:
 
 def main() -> None:
     env = load_env()
-    uri = sys.argv[1] if len(sys.argv) > 1 else env.get("MONGO_URI", "mongodb://localhost:27017")
+    uri = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else env.get("MONGO_URI", "mongodb://localhost:27017")
+    )
     success = probe(uri)
     sys.exit(0 if success else 1)
 

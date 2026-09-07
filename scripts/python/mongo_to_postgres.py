@@ -188,9 +188,7 @@ _PG_TO_SPARK_CAST: dict[str, str] = {
 }
 
 
-def _cast_typed_columns(
-    sdf: DataFrame, table: str, log
-) -> DataFrame:
+def _cast_typed_columns(sdf: DataFrame, table: str, log) -> DataFrame:
     """
     Apply per-column type casts so JDBC writes typed values, not blind strings.
 
@@ -210,9 +208,14 @@ def _cast_typed_columns(
         except (ValueError, TypeError) as exc:
             log.warning(
                 "TYPE CAST FAILED for %s.%s (%s → %s): %s — column left as string",
-                table, col, pg_type, spark_cast, exc,
+                table,
+                col,
+                pg_type,
+                spark_cast,
+                exc,
             )
     return result
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Rich console setup — pretty tracebacks + terminal-facing banner/summary
@@ -324,9 +327,7 @@ def _to_datetime(val: object) -> datetime | None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def detect_pk_col(
-    columns: list[str], collection: str, log
-) -> list[str] | None:
+def detect_pk_col(columns: list[str], collection: str, log) -> list[str] | None:
     """
     Heuristic PK detection from slugified column names.
 
@@ -344,9 +345,7 @@ def detect_pk_col(
 
     composite = COMPOSITE_PK.get(slug)
     if composite and all(c in columns for c in composite):
-        log.info(
-            "PK DETECT : %s  (composite key from COMPOSITE_PK)", list(composite)
-        )
+        log.info("PK DETECT : %s  (composite key from COMPOSITE_PK)", list(composite))
         return list(composite)
 
     exact = f"{slug}_id"
@@ -497,7 +496,9 @@ def read_mongo_incremental(
 
         mongo_filter: dict = {}
         if ts_col_raw and pg_max_ts:
-            ts_val = _to_datetime(pg_max_ts) if isinstance(pg_max_ts, str) else pg_max_ts
+            ts_val = (
+                _to_datetime(pg_max_ts) if isinstance(pg_max_ts, str) else pg_max_ts
+            )
             if ts_val:
                 mongo_filter = {ts_col_raw: {"$gt": ts_val}}
             log.info(
@@ -686,17 +687,14 @@ def ensure_target_table(
     Per-column Postgres types are looked up via _pg_type_for(table, col); columns
     not in COLUMN_TYPE_MAP default to TEXT, so existing schemas are unaffected.
     """
-    col_defs = ",\n    ".join(
-        f'"{c}" {_pg_type_for(table, c)}' for c in columns
-    )
+    col_defs = ",\n    ".join(f'"{c}" {_pg_type_for(table, c)}' for c in columns)
 
     pk_list = pk_col
     if pk_list:
         pk_quoted = ", ".join(f'"{c}"' for c in pk_list)
         constraint_name = "_".join(pk_list)
         unique_clause = (
-            f',\n    CONSTRAINT "{table}_{constraint_name}_uq" '
-            f'UNIQUE ({pk_quoted})'
+            f',\n    CONSTRAINT "{table}_{constraint_name}_uq" UNIQUE ({pk_quoted})'
         )
     else:
         unique_clause = f',\n    CONSTRAINT "{table}_row_hash_uq" UNIQUE ("_row_hash")'
@@ -727,14 +725,14 @@ def ensure_target_table(
         if col not in existing:
             pg_type = _pg_type_for(table, col)
             conn.execute(
-                text(
-                    f'ALTER TABLE "{schema}"."{table}" '
-                    f'ADD COLUMN "{col}" {pg_type}'
-                )
+                text(f'ALTER TABLE "{schema}"."{table}" ADD COLUMN "{col}" {pg_type}')
             )
             log.info(
                 "Schema evolution → added column '%s' (%s) to %s.%s",
-                col, pg_type, schema, table,
+                col,
+                pg_type,
+                schema,
+                table,
             )
 
     # Type migration: promote existing TEXT columns to their target Postgres
@@ -777,13 +775,21 @@ def ensure_target_table(
             conn.execute(text(f"RELEASE SAVEPOINT {savepoint}"))
             log.info(
                 "Type migration → %s.%s  %s → %s",
-                schema, table, actual_type, target_type,
+                schema,
+                table,
+                actual_type,
+                target_type,
             )
         except SQLAlchemyError as exc:
             conn.execute(text(f"ROLLBACK TO SAVEPOINT {savepoint}"))
             log.warning(
                 "Type migration FAILED for %s.%s (%s → %s): %s — column left as %s",
-                schema, table, actual_type, target_type, exc, actual_type,
+                schema,
+                table,
+                actual_type,
+                target_type,
+                exc,
+                actual_type,
             )
 
     log.info("Table ready → %s.%s  (pk=%s)", schema, table, pk_list or "row_hash")
@@ -808,6 +814,7 @@ def merge_staging_to_target(
     columns written by the JDBC writer line up with the typed target
     columns. Columns that are TEXT in both staging and target stay as-is.
     """
+
     def _select_expr(col: str) -> str:
         return f'"{col}"'
 
@@ -818,10 +825,9 @@ def merge_staging_to_target(
     if pk_list:
         conflict_cols = ", ".join(f'"{c}"' for c in pk_list)
         pk_set = set(pk_list)
-        update_set = (
-            ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in columns if c not in pk_set)
-            or ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in pk_list)
-        )
+        update_set = ", ".join(
+            f'"{c}" = EXCLUDED."{c}"' for c in columns if c not in pk_set
+        ) or ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in pk_list)
         sql = f"""
             INSERT INTO "{schema}"."{table}" ({col_list})
             SELECT {select_list} FROM "{schema}"."{staging}"
@@ -846,9 +852,7 @@ def drop_staging(conn, schema: str, staging: str, log) -> None:
 
 
 def truncate_table(conn, schema: str, table: str, log) -> None:
-    conn.execute(
-        text(f'TRUNCATE TABLE "{schema}"."{table}" RESTART IDENTITY CASCADE')
-    )
+    conn.execute(text(f'TRUNCATE TABLE "{schema}"."{table}" RESTART IDENTITY CASCADE'))
     log.info("TRUNCATED   → %s.%s  (full-refresh)", schema, table)
 
 

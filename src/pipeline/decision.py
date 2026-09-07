@@ -31,8 +31,12 @@ def needs_load(mongo_stats: dict, pg_stats: dict, ts_col: str | None, log) -> bo
         )
         return True
 
-    if (ts_col and mongo_stats["max_ts"] and pg_stats["max_ts"]
-            and mongo_stats["max_ts"] > pg_stats["max_ts"]):
+    if (
+        ts_col
+        and mongo_stats["max_ts"]
+        and pg_stats["max_ts"]
+        and mongo_stats["max_ts"] > pg_stats["max_ts"]
+    ):
         log.info(
             "DECISION    : Mongo max_ts (%s) > PG max_ts (%s) → LOAD",
             mongo_stats["max_ts"],
