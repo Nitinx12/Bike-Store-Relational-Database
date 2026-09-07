@@ -51,11 +51,11 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install SQLFluff
-        run: pip install sqlfluff
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
       - name: Run SQLFluff Linting
-        run: sqlfluff lint . --dialect postgres
+        run: uv run sqlfluff lint . --dialect postgres
 
   makefile-check:
     name: Check Makefile (checkmake)

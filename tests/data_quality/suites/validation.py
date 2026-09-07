@@ -166,8 +166,8 @@ def products_suite() -> list:
         gxe.ExpectColumnValuesToBeBetween(
             column="list_price", min_value=0, strict_min=True
         ),
-        # TODO: adjust the upper bound if you legitimately stock pre-order /
-        # next-model-year bikes; this just catches obvious typos (e.g. 2035).
+        # NOTE: adjust max_value if you stock pre-order / next-model-year bikes.
+        # Current max=2027 catches obvious typos (e.g. year 2035).
         gxe.ExpectColumnValuesToBeBetween(
             column="model_year", min_value=2000, max_value=2027
         ),
@@ -187,31 +187,24 @@ def products_suite() -> list:
 
 
 def stocks_suite() -> list:
-    return (
-        [
-            gxe.ExpectColumnValuesToBeUnique(
-                column="store_id", mostly=0
-            ),  # placeholder, replaced below
-        ][:0]
-        + [  # keep structure simple: build the real list explicitly
-            gxe.ExpectTableRowCountToBeBetween(min_value=1),
-            *_not_null("store_id", "product_id", "quantity", "updated_at"),
-            gxe.ExpectCompoundColumnsToBeUnique(column_list=["store_id", "product_id"]),
-            gxe.ExpectColumnValuesToBeBetween(column="quantity", min_value=0),
-            _fk_check(
-                "stocks.store_id must reference an existing stores.store_id",
-                "store_id",
-                "stores",
-                "store_id",
-            ),
-            _fk_check(
-                "stocks.product_id must reference an existing products.product_id",
-                "product_id",
-                "products",
-                "product_id",
-            ),
-        ]
-    )
+    return [
+        gxe.ExpectTableRowCountToBeBetween(min_value=1),
+        *_not_null("store_id", "product_id", "quantity", "updated_at"),
+        gxe.ExpectCompoundColumnsToBeUnique(column_list=["store_id", "product_id"]),
+        gxe.ExpectColumnValuesToBeBetween(column="quantity", min_value=0),
+        _fk_check(
+            "stocks.store_id must reference an existing stores.store_id",
+            "store_id",
+            "stores",
+            "store_id",
+        ),
+        _fk_check(
+            "stocks.product_id must reference an existing products.product_id",
+            "product_id",
+            "products",
+            "product_id",
+        ),
+    ]
 
 
 def orders_suite() -> list:
@@ -228,9 +221,8 @@ def orders_suite() -> list:
             "staff_id",
             "updated_at",
         ),
-        # TODO: once you've confirmed the real set of statuses
-        # (`SELECT DISTINCT order_status FROM orders;`), replace this with:
-        # gxe.ExpectColumnValuesToBeInSet(column="order_status", value_set=[...]))
+        # NOTE: tighten to ExpectColumnValuesToBeInSet once the real statuses
+        # are confirmed: SELECT DISTINCT order_status FROM orders;
         gxe.ExpectColumnValueLengthsToBeBetween(
             column="order_status", min_value=1, max_value=50
         ),

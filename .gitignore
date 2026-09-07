@@ -264,14 +264,6 @@ mlruns/
 !data/raw/.gitkeep
 !data/staging/.gitkeep
 !reports/.gitkeep
-.env
-
-.env
-.env.*
-!.env.example
-__init__.py
-
-.env
 
 # =============================================================================
 # GREAT EXPECTATIONS
@@ -284,7 +276,7 @@ great_expectations/.gitignore
 # Ignore generated/local validation artifacts
 
 tests/data_quality/reports/
-.qwen
+.qwen/
 .ruff_cache/
 
 # =============================================================================

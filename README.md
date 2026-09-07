@@ -246,7 +246,7 @@ bike-store-relational-database/
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Visual system overview, Mermaid diagrams, container topology |
 | [docs/run_book.md](docs/run_book.md) | How to run, configure, and troubleshoot |
 | [docs/makefile.md](docs/makefile.md) | **Complete Makefile reference** — every target with examples |
-| [docs/data_catlog.md](docs/data_catlog.md) | Full schema reference for all 9 tables |
+| [docs/data_catalog.md](docs/data_catalog.md) | Full schema reference for all 9 tables |
 | [docs/incremental_loading.md](docs/incremental_loading.md) | How the ETL's incremental logic works, step by step |
 | [docs/testing.md](docs/testing.md) | Data quality strategy, suite overview |
 | [docs/docker.md](docs/docker.md) | Docker setup, image build, docker-compose services |

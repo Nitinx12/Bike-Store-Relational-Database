@@ -61,7 +61,7 @@ Markdown documentation rendered on GitHub.
 |---|---|
 | `ARCHITECTURE.md` | Visual system overview + container topology + ER diagram |
 | `run_book.md` | How to run, configure, troubleshoot |
-| `data_catlog.md` | Full schema reference (all 9 tables, every column) |
+| `data_catalog.md` | Full schema reference (all 9 tables, every column) |
 | `incremental_loading.md` | How the ETL's incremental logic works, step by step |
 | `testing.md` | Data quality strategy + both test layers |
 | `docker.md` | Docker setup, image build, compose services |

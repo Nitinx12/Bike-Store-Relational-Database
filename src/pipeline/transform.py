@@ -1,9 +1,9 @@
 """
 src/pipeline/transform.py
 
-Column-name normalisation and PK/timestamp-column detection for
-collections whose schema isn't declared anywhere — MongoDB documents
-don't carry a schema, so this is the pipeline's substitute for one.
+Column-name normalisation, PK/timestamp-column detection, and typed-column
+support for collections whose schema isn't declared anywhere — MongoDB
+documents don't carry a schema, so this is the pipeline's substitute for one.
 
 Moved out of scripts/mongo_to_postgres.py unchanged in behaviour.
 """
@@ -16,6 +16,33 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
 from src.pipeline.config import ETL_TS_COL
+
+# Composite (multi-column) primary key overrides — (table_slug, columns)
+COMPOSITE_PK: dict[str, tuple[str, ...]] = {
+    "stocks": ("store_id", "product_id"),
+    "order_items": ("order_id", "item_id"),
+}
+
+# Column type map  (table_slug, column) → Postgres type string.
+# Columns not in this map default to TEXT.
+COLUMN_TYPE_MAP: dict[tuple[str, str], str] = {
+    # timestamps / dates
+    ("brands", "updated_at"): "TIMESTAMPTZ",
+    ("categories", "updated_at"): "TIMESTAMPTZ",
+    ("customers", "updated_at"): "TIMESTAMPTZ",
+    ("order_items", "updated_at"): "TIMESTAMPTZ",
+    ("orders", "order_date"): "DATE",
+    ("orders", "required_date"): "DATE",
+    ("orders", "shipped_date"): "DATE",
+    ("orders", "updated_at"): "TIMESTAMPTZ",
+    ("products", "updated_at"): "TIMESTAMPTZ",
+    ("staffs", "updated_at"): "TIMESTAMPTZ",
+    ("stocks", "updated_at"): "TIMESTAMPTZ",
+    ("stores", "updated_at"): "TIMESTAMPTZ",
+    # numeric / boolean
+    ("staffs", "active"): "SMALLINT",
+    ("order_items", "total_value"): "NUMERIC(14,2)",
+}
 
 
 def slugify(s: str) -> str:
@@ -31,13 +58,20 @@ def detect_pk_col(columns: list[str], collection: str, log) -> str | None:
     Heuristic PK detection from slugified column names.
 
     Priority:
-      1. Exact match for the collection name + '_id'  e.g. 'artist' → 'artist_id'
-      2. Any column that ends with '_id'
-      3. Exact column named 'id'
+      1. Explicit composite-PK override in COMPOSITE_PK (e.g. stocks, order_items)
+      2. Exact match for the collection name + '_id'  e.g. 'artist' → 'artist_id'
+      3. Any column that ends with '_id'
+      4. Exact column named 'id'
 
     Returns the column name or None if nothing matches.
     """
     slug = slugify(collection)
+
+    composite = COMPOSITE_PK.get(slug)
+    if composite and all(c in columns for c in composite):
+        log.info("PK DETECT : %s  (composite key from COMPOSITE_PK)", list(composite))
+        return list(composite)  # type: ignore[return-value]
+
     exact = f"{slug}_id"
 
     if exact in columns:

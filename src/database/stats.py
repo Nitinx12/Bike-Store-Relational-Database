@@ -62,12 +62,13 @@ def get_postgres_stats(
                     if row and row[0]:
                         result["max_ts"] = row[0]
 
+        max_ts = result["max_ts"]
         log.info(
             "PG STATS    : %s.%s  count=%d  max_ts=%s",
             schema,
             table,
             result["count"],
-            result["max_ts"].isoformat() if result["max_ts"] else "N/A",
+            max_ts.isoformat() if max_ts is not None else "N/A",
         )
     except SQLAlchemyError as exc:
         log.error("Failed to get Postgres stats for %s.%s: %s", schema, table, exc)

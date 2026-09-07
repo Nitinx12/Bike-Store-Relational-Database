@@ -192,8 +192,8 @@ prune: clean ## Deep prune Docker
 
 check-deps: ## Verify required tools (uv, python, docker, etc.) are available
 	@echo Checking prerequisites...
-	@uv --version >nul 2>&1 && echo   uv OK     && echo   uv version: && uv --version
-	@uv sync --dry-run >nul 2>&1 && echo   uv lockfile OK || (echo   FATAL: uv lockfile out of sync. Run uv sync. && exit /b 1)
+	@uv --version >/dev/null 2>&1 && echo   uv OK     && echo   uv version: && uv --version || (echo   FATAL: uv not found. && exit 1)
+	@uv sync --dry-run >/dev/null 2>&1 && echo   uv lockfile OK || (echo   FATAL: uv lockfile out of sync. Run uv sync. && exit 1)
 	@echo All prerequisites met.
 
 install: check-deps ## Install / sync dependencies and verify
@@ -205,15 +205,15 @@ verify: check-deps ## Alias for 'check-deps' (runs dependency checks only)
 
 doctor: check-deps ## Run dependency + import health check; exit non-zero if anything is misconfigured
 	@echo === Doctor: uv lockfile ===
-	@uv sync --dry-run >nul 2>&1 && echo   Lockfile OK || (echo   ERROR: Lockfile out of sync. Run make install. && exit /b 1)
+	@uv sync --dry-run >/dev/null 2>&1 && echo   Lockfile OK || (echo   ERROR: Lockfile out of sync. Run make install. && exit 1)
 	@echo === Doctor: Pipeline imports ===
-	@uv run python -c "from src.pipeline.runner import run_pipeline; print('  Pipeline import OK')" 2>nul || (echo   ERROR: Cannot import pipeline modules. && exit /b 1)
-	@uv run python -c "from src.validation.plpgsql_loops import run_all; print('  PL/pgSQL import OK')" 2>nul || (echo   ERROR: Cannot import plpgsql modules. && exit /b 1)
-	@uv run python -c "from tests.data_quality import run; print('  GX import OK')" 2>nul || (echo   ERROR: Cannot import GX modules. && exit /b 1)
+	@uv run python -c "from src.pipeline.runner import run_pipeline; print('  Pipeline import OK')" 2>/dev/null || (echo   ERROR: Cannot import pipeline modules. && exit 1)
+	@uv run python -c "from src.validation.plpgsql_loops import run_all; print('  PL/pgSQL import OK')" 2>/dev/null || (echo   ERROR: Cannot import plpgsql modules. && exit 1)
+	@uv run python -c "from tests.data_quality import run; print('  GX import OK')" 2>/dev/null || (echo   ERROR: Cannot import GX modules. && exit 1)
 	@echo All doctor checks passed.
 
 run-clean: ## Remove pipeline log files older than 7 days
-	@if exist logs\pipeline (forfiles /p logs\pipeline /m pipeline_*.log /d -7 /c "cmd /c del @file" 2>nul && echo Cleaned old pipeline logs. || echo No old logs to clean.) else echo No logs directory; nothing to clean.
+	@bash scripts/shell/log_cleanup.sh ${ARGS}
 
 # ----------------------------------------------------------------------------
 # Primary run targets

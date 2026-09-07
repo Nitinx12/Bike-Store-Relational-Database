@@ -11,6 +11,7 @@
 #   ./scripts/restore_postgres.sh <backup.sql.gz>
 #   ./scripts/restore_postgres.sh /backups/bike_store_20240101_120000.sql.gz
 #   ./scripts/restore_postgres.sh --list               List available backups
+#   ./scripts/restore_postgres.sh --force              Skip confirmation (CI)
 # ============================================================================
 
 set -uo pipefail
@@ -84,6 +85,7 @@ ${BOLD}Postgres Restore Utility${RESET}
 Usage:
   $(basename "$0") <backup.sql.gz>     Restore the named backup (DESTRUCTIVE)
   $(basename "$0") --list              List available backups
+  $(basename "$0") --force             Skip confirmation prompt (CI/automation)
   $(basename "$0") --help
 
 WARNING: This script drops the '${POSTGRES_DATABASE}' database before
@@ -93,9 +95,11 @@ EOF
 
 main() {
     local target=""
+    local force=""
     for arg in "$@"; do
         case "$arg" in
             --list) list_backups; exit 0 ;;
+            --force) force="yes" ;;
             --help|-h) usage; exit 0 ;;
             -*) fail "Unknown option: $arg"; usage; exit 1 ;;
             *) target="$arg" ;;
@@ -115,12 +119,16 @@ main() {
 
     warn "This will DROP and RECREATE the '${POSTGRES_DATABASE}' database."
     warn "Source: $target"
-    local confirm=""
-    read -r -p $'\nProceed? [y/N] ' confirm
-    case "$confirm" in
-        y|Y|yes|YES) ;;
-        *) info "Aborted. No changes made."; exit 0 ;;
-    esac
+
+    # Skip prompt if --force is passed or stdin is not a terminal (CI)
+    if [[ "$force" != "yes" && -t 0 ]]; then
+        local confirm=""
+        read -r -p $'\nProceed? [y/N] ' confirm
+        case "$confirm" in
+            y|Y|yes|YES) ;;
+            *) info "Aborted. No changes made."; exit 0 ;;
+        esac
+    fi
 
     info "Terminating active connections to '${POSTGRES_DATABASE}'..."
     run_psql -d postgres -c "

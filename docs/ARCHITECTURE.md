@@ -1,6 +1,6 @@
 # Architecture
 
-This project moves retail data from **MongoDB** to **PostgreSQL** on a schedule, checks it for quality, then turns it into reports. This page is the simple, visual entry point. For column-level detail, see [`data_catlog.md`](./data_catlog.md), [`incremental_loading.md`](./incremental_loading.md), and [`run_book.md`](./run_book.md).
+This project moves retail data from **MongoDB** to **PostgreSQL** on a schedule, checks it for quality, then turns it into reports. This page is the simple, visual entry point. For column-level detail, see [`data_catalog.md`](./data_catalog.md), [`incremental_loading.md`](./incremental_loading.md), and [`run_book.md`](./run_book.md).
 
 ---
 

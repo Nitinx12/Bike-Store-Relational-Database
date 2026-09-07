@@ -72,7 +72,7 @@ import time
 
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
 
-PUSHGATEWAY_URL = os.getenv("PUSHGATEWAY_URL", "localhost:9091")
+PUSHGATEWAY_URL = os.getenv("PUSHGATEWAY_URL", "pushgateway:9091")
 PUSHGATEWAY_TIMEOUT = float(os.getenv("PUSHGATEWAY_TIMEOUT", "5"))
 
 _module_logger = logging.getLogger("metrics")

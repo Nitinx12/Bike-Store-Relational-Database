@@ -3,11 +3,11 @@
 This document provides strict instructions, coding standards, and architectural context for any AI/LLM assisting with this project. 
 
 ## 1. Project Overview & Structure
-This is an ETL (Extract, Transform, Load) data pipeline project that extracts data (likely from MongoDB, based on `mongo_to_postgres.py`), transforms it using PySpark, validates it via Great Expectations (`gx/`), and loads it into a PostgreSQL relational database. It includes observability via Docker/Grafana and extensive SQL-based analytics.
+This is an ETL (Extract, Transform, Load) data pipeline project that extracts data (likely from MongoDB, based on `scripts/python/mongo_to_postgres.py`), transforms it using PySpark, validates it via Great Expectations (`gx/`), and loads it into a PostgreSQL relational database. It includes observability via Docker/Grafana and extensive SQL-based analytics.
 
 ### Directory Map Context
 *   **`src/`**: Core Python ETL pipeline logic (`pipeline/`), database connections (`database/`), and validation triggers (`validation/`).
-*   **`scripts/`**: Operational Bash and Python scripts (e.g., `monitor_logs.sh`, `run_gx.py`).
+*   **`scripts/`**: Operational Bash and Python scripts (e.g., `scripts/shell/monitor_logs.sh`, `scripts/python/run_gx.py`).
 *   **`sql/`**: Analytical queries, schema explorations, and PL/pgSQL functions.
 *   **`tests/`**: Data quality tests using Python (`data_quality/`) and SQL/PLpgSQL (`generic/loops/`).
 *   **`gx/`**: Great Expectations configurations, suites, and uncommitted data docs.
@@ -52,7 +52,7 @@ This is an ETL (Extract, Transform, Load) data pipeline project that extracts da
 ## 4. Package Management & Dependencies (`uv`)
 This project strictly uses [uv](https://github.com/astral-sh/uv) by Astral for Python dependency management. 
 *   **No pip/conda**: Do not suggest `pip install` or `conda install`.
-*   **Running Scripts**: Always prefix Python executions with `uv run` (e.g., `uv run main.py` or `uv run scripts/run_gx.py`).
+*   **Running Scripts**: Always prefix Python executions with `uv run` (e.g., `uv run main.py` or `uv run scripts/python/run_gx.py`).
 *   **Adding Dependencies**: 
     *   Standard: `uv add <package>`
     *   **Dev Dependencies**: `uv add --dev <package>` (Use this for linters, formatters, or testing frameworks like `pytest`).
@@ -66,7 +66,7 @@ This project strictly uses [uv](https://github.com/astral-sh/uv) by Astral for P
 ## 6. ETL Specific Rules
 *   **PySpark (`src/pipeline/`)**: Avoid UDFs where standard Spark SQL functions (`pyspark.sql.functions`) can be used. Rely on `src/pipeline/spark_session.py` for context generation.
 *   **SQL (`sql/` & `tests/generic/loops/`)**: Use standard PostgreSQL syntax. Avoid reserved keywords as column names. Use explicit `JOIN` syntax rather than implicit `WHERE` clauses.
-*   **Great Expectations (`gx/`)**: When updating validations, interact strictly through the `src/validation/` wrappers or `scripts/run_gx.py`.
+*   **Great Expectations (`gx/`)**: When updating validations, interact strictly through the `src/validation/` wrappers or `scripts/python/run_gx.py`.
 
 ## 7. Version Control & Git Workflow
 When suggesting Git commands or generating commits, strictly adhere to the following rules:

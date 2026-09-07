@@ -15,7 +15,7 @@ set -euo pipefail
 # Examples:
 #   docker run myimg pipeline                     # full pipeline run
 #   docker run myimg etl                          # incremental, all collections
-#   docker run myimg etl --collection orders       # incremental, one collection
+#   docker run myimg etl --collection orders      # incremental, one collection
 #   docker run myimg etl --full-refresh
 #   docker run myimg dq-loops
 #   docker run myimg dq-gx orders products
@@ -29,7 +29,7 @@ shift || true
 # ----------------------------------------------------------------------------
 # Optional: wait for the Pushgateway to accept connections before running a
 # metrics-emitting job, so the first run right after `docker compose up`
-# doesn't just silently miss its push while Pushgateway is still starting.
+# doesn\'t just silently miss its push while Pushgateway is still starting.
 # This is a convenience, not a requirement — utils/metrics.py already fails
 # soft (logs + returns False) if the gateway is unreachable, so timing out
 # here just prints a warning and the job still runs.
@@ -47,8 +47,18 @@ wait_for_pushgateway() {
 
     echo "[entrypoint] Waiting up to ${timeout}s for Pushgateway at ${target}..."
     while (( waited < timeout )); do
-        if (exec 3<>"/dev/tcp/${host}/${port}") 2>/dev/null; then
-            exec 3>&- 3<&- 2>/dev/null || true
+        # Use Python (always present in the image) instead of /dev/tcp so
+        # this works in sh, bash, busybox, and minimal containers alike.
+        if uv run python -c "
+import socket, sys
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.settimeout(1.0)
+try:
+    s.connect(('${host}', int('${port}')))
+    sys.exit(0)
+except (OSError, ValueError):
+    sys.exit(1)
+" 2>/dev/null; then
             echo "[entrypoint] Pushgateway is reachable."
             return 0
         fi
@@ -87,12 +97,12 @@ Jobs:
       customers, orders, order_items) suitable for a first end-to-end run.
 
   inspect-schema
-      scripts/python/inspect_schema.py — prints the public schema's tables,
+      scripts/python/inspect_schema.py — prints the public schema\'s tables,
       columns, and data types.
 
   monitor-logs [summary|clean] [--dry-run|-y]
       scripts/shell/monitor_logs.sh — defaults to a read-only summary; see the
-      script's own --help for the full option list.
+      script\'s own --help for the full option list.
 
   shell
       Drop into bash inside the container (debugging).
@@ -112,7 +122,7 @@ case "$JOB" in
         ;;
     etl)
         wait_for_pushgateway
-        exec uv run python -m scripts.python.mongo_to_postgres "$@"
+        exec uv run python scripts/python/mongo_to_postgres.py "$@"
         ;;
     dq-loops)
         wait_for_pushgateway
@@ -138,7 +148,7 @@ case "$JOB" in
         usage
         ;;
     *)
-        echo "[entrypoint] Unknown job: '${JOB}'" >&2
+        echo "[entrypoint] Unknown job: \'${JOB}\'" >&2
         echo >&2
         usage >&2
         exit 1

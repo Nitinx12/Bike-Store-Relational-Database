@@ -51,7 +51,9 @@ def merge_staging_to_target(
         """
 
     conn.execute(text(sql))
-    count = conn.execute(text(f'SELECT COUNT(*) FROM "{schema}"."{staging}"')).scalar()
+    count = conn.execute(
+        text(f'SELECT COUNT(*) FROM "{schema}"."{table}"')
+    ).scalar()
     log.info("MERGE       : %d rows → %s.%s", count, schema, table)
     return count
 

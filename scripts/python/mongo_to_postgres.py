@@ -193,10 +193,12 @@ def _cast_typed_columns(sdf: DataFrame, table: str, log) -> DataFrame:
     Apply per-column type casts so JDBC writes typed values, not blind strings.
 
     Only columns listed in COLUMN_TYPE_MAP are cast; all others stay as strings.
-    Casting failures (e.g. malformed timestamp strings) fall back to NULL so the
-    pipeline never aborts on a single bad row.
+    Spark's permissive `.cast()` returns NULL on unparseable values rather than
+    raising, so per-row cast failures surface as NULLs — we count and report
+    them per-column so silent data-quality issues don't disappear into the load.
     """
     result = sdf
+    cast_failures: dict[str, int] = {}
     for col in sdf.columns:
         pg_type = _pg_type_for(table, col)
         spark_cast = _PG_TO_SPARK_CAST.get(pg_type)
@@ -205,6 +207,13 @@ def _cast_typed_columns(sdf: DataFrame, table: str, log) -> DataFrame:
         try:
             result = result.withColumn(col, F.col(col).cast(spark_cast))
             log.debug("TYPE CAST  : %s.%s → %s", table, col, spark_cast)
+            # Track rows that became NULL because casting failed (had a
+            # non-NULL source value but the cast couldn't parse it).
+            original_non_null = sdf.filter(F.col(col).isNotNull()).count()
+            new_non_null = result.filter(F.col(col).isNotNull()).count()
+            lost = original_non_null - new_non_null
+            if lost > 0:
+                cast_failures[col] = lost
         except (ValueError, TypeError) as exc:
             log.warning(
                 "TYPE CAST FAILED for %s.%s (%s → %s): %s — column left as string",
@@ -213,6 +222,14 @@ def _cast_typed_columns(sdf: DataFrame, table: str, log) -> DataFrame:
                 pg_type,
                 spark_cast,
                 exc,
+            )
+    if cast_failures:
+        for col, n in cast_failures.items():
+            log.warning(
+                "TYPE CAST    : %s.%s had %d unparseable values (cast to NULL)",
+                table,
+                col,
+                n,
             )
     return result
 

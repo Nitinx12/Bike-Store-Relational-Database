@@ -98,4 +98,6 @@ def get_datasource() -> PostgresDatasource:
     first if it hasn't been built yet."""
     if _datasource is None:
         get_context()
+    if _datasource is None:
+        raise RuntimeError("Postgres datasource could not be initialized")
     return _datasource
