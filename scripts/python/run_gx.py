@@ -17,7 +17,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[2]
 DATA_QUALITY_DIR = ROOT_DIR / "tests" / "data_quality"
 
 for p in (DATA_QUALITY_DIR, ROOT_DIR):

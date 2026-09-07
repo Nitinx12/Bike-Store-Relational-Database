@@ -13,17 +13,19 @@ import logging
 import sys
 from pathlib import Path
 
+# This file lives in scripts/python/, so the repo root is two levels up.
+# Add it to sys.path *before* any other imports, so `utils.*` resolves
+# no matter where this script is invoked from.
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 import psycopg2
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from sqlalchemy.exc import SQLAlchemyError
-
-# This file lives in scripts/, so the repo root is one level up. Add it to
-# sys.path so `utils.*` resolves no matter where this script is invoked from.
-SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
-sys.path.insert(0, str(REPO_ROOT))
 
 from utils.engine import postgres_engine
 from utils.logger import get_logger

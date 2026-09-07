@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/makefile.md` — complete Makefile reference with all targets, examples, and troubleshooting guide
+- `Makefile` — production-grade run targets: `run`, `run-verbose`, `run-full`, `run-etl`, `run-dq`, `run-gx`, `run-etl-only`, `run-etl-dq`, `run-collection`, `run-collection-full`, `run-gx-table`, `check-deps`, `doctor`, `run-clean`, `verify`
+- `README.md` — comprehensive Makefile commands table with 30+ targets documented; improved section structure, TOC, and contributing guide
 - `CHANGELOG.md` — project changelog for tracking notable changes
 
 ### Changed
@@ -28,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`scripts/python/plpgsql_loops_tests.py`**: moved `sys.path` setup before the `from utils...` import block, and corrected the parent-directory traversal from `SCRIPT_DIR.parent` to `SCRIPT_DIR.parent.parent` (was resolving to `scripts/` instead of the repo root) — `make local-pipeline` Stage 2 now works
+- **`scripts/python/run_gx.py`**: corrected `Path(__file__).resolve().parents[1]` to `parents[2]` so the repo root (and therefore `utils/`) is on `sys.path` — `make local-pipeline` Stage 3 now works
+- **`Makefile`**: rewrote `help` target to use plain `@echo` (no `grep`/`awk`) so it works on Windows `cmd.exe`; replaced bash-only `command -v` checks in `check-deps` and `doctor` with Windows-compatible shell primitives; replaced Unix `find`/`mtime` log cleanup with `forfiles`
 - **SQL files**: `sqlfluff fix` auto-fixed trailing whitespace, missing trailing newlines, indentation, spacing, and SELECT modifier issues across all 21 SQL files
 - **`sql/04_measures_exploration.sql`**: added explicit `AS metric` and `AS metric_value` aliases (AL03), renamed `value` alias to `metric_value` (RF04 reserved keyword)
 - **`sql/09_performance_analysis.sql`**: wrapped long comment across multiple lines to respect 80-char limit (LT05)
