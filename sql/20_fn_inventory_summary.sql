@@ -60,20 +60,20 @@
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION fn_inventory_summary(
-    p_start_date        DATE DEFAULT DATE_TRUNC('MONTH', CURRENT_DATE)::DATE,
-    p_end_date          DATE DEFAULT CURRENT_DATE,
-    p_reorder_threshold INT  DEFAULT 10
+    p_start_date DATE DEFAULT date_trunc('MONTH', current_date)::DATE,
+    p_end_date DATE DEFAULT current_date,
+    p_reorder_threshold INT DEFAULT 10
 )
 RETURNS TABLE (
-    product_id        BIGINT,
-    product_name      TEXT,
-    model_year        BIGINT,
-    current_stock     NUMERIC,    
-    stock_out         NUMERIC, 
-    reorder_alert     BOOLEAN,
+    product_id BIGINT,
+    product_name TEXT,
+    model_year BIGINT,
+    current_stock NUMERIC,
+    stock_out NUMERIC,
+    reorder_alert BOOLEAN,
     potential_revenue NUMERIC,
-    actual_revenue    NUMERIC,
-    lost_revenue      NUMERIC
+    actual_revenue NUMERIC,
+    lost_revenue NUMERIC
 )
 LANGUAGE plpgsql
 AS $$

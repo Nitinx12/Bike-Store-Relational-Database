@@ -1,40 +1,46 @@
-WITH Product_metric AS(
+WITH Product_metric AS (
     SELECT
-        B.brand_id,
-        B.brand_name,
-        COUNT(DISTINCT P.product_id) AS total_products,
-        COUNT(DISTINCT OI.order_id) AS total_orders,
-        COUNT(DISTINCT O.customer_id) AS unique_customers,
-        COALESCE(ROUND(SUM(OI.total_value),2),0) AS total_revenue,
-        COALESCE(ROUND(AVG(OI.total_value),2),0) AS avg_order_value,
-        COALESCE(SUM(OI.quantity),0) AS units_sold
-    FROM brands AS B
-    LEFT JOIN products AS P ON
-    P.brand_id = B.brand_id
-    LEFT JOIN order_items AS OI ON
-    OI.product_id = P.product_id
-    LEFT JOIN orders AS O ON
-    OI.order_id = O.order_id
+        B.Brand_id,
+        B.Brand_name,
+        COUNT(DISTINCT P.Product_id) AS Total_products,
+        COUNT(DISTINCT Oi.Order_id) AS Total_orders,
+        COUNT(DISTINCT O.Customer_id) AS Unique_customers,
+        COALESCE(ROUND(SUM(Oi.Total_value), 2), 0) AS Total_revenue,
+        COALESCE(ROUND(AVG(Oi.Total_value), 2), 0) AS Avg_order_value,
+        COALESCE(SUM(Oi.Quantity), 0) AS Units_sold
+    FROM Brands AS B
+    LEFT JOIN Products AS P
+        ON
+            B.Brand_id = P.Brand_id
+    LEFT JOIN Order_items AS Oi
+        ON
+            P.Product_id = Oi.Product_id
+    LEFT JOIN Orders AS O
+        ON
+            Oi.Order_id = O.Order_id
     GROUP BY
-        B.brand_id,
-        B.brand_name
+        B.Brand_id,
+        B.Brand_name
 ),
-Grand_revenue AS(
-    SELECT SUM(total_revenue) AS grand_revenue
+
+Grand_revenue AS (
+    SELECT SUM(Total_revenue) AS Grand_revenue
     FROM Product_metric
 )
+
 SELECT
+    Pm.Brand_id,
+    Pm.Brand_name,
+    Pm.Total_products,
+    Pm.Units_sold,
+    Pm.Unique_customers,
+    Pm.Total_orders,
+    Pm.Total_revenue,
+    Pm.Avg_order_value,
     RANK()
-        OVER(ORDER BY PM.total_revenue DESC) AS brand_rank,
-    PM.brand_id,
-    PM.brand_name,
-    PM.total_products,
-    PM.units_sold,
-    PM.unique_customers,
-    PM.total_orders,
-    PM.total_revenue,
-    PM.avg_order_value,
-    ROUND(PM.total_revenue / NULLIF(GR.grand_revenue,0) * 100,2) AS pct_of_total
-FROM Product_metric AS PM
-CROSS JOIN Grand_revenue AS GR
-ORDER BY brand_rank ASC;
+        OVER (ORDER BY Pm.Total_revenue DESC) AS Brand_rank,
+    ROUND(Pm.Total_revenue / NULLIF(Gr.Grand_revenue, 0) * 100, 2)
+        AS Pct_of_total
+FROM Product_metric AS Pm
+CROSS JOIN Grand_revenue AS Gr
+ORDER BY Brand_rank ASC;

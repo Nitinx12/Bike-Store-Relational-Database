@@ -1,58 +1,67 @@
 WITH Cohort_base AS (
     SELECT
-        O.customer_id,
-        DATE_TRUNC('MONTH', MIN(O.order_date)) AS cohort_month
-    FROM orders AS O
-    WHERE O.order_status = 'Completed'
-    GROUP BY O.customer_id
+        O.Customer_id,
+        DATE_TRUNC('MONTH', MIN(O.Order_date)) AS Cohort_month
+    FROM Orders AS O
+    WHERE O.Order_status = 'Completed'
+    GROUP BY O.Customer_id
 ),
+
 Index_table AS (
     SELECT
-        O.customer_id,
-        CB.cohort_month,
-        DATE_TRUNC('MONTH', O.order_date) AS activity_month,
+        O.Customer_id,
+        Cb.Cohort_month,
+        Oi.Total_value,
+        DATE_TRUNC('MONTH', O.Order_date) AS Activity_month,
         (
-            EXTRACT(YEAR  FROM O.order_date)  * 12 +
-            EXTRACT(MONTH FROM O.order_date)
-        ) -
-        (
-            EXTRACT(YEAR  FROM CB.cohort_month) * 12 +  
-            EXTRACT(MONTH FROM CB.cohort_month)
-        ) AS index_number,
-        OI.total_value
-    FROM Cohort_base AS CB
-    INNER JOIN orders AS O ON 
-    O.customer_id = CB.customer_id
-    INNER JOIN order_items AS OI ON 
-    OI.order_id   = O.order_id
-    WHERE O.order_status = 'Completed'                 
+            EXTRACT(YEAR FROM O.Order_date) * 12
+            + EXTRACT(MONTH FROM O.Order_date)
+        )
+        - (
+            EXTRACT(YEAR FROM Cb.Cohort_month) * 12
+            + EXTRACT(MONTH FROM Cb.Cohort_month)
+        ) AS Index_number
+    FROM Cohort_base AS Cb
+    INNER JOIN Orders AS O
+        ON
+            Cb.Customer_id = O.Customer_id
+    INNER JOIN Order_items AS Oi
+        ON
+            O.Order_id = Oi.Order_id
+    WHERE O.Order_status = 'Completed'
 ),
+
 Cohort_summary AS (
     SELECT
-        cohort_month,
-        COUNT(DISTINCT customer_id) AS total_customers,
-        SUM(total_value)            AS total_revenue
+        Cohort_month,
+        COUNT(DISTINCT Customer_id) AS Total_customers,
+        SUM(Total_value) AS Total_revenue
     FROM Index_table
-    WHERE index_number = 0                             
-    GROUP BY cohort_month
+    WHERE Index_number = 0
+    GROUP BY Cohort_month
 ),
-Cohort_retention AS (                                  
+
+Cohort_retention AS (
     SELECT
-        IT.cohort_month,
-        IT.index_number,
-        CS.total_customers                                              AS cohort_size,
-        COUNT(DISTINCT IT.customer_id)                                  AS active_customers,
-        ROUND(100.0 * COUNT(DISTINCT IT.customer_id)
-              / CS.total_customers, 1)                                  AS retention_rate,
-        SUM(IT.total_value)                                             AS period_revenue
-    FROM Index_table    AS IT
-    INNER JOIN Cohort_summary AS CS ON 
-    IT.cohort_month = CS.cohort_month
-    GROUP BY 
-        IT.cohort_month, 
-        IT.index_number, 
-        CS.total_customers
+        It.Cohort_month,
+        It.Index_number,
+        Cs.Total_customers AS Cohort_size,
+        COUNT(DISTINCT It.Customer_id) AS Active_customers,
+        ROUND(
+            100.0 * COUNT(DISTINCT It.Customer_id)
+            / Cs.Total_customers, 1
+        ) AS Retention_rate,
+        SUM(It.Total_value) AS Period_revenue
+    FROM Index_table AS It
+    INNER JOIN Cohort_summary AS Cs
+        ON
+            It.Cohort_month = Cs.Cohort_month
+    GROUP BY
+        It.Cohort_month,
+        It.Index_number,
+        Cs.Total_customers
 )
+
 SELECT *
 FROM Cohort_retention
-ORDER BY cohort_month, index_number;
+ORDER BY Cohort_month, Index_number;

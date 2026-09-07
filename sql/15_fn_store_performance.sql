@@ -46,28 +46,28 @@
 -- =====================================================================
 
 CREATE OR REPLACE FUNCTION fn_store_performance(
-    p_start_date  DATE DEFAULT '2016-01-01',
-    p_end_date    DATE DEFAULT '2018-12-28'
+    p_start_date DATE DEFAULT '2016-01-01',
+    p_end_date DATE DEFAULT '2018-12-28'
 )
-RETURNS TABLE(
-    store_id              BIGINT,
-    store_name            TEXT,
-    city                  TEXT,
-    state                 TEXT,
-    total_orders          BIGINT,
-    completed_orders      BIGINT,
-    cancelled_orders      BIGINT,
-    cancellation_rate     NUMERIC,
-    total_revenue         NUMERIC,
-    avg_order_value       NUMERIC,
-    total_units_sold      NUMERIC,
-    total_discount_given  NUMERIC,
-    on_time_rate          NUMERIC,
-    total_staff           BIGINT,
+RETURNS TABLE (
+    store_id BIGINT,
+    store_name TEXT,
+    city TEXT,
+    state TEXT,
+    total_orders BIGINT,
+    completed_orders BIGINT,
+    cancelled_orders BIGINT,
+    cancellation_rate NUMERIC,
+    total_revenue NUMERIC,
+    avg_order_value NUMERIC,
+    total_units_sold NUMERIC,
+    total_discount_given NUMERIC,
+    on_time_rate NUMERIC,
+    total_staff BIGINT,
     avg_revenue_per_staff NUMERIC,
-    total_customers       BIGINT,
-    repeat_customers      BIGINT,
-    total_stock_quantity  NUMERIC
+    total_customers BIGINT,
+    repeat_customers BIGINT,
+    total_stock_quantity NUMERIC
 )
 LANGUAGE plpgsql
 AS $$

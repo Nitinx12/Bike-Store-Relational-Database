@@ -4,50 +4,57 @@
 --   Grain : One row per month (or per month + category)
 -- ============================================================
 
-WITH Monthly_base AS(
+WITH Monthly_base AS (
     SELECT
-        TO_CHAR(O.order_date,'YYYY-MM')                         AS order_month,
-        COUNT(DISTINCT O.customer_id)                           AS unique_customers,
-        COUNT(DISTINCT OI.order_id)                             AS total_orders,
-        SUM(OI.quantity)                                        AS units_sold,
-        ROUND(SUM(oi.list_price * oi.quantity), 2)              AS gross_revenue,
-        ROUND(SUM(oi.discount), 2)                              AS total_discounts,
-        ROUND(SUM(oi.total_value), 2)                           AS net_revenue
-    FROM orders AS O
-    INNER JOIN order_items AS OI ON
-    OI.order_id = O.order_id
-    WHERE O.order_status = 'Completed'
-    GROUP BY order_month
+        TO_CHAR(O.Order_date, 'YYYY-MM') AS Order_month,
+        COUNT(DISTINCT O.Customer_id) AS Unique_customers,
+        COUNT(DISTINCT Oi.Order_id) AS Total_orders,
+        SUM(Oi.Quantity) AS Units_sold,
+        ROUND(SUM(Oi.List_price * Oi.Quantity), 2) AS Gross_revenue,
+        ROUND(SUM(Oi.Discount), 2) AS Total_discounts,
+        ROUND(SUM(Oi.Total_value), 2) AS Net_revenue
+    FROM Orders AS O
+    INNER JOIN Order_items AS Oi
+        ON
+            O.Order_id = Oi.Order_id
+    WHERE O.Order_status = 'Completed'
+    GROUP BY Order_month
 ),
-Monthly_kpi AS(
+
+Monthly_kpi AS (
     SELECT
-        order_month,
-        unique_customers,
-        total_orders,
-        units_sold,
-        gross_revenue,
-        total_discounts,
-        net_revenue,
-        ROUND(net_revenue / NULLIF(total_orders, 0), 2)             AS avg_order_value,
-        ROUND(total_discounts / NULLIF(gross_revenue, 0) * 100, 2)  AS discount_rate_pct,
-        ROUND(net_revenue / NULLIF(unique_customers, 0), 2)         AS revenue_per_customer,
-        ROUND(units_sold * 1.0 / NULLIF(total_orders, 0), 2)        AS units_per_order,
-        LAG(net_revenue)    OVER (ORDER BY order_month)                   AS prev_month_revenue,
-        LAG(total_orders)   OVER (ORDER BY order_month)                   AS prev_month_orders,
-        LAG(unique_customers) OVER (ORDER BY order_month)                 AS prev_month_customers,
+        Order_month,
+        Unique_customers,
+        Total_orders,
+        Units_sold,
+        Gross_revenue,
+        Total_discounts,
+        Net_revenue,
+        ROUND(Net_revenue / NULLIF(Total_orders, 0), 2) AS Avg_order_value,
+        ROUND(Total_discounts / NULLIF(Gross_revenue, 0) * 100, 2)
+            AS Discount_rate_pct,
+        ROUND(Net_revenue / NULLIF(Unique_customers, 0), 2)
+            AS Revenue_per_customer,
+        ROUND(Units_sold * 1.0 / NULLIF(Total_orders, 0), 2) AS Units_per_order,
+        LAG(Net_revenue) OVER (ORDER BY Order_month) AS Prev_month_revenue,
+        LAG(Total_orders) OVER (ORDER BY Order_month) AS Prev_month_orders,
+        LAG(Unique_customers)
+            OVER (ORDER BY Order_month)
+            AS Prev_month_customers,
         ROUND(
-            (net_revenue - LAG(net_revenue) OVER (ORDER BY order_month))
-            / NULLIF(LAG(net_revenue) OVER (ORDER BY order_month), 0) * 100, 2
-        )                                                           AS revenue_growth_mom_pct,
+            (Net_revenue - LAG(Net_revenue) OVER (ORDER BY Order_month))
+            / NULLIF(LAG(Net_revenue) OVER (ORDER BY Order_month), 0) * 100, 2
+        ) AS Revenue_growth_mom_pct,
         ROUND(
-            (total_orders - LAG(total_orders) OVER (ORDER BY order_month))
-            / NULLIF(LAG(total_orders) OVER (ORDER BY order_month), 0) * 100, 2
-        )                                                           AS orders_growth_mom_pct,
-        ROUND(AVG(net_revenue) OVER (
-            ORDER BY order_month
+            (Total_orders - LAG(Total_orders) OVER (ORDER BY Order_month))
+            / NULLIF(LAG(Total_orders) OVER (ORDER BY Order_month), 0) * 100, 2
+        ) AS Orders_growth_mom_pct,
+        ROUND(AVG(Net_revenue) OVER (
+            ORDER BY Order_month
             ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
-        ), 2)                                                       AS rolling_3m_avg_revenue
+        ), 2) AS Rolling_3m_avg_revenue
     FROM Monthly_base
 )
+
 SELECT *
 FROM Monthly_kpi

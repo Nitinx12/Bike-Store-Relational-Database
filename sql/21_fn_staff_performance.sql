@@ -65,21 +65,21 @@
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION fn_staff_performance(
-    p_start_date  DATE DEFAULT (CURRENT_DATE - INTERVAL '3 years')::DATE,
-    p_end_date    DATE DEFAULT CURRENT_DATE
-)  
-RETURNS TABLE(
-    staff_id              BIGINT,
-    store_id              BIGINT,
-    total_orders          BIGINT,
-    completed_orders      BIGINT,
-    cancelled_orders      BIGINT,
-    cancellation_rate     NUMERIC,
-    total_revenue         NUMERIC,
-    avg_order_value       NUMERIC,
-    total_units_sold      NUMERIC,
-    total_discount_given  NUMERIC,
-    on_time_rate          NUMERIC
+    p_start_date DATE DEFAULT (current_date - INTERVAL '3 years')::DATE,
+    p_end_date DATE DEFAULT current_date
+)
+RETURNS TABLE (
+    staff_id BIGINT,
+    store_id BIGINT,
+    total_orders BIGINT,
+    completed_orders BIGINT,
+    cancelled_orders BIGINT,
+    cancellation_rate NUMERIC,
+    total_revenue NUMERIC,
+    avg_order_value NUMERIC,
+    total_units_sold NUMERIC,
+    total_discount_given NUMERIC,
+    on_time_rate NUMERIC
 )
 LANGUAGE plpgsql
 AS $$

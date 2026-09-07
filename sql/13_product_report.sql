@@ -1,161 +1,186 @@
 WITH Sales_base AS (
     SELECT
-        OI.product_id,
-        O.order_id,
-        O.customer_id,
-        O.store_id,
-        O.order_date,
-        C.state,
-        S.store_name,
-        OI.quantity,
-        OI.list_price,
-        OI.discount,
-        OI.quantity * OI.list_price * (1 - OI.discount) AS revenue,
-        OI.quantity * OI.list_price * OI.discount       AS discount_amount
-    FROM order_items AS OI
-    INNER JOIN orders AS O ON 
-    OI.order_id = O.order_id
-    INNER JOIN customers AS C ON 
-    C.customer_id = O.customer_id
-    INNER JOIN stores AS S ON 
-    S.store_id = O.store_id
+        Oi.Product_id,
+        O.Order_id,
+        O.Customer_id,
+        O.Store_id,
+        O.Order_date,
+        C.State,
+        S.Store_name,
+        Oi.Quantity,
+        Oi.List_price,
+        Oi.Discount,
+        Oi.Quantity * Oi.List_price * (1 - Oi.Discount) AS Revenue,
+        Oi.Quantity * Oi.List_price * Oi.Discount AS Discount_amount
+    FROM Order_items AS Oi
+    INNER JOIN Orders AS O
+        ON
+            Oi.Order_id = O.Order_id
+    INNER JOIN Customers AS C
+        ON
+            O.Customer_id = C.Customer_id
+    INNER JOIN Stores AS S ON
+        O.Store_id = S.Store_id
 ),
+
 Metrics AS (
     SELECT
-        product_id,
-        SUM(quantity)              AS total_units_sold,
-        SUM(revenue)               AS total_revenue,
-        COUNT(DISTINCT order_id)   AS total_orders,
-        COUNT(DISTINCT customer_id) AS unique_customers,
-        SUM(discount_amount)       AS total_discount,
-        MIN(order_date)            AS first_sale_date,
-        MAX(order_date)            AS last_sale_date
+        Product_id,
+        SUM(Quantity) AS Total_units_sold,
+        SUM(Revenue) AS Total_revenue,
+        COUNT(DISTINCT Order_id) AS Total_orders,
+        COUNT(DISTINCT Customer_id) AS Unique_customers,
+        SUM(Discount_amount) AS Total_discount,
+        MIN(Order_date) AS First_sale_date,
+        MAX(Order_date) AS Last_sale_date
     FROM Sales_base
     GROUP BY
-        product_id
+        Product_id
 ),
+
 Inventory_metrics AS (
     SELECT
-        product_id,
-        SUM(quantity) AS inventory_level
-    FROM stocks
+        Product_id,
+        SUM(Quantity) AS Inventory_level
+    FROM Stocks
     GROUP BY
-        product_id
+        Product_id
 ),
+
 Top_state AS (
     SELECT
-        product_id,
-        state,
+        Product_id,
+        State,
         ROW_NUMBER()
-            OVER(
-                PARTITION BY product_id
-                ORDER BY SUM(revenue) DESC, state 
-            ) AS rnk
+            OVER (
+                PARTITION BY Product_id
+                ORDER BY SUM(Revenue) DESC, State
+            ) AS Rnk
     FROM Sales_base
     GROUP BY
-        product_id,
-        state
+        Product_id,
+        State
 ),
+
 Top_store AS (
     SELECT
-        product_id,
-        store_name,
+        Product_id,
+        Store_name,
         ROW_NUMBER()
-            OVER(
-                PARTITION BY product_id
-                ORDER BY SUM(revenue) DESC, store_name
-            ) AS rnk
+            OVER (
+                PARTITION BY Product_id
+                ORDER BY SUM(Revenue) DESC, Store_name
+            ) AS Rnk
     FROM Sales_base
     GROUP BY
-        product_id,
-        store_name
+        Product_id,
+        Store_name
 ),
+
 Dataset_date AS (
-    SELECT MAX(order_date) AS last_dataset_date
-    FROM orders
+    SELECT MAX(Order_date) AS Last_dataset_date
+    FROM Orders
 ),
+
 Product_segmentation AS (
     SELECT
-        product_id,
-        total_revenue,
-        revenue_segment,
-        AVG(total_revenue) OVER(PARTITION BY category_id)   AS avg_category_revenue,
+        Product_id,
+        Total_revenue,
+        Revenue_segment,
+        AVG(Total_revenue)
+            OVER (PARTITION BY Category_id)
+            AS Avg_category_revenue,
         CASE
-            WHEN total_revenue > AVG(total_revenue) OVER(PARTITION BY category_id)
-            THEN 'Above Average'
+            WHEN
+                Total_revenue
+                > AVG(Total_revenue) OVER (PARTITION BY Category_id)
+                THEN 'Above Average'
             ELSE 'Below Average'
-        END AS vs_category_avg
+        END AS Vs_category_avg
     FROM (
         SELECT
-            P.product_id,
-            P.category_id,
-            SUM(OI.quantity * OI.list_price * (1 - OI.discount)) AS total_revenue,
+            P.Product_id,
+            P.Category_id,
+            SUM(Oi.Quantity * Oi.List_price * (1 - Oi.Discount))
+                AS Total_revenue,
             CASE
-                WHEN SUM(OI.quantity * OI.list_price * (1 - OI.discount)) >= 15000
-                THEN 'High Revenue'
-                WHEN SUM(OI.quantity * OI.list_price * (1 - OI.discount)) BETWEEN 3000 AND 14999
-                THEN 'Medium Revenue'
+                WHEN
+                    SUM(Oi.Quantity * Oi.List_price * (1 - Oi.Discount))
+                    >= 15000
+                    THEN 'High Revenue'
+                WHEN
+                    SUM(
+                        Oi.Quantity * Oi.List_price * (1 - Oi.Discount)
+                    ) BETWEEN 3000 AND 14999
+                    THEN 'Medium Revenue'
                 ELSE 'Low Revenue'
-            END AS revenue_segment
-        FROM products AS P
-        INNER JOIN order_items AS OI
-            ON P.product_id = OI.product_id
+            END AS Revenue_segment
+        FROM Products AS P
+        INNER JOIN Order_items AS Oi
+            ON P.Product_id = Oi.Product_id
         GROUP BY
-            P.product_id,
-            P.category_id
+            P.Product_id,
+            P.Category_id
     ) AS X
 )
+
 SELECT
-    P.product_name,
-    B.brand_name,
-    C.category_name,
-    P.list_price,
+    P.Product_name,
+    B.Brand_name,
+    C.Category_name,
+    P.List_price,
+    M.First_sale_date,
+    M.Last_sale_date,
+    Ts.State AS Top_state,
+    Tss.Store_name AS Top_store,
+    Pm.Vs_category_avg,
     DENSE_RANK()
-        OVER(
-            PARTITION BY P.category_id
-            ORDER BY COALESCE(M.total_units_sold, 0) DESC
-        )                                                       AS category_rank,
-    COALESCE(M.total_units_sold, 0)                             AS total_units_sold,
-    ROUND(COALESCE(M.total_revenue, 0), 2)                      AS total_revenue,
-    COALESCE(M.total_orders, 0)                                 AS total_orders,
-    COALESCE(M.unique_customers, 0)                             AS unique_customers,
+        OVER (
+            PARTITION BY P.Category_id
+            ORDER BY COALESCE(M.Total_units_sold, 0) DESC
+        ) AS Category_rank,
+    COALESCE(M.Total_units_sold, 0) AS Total_units_sold,
+    ROUND(COALESCE(M.Total_revenue, 0), 2) AS Total_revenue,
+    COALESCE(M.Total_orders, 0) AS Total_orders,
+    COALESCE(M.Unique_customers, 0) AS Unique_customers,
     CASE
-        WHEN M.total_units_sold > 0
-        THEN ROUND(M.total_revenue / M.total_units_sold, 2)
-        ELSE NULL
-    END                                                         AS avg_selling_price,
-    ROUND(COALESCE(M.total_discount, 0), 2)                     AS total_discount,
-    M.first_sale_date,
-    M.last_sale_date,
-    GD.last_dataset_date - M.last_sale_date                     AS days_since_last_sale,
-    TS.state                                                    AS top_state,
-    TSS.store_name                                              AS top_store,
-    COALESCE(IM.inventory_level, 0)                             AS inventory_level,
-    COALESCE(PM.revenue_segment, 'Low Revenue')                 AS revenue_segment,
-    ROUND(PM.avg_category_revenue, 2)                           AS avg_category_revenue,
-    PM.vs_category_avg,
+        WHEN M.Total_units_sold > 0
+            THEN ROUND(M.Total_revenue / M.Total_units_sold, 2)
+    END AS Avg_selling_price,
+    ROUND(COALESCE(M.Total_discount, 0), 2) AS Total_discount,
+    Gd.Last_dataset_date - M.Last_sale_date AS Days_since_last_sale,
+    COALESCE(Im.Inventory_level, 0) AS Inventory_level,
+    COALESCE(Pm.Revenue_segment, 'Low Revenue') AS Revenue_segment,
+    ROUND(Pm.Avg_category_revenue, 2) AS Avg_category_revenue,
     CASE
-        WHEN M.last_sale_date IS NULL
-        THEN 'Never Sold'
-        WHEN GD.last_dataset_date - M.last_sale_date <= 365
-        THEN 'Active'
-        WHEN GD.last_dataset_date - M.last_sale_date <= 1095
-        THEN 'Slow Moving'
+        WHEN M.Last_sale_date IS NULL
+            THEN 'Never Sold'
+        WHEN Gd.Last_dataset_date - M.Last_sale_date <= 365
+            THEN 'Active'
+        WHEN Gd.Last_dataset_date - M.Last_sale_date <= 1095
+            THEN 'Slow Moving'
         ELSE 'Obsolete'
-    END                                                         AS lifecycle_status
-FROM products AS P
-LEFT JOIN brands AS B ON 
-B.brand_id = P.brand_id
-LEFT JOIN categories AS C ON 
-C.category_id = P.category_id
-LEFT JOIN Metrics AS M ON 
-M.product_id = P.product_id
-LEFT JOIN Inventory_metrics AS IM ON 
-P.product_id = IM.product_id
-LEFT JOIN Top_state AS TS ON 
-TS.product_id = P.product_id AND TS.rnk = 1
-LEFT JOIN Top_store AS TSS ON 
-TSS.product_id = P.product_id AND TSS.rnk = 1
-LEFT JOIN Product_segmentation AS PM ON 
-PM.product_id = P.product_id
-CROSS JOIN Dataset_date AS GD;
+    END AS Lifecycle_status
+FROM Products AS P
+LEFT JOIN Brands AS B
+    ON
+        P.Brand_id = B.Brand_id
+LEFT JOIN Categories AS C
+    ON
+        P.Category_id = C.Category_id
+LEFT JOIN Metrics AS M
+    ON
+        P.Product_id = M.Product_id
+LEFT JOIN Inventory_metrics AS Im
+    ON
+        P.Product_id = Im.Product_id
+LEFT JOIN Top_state AS Ts
+    ON
+        P.Product_id = Ts.Product_id AND Ts.Rnk = 1
+LEFT JOIN Top_store AS Tss
+    ON
+        P.Product_id = Tss.Product_id AND Tss.Rnk = 1
+LEFT JOIN Product_segmentation AS Pm
+    ON
+        P.Product_id = Pm.Product_id
+CROSS JOIN Dataset_date AS Gd;

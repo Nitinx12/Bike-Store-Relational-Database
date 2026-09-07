@@ -1,81 +1,88 @@
 -- Which 5 products Generating the Highest Revenue?
 -- Simple Ranking
 SELECT
-    P.product_id,
-    P.product_name,
-    COALESCE(SUM(OI.total_value),0) AS total_revenue
-FROM products AS P
-LEFT JOIN order_items AS OI ON
-OI.product_id = P.product_id
-GROUP BY P.product_id, P.product_name
-ORDER BY total_revenue DESC
+    P.PRODUCT_ID,
+    P.PRODUCT_NAME,
+    COALESCE(SUM(OI.TOTAL_VALUE), 0) AS TOTAL_REVENUE
+FROM PRODUCTS AS P
+LEFT JOIN ORDER_ITEMS AS OI
+    ON
+        P.PRODUCT_ID = OI.PRODUCT_ID
+GROUP BY P.PRODUCT_ID, P.PRODUCT_NAME
+ORDER BY TOTAL_REVENUE DESC
 LIMIT 5;
 
 -- Complex but Flexibly Ranking Using Window Functions
 SELECT
-    product_id,
-    product_name,
-    total_revenue
-FROM(
+    X.PRODUCT_ID,
+    X.PRODUCT_NAME,
+    X.TOTAL_REVENUE
+FROM (
     SELECT
-        P.product_id,
-        P.product_name,
-        COALESCE(SUM(OI.total_value),0)  AS total_revenue,
+        P.PRODUCT_ID,
+        P.PRODUCT_NAME,
+        COALESCE(SUM(OI.TOTAL_VALUE), 0) AS TOTAL_REVENUE,
         DENSE_RANK()
-            OVER(ORDER BY COALESCE(SUM(OI.total_value),0) DESC) AS rnk
-    FROM products AS P
-    LEFT JOIN order_items AS OI ON
-    OI.product_id = P.product_id
-    GROUP BY P.product_id, P.product_name
-    ORDER BY total_revenue DESC
+            OVER (ORDER BY COALESCE(SUM(OI.TOTAL_VALUE), 0) DESC) AS RNK
+    FROM PRODUCTS AS P
+    LEFT JOIN ORDER_ITEMS AS OI
+        ON
+            P.PRODUCT_ID = OI.PRODUCT_ID
+    GROUP BY P.PRODUCT_ID, P.PRODUCT_NAME
+    ORDER BY TOTAL_REVENUE DESC
 ) AS X
-WHERE X.rnk <= 5;
+WHERE X.RNK <= 5;
 
 -- What are the 5 worst-performing products in terms of sales?
 SELECT
-    P.product_id,
-    P.product_name,
-    COALESCE(SUM(OI.total_value),0) AS total_revenue
-FROM products AS P
-LEFT JOIN order_items AS OI ON
-OI.product_id = P.product_id
-GROUP BY P.product_id, P.product_name
-ORDER BY total_revenue ASC
+    P.PRODUCT_ID,
+    P.PRODUCT_NAME,
+    COALESCE(SUM(OI.TOTAL_VALUE), 0) AS TOTAL_REVENUE
+FROM PRODUCTS AS P
+LEFT JOIN ORDER_ITEMS AS OI
+    ON
+        P.PRODUCT_ID = OI.PRODUCT_ID
+GROUP BY P.PRODUCT_ID, P.PRODUCT_NAME
+ORDER BY TOTAL_REVENUE ASC
 LIMIT 5;
 
 -- Find the top 10 customers who have generated the highest revenue
 SELECT
-    customer_id,
-    customer_name,
-    total_revenue
-FROM(
+    X.CUSTOMER_ID,
+    X.CUSTOMER_NAME,
+    X.TOTAL_REVENUE
+FROM (
     SELECT
-        C.customer_id,
-        CONCAT(C.first_name,' ',C.last_name) AS customer_name,
-        SUM(OI.total_value) AS total_revenue,
+        C.CUSTOMER_ID,
+        CONCAT(C.FIRST_NAME, ' ', C.LAST_NAME) AS CUSTOMER_NAME,
+        SUM(OI.TOTAL_VALUE) AS TOTAL_REVENUE,
         DENSE_RANK()
-            OVER(ORDER BY SUM(OI.total_value) DESC) AS rnk
-    FROM customers AS C
-    LEFT JOIN orders AS O ON
-    C.customer_id = O.customer_id
-    LEFT JOIN order_items AS OI ON
-    OI.order_id = O.order_id
-    GROUP BY C.customer_id, customer_name
+            OVER (ORDER BY SUM(OI.TOTAL_VALUE) DESC) AS RNK
+    FROM CUSTOMERS AS C
+    LEFT JOIN ORDERS AS O
+        ON
+            C.CUSTOMER_ID = O.CUSTOMER_ID
+    LEFT JOIN ORDER_ITEMS AS OI
+        ON
+            O.ORDER_ID = OI.ORDER_ID
+    GROUP BY C.CUSTOMER_ID, CUSTOMER_NAME
 ) AS X
-WHERE X.rnk <= 10;
+WHERE X.RNK <= 10;
 
 -- The 3 customers with the fewest orders placed
 SELECT
-    C.customer_id,
-    CONCAT(C.first_name,' ',C.last_name) AS full_name,
-    COUNT(DISTINCT OI.order_id) AS total_orders
-FROM customers AS C
-LEFT JOIN orders AS O ON
-C.customer_id = O.customer_id
-LEFT JOIN order_items AS OI ON
-OI.order_id = O.order_id
+    C.CUSTOMER_ID,
+    CONCAT(C.FIRST_NAME, ' ', C.LAST_NAME) AS FULL_NAME,
+    COUNT(DISTINCT OI.ORDER_ID) AS TOTAL_ORDERS
+FROM CUSTOMERS AS C
+LEFT JOIN ORDERS AS O
+    ON
+        C.CUSTOMER_ID = O.CUSTOMER_ID
+LEFT JOIN ORDER_ITEMS AS OI
+    ON
+        O.ORDER_ID = OI.ORDER_ID
 GROUP BY
-    C.customer_id,
-    full_name
-ORDER BY total_orders ASC
+    C.CUSTOMER_ID,
+    FULL_NAME
+ORDER BY TOTAL_ORDERS ASC
 LIMIT 3;
