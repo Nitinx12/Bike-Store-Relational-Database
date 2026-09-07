@@ -1,25 +1,25 @@
 SELECT
     'Completed Orders' AS metric,
-    COUNT(*) FILTER (WHERE order_status = 'Completed') AS value
+    COUNT(*) FILTER (WHERE order_status = 'Completed') AS metric_value
 FROM orders
 
 UNION ALL
 
 SELECT
-    'Pending Orders',
-    COUNT(*) FILTER (WHERE order_status = 'Pending')
+    'Pending Orders' AS metric,
+    COUNT(*) FILTER (WHERE order_status = 'Pending') AS metric_value
 FROM orders
 
 UNION ALL
 
 SELECT
-    'Rejected Orders',
-    COUNT(*) FILTER (WHERE order_status = 'Rejected')
+    'Rejected Orders' AS metric,
+    COUNT(*) FILTER (WHERE order_status = 'Rejected') AS metric_value
 FROM orders
 
 UNION ALL
 
 SELECT
-    'Processing Orders',
-    COUNT(*) FILTER (WHERE order_status = 'Processing')
+    'Processing Orders' AS metric,
+    COUNT(*) FILTER (WHERE order_status = 'Processing') AS metric_value
 FROM orders;
