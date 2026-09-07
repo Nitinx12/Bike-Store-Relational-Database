@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import psycopg2
+
 
 def discover_test_files(loops_dir: Path) -> list[Path]:
     if not loops_dir.is_dir():
@@ -41,7 +43,7 @@ def run_test_file(dbapi_conn, sql_path: Path) -> tuple[bool, str]:
         dbapi_conn.commit()
         message = "".join(dbapi_conn.notices).strip()
         return True, message
-    except Exception as exc:
+    except psycopg2.Error as exc:
         dbapi_conn.rollback()
         message = getattr(exc, "pgerror", None) or str(exc)
         return False, message.strip()

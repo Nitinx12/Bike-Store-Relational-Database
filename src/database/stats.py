@@ -11,6 +11,7 @@ Moved out of scripts/mongo_to_postgres.py unchanged in behaviour.
 from __future__ import annotations
 
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 
 def get_postgres_stats(
@@ -68,7 +69,7 @@ def get_postgres_stats(
             result["count"],
             result["max_ts"].isoformat() if result["max_ts"] else "N/A",
         )
-    except Exception as exc:
+    except SQLAlchemyError as exc:
         log.error("Failed to get Postgres stats for %s.%s: %s", schema, table, exc)
 
     return result

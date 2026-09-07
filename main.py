@@ -24,7 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from rich.console import Console
@@ -201,13 +201,13 @@ def run_gx_stage(tables: list[str] | None) -> list[dict] | None:
     try:
         context = gx_run.get_context()
         datasource = gx_run.get_datasource()
-    except Exception as exc:
+    except (OSError, ValueError, TypeError, AttributeError) as exc:
         console.print(f"[red]Could not set up GX context/datasource: {exc}[/red]")
         return None
 
-    run_started = datetime.now()
+    run_started = datetime.now(UTC)
     results = [gx_run.validate_table(context, datasource, t) for t in table_names]
-    run_finished = datetime.now()
+    run_finished = datetime.now(UTC)
 
     metrics = ValidationRunMetrics(job="run_gx")
     for r in results:

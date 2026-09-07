@@ -14,6 +14,7 @@ from datetime import datetime
 
 import pandas as pd
 from pymongo import MongoClient
+from pymongo.errors import PyMongoError
 from pyspark.sql import DataFrame, SparkSession
 
 from src.pipeline.config import ISO_FMT
@@ -44,7 +45,7 @@ def mongo_collection_stats(collection: str, ts_col_raw: str | None, log) -> dict
         )
         return {"count": count, "max_ts": max_ts}
 
-    except Exception as exc:
+    except PyMongoError as exc:
         log.error("Failed to get Mongo stats for '%s': %s", collection, exc)
         return {"count": 0, "max_ts": None}
 
@@ -101,7 +102,7 @@ def read_mongo_incremental(
         )
         return sdf
 
-    except Exception as exc:
+    except PyMongoError as exc:
         log.error("Failed to read collection '%s': %s", collection, exc)
         log.debug(traceback.format_exc())
         return None
