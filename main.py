@@ -166,11 +166,34 @@ def run_load_stage(args: argparse.Namespace) -> dict:
 def run_plpgsql_stage() -> list[dict]:
     console.rule("[bold]Stage 2/3 — PL/pgSQL data-quality suite[/bold]")
 
-    engine = postgres_engine()
+    try:
+        engine = postgres_engine()
+    except Exception as exc:  # noqa: BLE001 - DB unreachable must fail the stage, not crash
+        console.print(
+            Panel(
+                f"Could not connect to Postgres: {exc}\n\n"
+                "Is the database running? Try: docker compose up -d postgres",
+                title="[bold red]Postgres connection failed[/bold red]",
+                border_style="red",
+            )
+        )
+        return [{"name": "postgres-connection", "passed": False, "message": str(exc)}]
     try:
         results = run_all(engine, LOOPS_DIR)
+    except Exception as exc:  # noqa: BLE001 - suite failure must fail the stage, not crash
+        console.print(
+            Panel(
+                str(exc),
+                title="[bold red]PL/pgSQL suite failed[/bold red]",
+                border_style="red",
+            )
+        )
+        return [{"name": "plpgsql-suite", "passed": False, "message": str(exc)}]
     finally:
-        engine.dispose()
+        try:
+            engine.dispose()
+        except Exception:  # noqa: BLE001, S110 - best-effort cleanup
+            pass
 
     metrics = ValidationRunMetrics(job="plpgsql_loops_tests")
     for r in results:
