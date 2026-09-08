@@ -48,12 +48,35 @@ COLUMN_TYPE_MAP: dict[tuple[str, str], str] = {
 def slugify(s: str) -> str:
     """Normalise a field name to a safe Postgres column identifier."""
     s = str(s).strip().lower()
-    s = re.sub(r"[^\w\s]", "", s)
     s = re.sub(r"[\s\-]+", "_", s)
+    s = re.sub(r"[^\w]", "", s)
     return re.sub(r"_+", "_", s).strip("_") or "col"
 
 
-def detect_pk_col(columns: list[str], collection: str, log) -> str | None:
+PkCol = str | tuple[str, ...] | None
+
+
+def detect_pk_cols(columns: list[str], collection: str, log) -> tuple[str, ...] | None:
+    """Return all PK columns (composite-aware). None if no match."""
+    slug = slugify(collection)
+    composite = COMPOSITE_PK.get(slug)
+    if composite and all(c in columns for c in composite):
+        log.info("PK DETECT : %s  (composite key from COMPOSITE_PK)", list(composite))
+        return tuple(composite)
+    exact = f"{slug}_id"
+    if exact in columns:
+        return (exact,)
+    candidates = [c for c in columns if c.endswith("_id")]
+    if candidates:
+        return (candidates[0],)
+    if "id" in columns:
+        return ("id",)
+    return None
+
+
+def detect_pk_col(
+    columns: list[str], collection: str, log
+) -> str | tuple[str, ...] | None:
     """
     Heuristic PK detection from slugified column names.
 
@@ -63,14 +86,14 @@ def detect_pk_col(columns: list[str], collection: str, log) -> str | None:
       3. Any column that ends with '_id'
       4. Exact column named 'id'
 
-    Returns the column name or None if nothing matches.
+    Returns a single column, a tuple for composites, or None.
     """
     slug = slugify(collection)
 
     composite = COMPOSITE_PK.get(slug)
     if composite and all(c in columns for c in composite):
         log.info("PK DETECT : %s  (composite key from COMPOSITE_PK)", list(composite))
-        return list(composite)  # type: ignore[return-value]
+        return tuple(composite)
 
     exact = f"{slug}_id"
 

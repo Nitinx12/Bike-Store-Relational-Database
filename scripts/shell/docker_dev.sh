@@ -19,9 +19,9 @@
 #   ./scripts/docker_dev.sh reset      Stop containers & PURGE all database/metric volumes
 # ============================================================================
 
-set -uo pipefail
+set -euo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE_FILE="${PROJECT_ROOT}/docker-compose.yml"
 
 # Load environment overrides

@@ -13,6 +13,8 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
+from src.pipeline.mongo_source import to_iso
+
 
 def get_postgres_stats(
     engine, schema: str, table: str, ts_col: str | None, log
@@ -63,12 +65,16 @@ def get_postgres_stats(
                         result["max_ts"] = row[0]
 
         max_ts = result["max_ts"]
+        try:
+            max_ts_str = to_iso(max_ts) if max_ts is not None else "N/A"
+        except (AttributeError, TypeError, ValueError):
+            max_ts_str = str(max_ts)
         log.info(
             "PG STATS    : %s.%s  count=%d  max_ts=%s",
             schema,
             table,
             result["count"],
-            max_ts.isoformat() if max_ts is not None else "N/A",
+            max_ts_str,
         )
     except SQLAlchemyError as exc:
         log.error("Failed to get Postgres stats for %s.%s: %s", schema, table, exc)

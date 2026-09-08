@@ -35,7 +35,7 @@ def ensure_target_table(
     schema: str,
     table: str,
     columns: list[str],
-    pk_col: str | None,
+    pk_col: str | tuple[str, ...] | None,
     log,
 ) -> None:
     """
@@ -46,8 +46,17 @@ def ensure_target_table(
     """
     col_defs = ",\n    ".join(f'"{c}" {_pg_type_for(table, c)}' for c in columns)
 
-    if pk_col and pk_col in columns:
-        unique_clause = f',\n    CONSTRAINT "{table}_{pk_col}_uq" UNIQUE ("{pk_col}")'
+    if isinstance(pk_col, (list, tuple)):
+        pk_cols = [c for c in pk_col if c in columns]
+    elif pk_col and pk_col in columns:
+        pk_cols = [pk_col]
+    else:
+        pk_cols = []
+    if pk_cols:
+        cols_sql = ", ".join(f'"{c}"' for c in pk_cols)
+        unique_clause = (
+            f',\n    CONSTRAINT "{table}_{"_".join(pk_cols)}_uq" UNIQUE ({cols_sql})'
+        )
     else:
         unique_clause = f',\n    CONSTRAINT "{table}_row_hash_uq" UNIQUE ("_row_hash")'
 

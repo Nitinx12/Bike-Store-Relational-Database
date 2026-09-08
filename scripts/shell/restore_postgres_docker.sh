@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Internal wrapper: restore PostgreSQL dump into Docker container via compose exec.
 # Handles the DROP + RESTORE in a single non-interactive call.
-set -uo pipefail
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 COMPOSE_DIR="${PROJECT_ROOT}"
 
 SRC_FILE="${1:-${PROJECT_ROOT}/backups/postgres/bike_store_20260905_101833.sql.gz}"
