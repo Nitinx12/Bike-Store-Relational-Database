@@ -10,8 +10,16 @@ Moved out of scripts/mongo_to_postgres.py unchanged in behaviour.
 
 from __future__ import annotations
 
+import logging
+from typing import Any
 
-def needs_load(mongo_stats: dict, pg_stats: dict, ts_col: str | None, log) -> bool:
+
+def needs_load(
+    mongo_stats: dict[str, Any],
+    pg_stats: dict[str, Any],
+    ts_col: str | None,
+    log: logging.Logger,
+) -> bool:
     """
     Rules:
       1. Target table doesn't exist in Postgres        → always load
@@ -19,22 +27,22 @@ def needs_load(mongo_stats: dict, pg_stats: dict, ts_col: str | None, log) -> bo
       3. ts_col present AND Mongo max_ts > PG max_ts    → newer records exist, load
       4. Otherwise                                      → nothing changed, skip
     """
-    if not pg_stats["table_exists"]:
+    if not pg_stats.get("table_exists", False):
         log.info("DECISION    : table absent in Postgres → LOAD (first run)")
         return True
 
-    if mongo_stats["count"] > pg_stats["count"]:
+    if int(mongo_stats.get("count", 0)) > int(pg_stats.get("count", 0)):
         log.info(
             "DECISION    : Mongo count (%d) > PG count (%d) → LOAD",
-            mongo_stats["count"],
-            pg_stats["count"],
+            mongo_stats.get("count", 0),
+            pg_stats.get("count", 0),
         )
         return True
 
     if (
         ts_col
-        and mongo_stats["max_ts"]
-        and pg_stats["max_ts"]
+        and mongo_stats.get("max_ts")
+        and pg_stats.get("max_ts")
         and mongo_stats["max_ts"] > pg_stats["max_ts"]
     ):
         log.info(
@@ -46,7 +54,7 @@ def needs_load(mongo_stats: dict, pg_stats: dict, ts_col: str | None, log) -> bo
 
     log.info(
         "DECISION    : no changes detected (Mongo count=%d, PG count=%d) → SKIP",
-        mongo_stats["count"],
-        pg_stats["count"],
+        mongo_stats.get("count", 0),
+        pg_stats.get("count", 0),
     )
     return False

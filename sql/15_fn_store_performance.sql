@@ -71,7 +71,8 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 AS $$
-#variable_conflict use_column
+DECLARE
+    -- variable_conflict handled via qualified names (order_revenue alias below)
 BEGIN
 
     RETURN QUERY
@@ -101,13 +102,13 @@ BEGIN
     ),
     revenue_metrics AS (
         SELECT
-            OR2.store_id,
-            SUM(OR2.order_total)::NUMERIC    AS total_revenue,
-            AVG(OR2.order_total)::NUMERIC    AS avg_order_value,
-            SUM(OR2.order_units)::NUMERIC    AS total_units_sold,
-            SUM(OR2.order_discount)::NUMERIC AS total_discount_given
-        FROM order_revenue AS OR2
-        GROUP BY OR2.store_id
+            ord_rev.store_id,
+            SUM(ord_rev.order_total)::NUMERIC    AS total_revenue,
+            AVG(ord_rev.order_total)::NUMERIC    AS avg_order_value,
+            SUM(ord_rev.order_units)::NUMERIC    AS total_units_sold,
+            SUM(ord_rev.order_discount)::NUMERIC AS total_discount_given
+        FROM order_revenue AS ord_rev
+        GROUP BY ord_rev.store_id
     ),
     fulfillment AS (
         SELECT

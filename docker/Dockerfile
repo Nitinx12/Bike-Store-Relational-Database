@@ -29,28 +29,36 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV JAVA_HOME=/opt/java \
     PATH="${JAVA_HOME}/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
-    PYSPARK_PYTHON=/usr/local/bin/python \
-    PYSPARK_DRIVER_PYTHON=/usr/local/bin/python
+    PYSPARK_PYTHON=/app/.venv/bin/python \
+    PYSPARK_DRIVER_PYTHON=/app/.venv/bin/python
 
 # uv: the dependency manager this project already uses (`uv run scripts/...`)
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.8.22 /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Dependencies first, in their own layer, so editing scripts/ doesn't
-# invalidate the (slow) dependency-install cache.
+# Dependencies + app code in one layer (single sync keeps image lean).
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-install-project --no-dev
-
-# App code
-COPY utils/   ./utils/
+COPY utils/ ./utils/
 COPY scripts/ ./scripts/
-COPY tests/   ./tests/
-COPY src/     ./src/
-COPY jars/    ./jars/
-COPY main.py  ./
+COPY tests/ ./tests/
+COPY src/ ./src/
+COPY jars/ ./jars/
+COPY gx/ ./gx/
+COPY sql/ ./sql/
+COPY main.py ./
 
 RUN uv sync --frozen --no-dev
+
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh \
+    && useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app
+
+USER app
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import src.pipeline.runner; print('ok')" || exit 1
 
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

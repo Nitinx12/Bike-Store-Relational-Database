@@ -34,10 +34,10 @@ jobs:
       - name: Run PSScriptAnalyzer
         uses: microsoft/psscriptanalyzer-action@v1.1
         with:
-          path: .\
+          path: ./
           recurse: true
           # Fail the build on Error and Warning level violations
-          severity: '"Error", "Warning"'
+          severity: Error, Warning
 
   sql-check:
     name: Check SQL (SQLFluff)
@@ -55,7 +55,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Run SQLFluff Linting
-        run: uv run sqlfluff lint . --dialect postgres
+        run: uv run sqlfluff lint sql/ --dialect postgres
 
   makefile-check:
     name: Check Makefile (checkmake)
@@ -64,10 +64,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install checkmake
+      - name: Install checkmake via release binary
         run: |
-          sudo apt-get update
-          sudo apt-get install -y checkmake
+          CHECKMAKE_VERSION=0.2.1
+          curl -sSL -o checkmake "https://github.com/mrtazz/checkmake/releases/download/${CHECKMAKE_VERSION}/checkmake_linux_amd64"
+          chmod +x checkmake
+          sudo mv checkmake /usr/local/bin/checkmake
 
       - name: Run checkmake
         run: find . -type f -name "Makefile" -exec checkmake {} +

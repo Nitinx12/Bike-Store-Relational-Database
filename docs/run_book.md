@@ -25,8 +25,8 @@ Or locally without Docker:
 
 ```bash
 uv sync
-uv run python scripts/mongo_to_postgres.py --full-refresh
-uv run python scripts/plpgsql_loops_tests.py
+uv run python scripts/python/mongo_to_postgres.py --full-refresh
+uv run python scripts/python/plpgsql_loops_tests.py
 uv run python tests/data_quality/run.py
 ```
 
@@ -147,22 +147,22 @@ docker compose --profile jobs run --rm app shell
 
 ```bash
 # ETL — incremental
-uv run python -m scripts.mongo_to_postgres
+uv run python scripts/python/mongo_to_postgres.py
 
 # ETL — full refresh
-uv run python -m scripts.mongo_to_postgres -- --full-refresh
+uv run python scripts/python/mongo_to_postgres.py -- --full-refresh
 
 # ETL — specific collections
-uv run python -m scripts.mongo_to_postgres -- --collection orders --collection products
+uv run python scripts/python/mongo_to_postgres.py -- --collection orders --collection products
 
 # PL/pgSQL suite
-uv run python scripts/plpgsql_loops_tests.py
+uv run python scripts/python/plpgsql_loops_tests.py
 
 # Great Expectations suite
-uv run python scripts/run_gx.py orders products
+uv run python scripts/python/run_gx.py orders products
 
 # Inspect schema
-uv run python scripts/inspect_schema.py
+uv run python scripts/python/inspect_schema.py
 ```
 
 ---
@@ -211,7 +211,7 @@ flowchart TD
 
 | Function | File | Responsibility |
 |---|---|---|
-| `_find_project_root()` | `scripts/mongo_to_postgres.py` | Walks up 8 dirs to find `utils/connection.py` |
+| `_find_project_root()` | `scripts/python/mongo_to_postgres.py` | Walks up 8 dirs to find `utils/connection.py` |
 | `_slugify(s)` | `src/pipeline/transform.py` | Normalizes field/collection names to safe Postgres identifiers |
 | `detect_pk_col()` | `src/pipeline/transform.py` | Heuristic PK: `<collection>_id` → `*_id` → `id` → row_hash |
 | `detect_ts_col()` | `src/pipeline/transform.py` | Finds `updated_at` (configurable via `ETL_TS_COL`) |

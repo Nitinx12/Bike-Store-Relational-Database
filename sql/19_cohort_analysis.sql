@@ -62,6 +62,12 @@ Cohort_retention AS (
         Cs.Total_customers
 )
 
-SELECT *
+SELECT
+    Cohort_month,
+    Index_number,
+    Cohort_size,
+    Active_customers,
+    Retention_rate,
+    Period_revenue
 FROM Cohort_retention
 ORDER BY Cohort_month, Index_number;

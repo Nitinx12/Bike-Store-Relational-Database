@@ -2,7 +2,7 @@
 
 ## Overview
 
-This schema represents a retail business with multiple stores, staff, products, customers, and orders. It is organized into reference (lookup) tables, operational tables, and transactional/junction tables. Every table includes an updated at column except order items, which is used for incremental loading from the source system.
+This schema represents a retail business with multiple stores, staff, products, customers, and orders. It is organized into reference (lookup) tables, operational tables, and transactional/junction tables. Every table includes an updated_at column used for incremental loading from the source system.
 
 ## Entity Relationship Summary
 

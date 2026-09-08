@@ -27,14 +27,14 @@ CYAN  := \033[36m
 RESET := \033[0m
 BOLD  := \033[1m
 
-.PHONY: help build up down pipeline local-pipeline etl local-etl dq-loops local-dq-loops dq-gx local-dq-gx seed local-seed inspect-schema local-inspect-schema monitor-logs log-cleanup shell clean prune check-env health-check init-db backup-postgres restore-postgres backup-mongo restore-mongo lint test format run run-verbose run-etl run-dq run-gx install verify run-clean check-deps doctor
+.PHONY: help build up down pipeline local-pipeline etl local-etl dq-loops local-dq-loops dq-gx local-dq-gx seed local-seed inspect-schema local-inspect-schema monitor-logs log-cleanup shell clean prune check-env health-check init-db backup-postgres restore-postgres backup-mongo restore-mongo lint test format run run-verbose run-full run-etl run-dq run-gx run-collection run-collection-full run-etl-only run-etl-dq run-gx-table install verify run-clean check-deps doctor
 
 help: ## Show this help message
 	@echo Bike Store Pipeline Management
-	@echo Usage: make ^<target^> [ARGS=...]
+	@echo Usage: make "<target>" [ARGS=...]
 	@echo.
-	@echo Quick Start ^(production-grade^):
-	@echo   run                  Run the full pipeline in-process ^(recommended^)
+	@echo Quick Start "(production-grade)":
+	@echo   run                  Run the full pipeline in-process "(recommended)"
 	@echo   run-verbose          Run with verbose Python tracebacks
 	@echo   run-full             Full refresh: truncate and reload every collection
 	@echo   install              Sync dependencies from pyproject.toml
@@ -42,11 +42,11 @@ help: ## Show this help message
 	@echo   doctor               Full system + dependency + import health check
 	@echo.
 	@echo Stage-level targets:
-	@echo   run-etl              Run only the ETL stage ^(MongoDB -^> Postgres^)
+	@echo   run-etl              Run only the ETL stage "(MongoDB -> Postgres)"
 	@echo   run-dq               Run only the PL/pgSQL data-quality suite
 	@echo   run-gx               Run only the Great Expectations suite
 	@echo   run-etl-only         ETL + skip all validation
-	@echo   run-etl-dq           ETL + PL/pgSQL ^(skip GX^)
+	@echo   run-etl-dq           ETL + PL/pgSQL "(skip GX)"
 	@echo.
 	@echo Collection targets:
 	@echo   run-collection              make ARGS=--collection orders
@@ -56,7 +56,7 @@ help: ## Show this help message
 	@echo Docker targets:
 	@echo   up                Start Postgres, MongoDB, and monitoring stack
 	@echo   pipeline          Full pipeline inside Docker
-	@echo   local-pipeline    Full pipeline via pwsh ^(rich terminal UI^)
+	@echo   local-pipeline    Full pipeline via pwsh (rich terminal UI)
 	@echo   build             Build the Docker app image
 	@echo   down              Stop the stack
 	@echo   clean             Remove containers and volumes
@@ -97,37 +97,37 @@ pipeline: ## Full pipeline (Docker)
 	docker compose --profile jobs run --rm app pipeline $(ARGS)
 
 local-pipeline: ## Full pipeline (Local)
-	pwsh scripts/ps1/local_runner.ps1 $(ARGS)
+	$(SHELL) -c 'if command -v pwsh >/dev/null 2>&1; then pwsh scripts/ps1/local_runner.ps1 "$(ARGS)"; else echo "pwsh not found - use: make run"; exit 1; fi'
 
 etl: ## MongoDB -> PostgreSQL ETL (Docker)
-	docker compose --profile jobs run --rm app etl $(ARGS)
+	docker compose --profile jobs run --rm app etl "$(ARGS)"
 
 local-etl: ## MongoDB -> PostgreSQL ETL (Local)
-	uv run python scripts/python/mongo_to_postgres.py $(ARGS)
+	uv run python scripts/python/mongo_to_postgres.py "$(ARGS)"
 
 dq-loops: ## PL/pgSQL DQ tests (Docker)
-	docker compose --profile jobs run --rm app dq-loops $(ARGS)
+	docker compose --profile jobs run --rm app dq-loops "$(ARGS)"
 
 local-dq-loops: ## PL/pgSQL DQ tests (Local)
-	uv run python scripts/python/plpgsql_loops_tests.py $(ARGS)
+	uv run python scripts/python/plpgsql_loops_tests.py "$(ARGS)"
 
 dq-gx: ## GX suite (Docker)
-	docker compose --profile jobs run --rm app dq-gx $(ARGS)
+	docker compose --profile jobs run --rm app dq-gx "$(ARGS)"
 
 local-dq-gx: ## GX suite (Local)
-	uv run python scripts/python/run_gx.py $(ARGS)
+	uv run python scripts/python/run_gx.py "$(ARGS)"
 
 seed: ## Seed MongoDB (Docker)
 	docker compose --profile jobs run --rm app seed
 
 local-seed: ## Seed MongoDB (Local)
-	uv run python scripts/python/seed_mongo.py $(ARGS)
+	uv run python scripts/python/seed_mongo.py "$(ARGS)"
 
 inspect-schema: ## Inspect schema (Docker)
 	docker compose --profile jobs run --rm app inspect-schema $(ARGS)
 
 local-inspect-schema: ## Inspect schema (Local)
-	uv run python scripts/python/inspect_schema.py $(ARGS)
+	uv run python scripts/python/inspect_schema.py "$(ARGS)"
 
 # ----------------------------------------------------------------------------
 # Quality Assurance (Production Grade)
@@ -152,7 +152,7 @@ format: ## Format code with Ruff
 # ----------------------------------------------------------------------------
 
 monitor-logs: ## Manage logs (Docker)
-	docker compose --profile jobs run --rm app monitor-logs $(ARGS)
+	docker compose --profile jobs run --rm app monitor-logs "$(ARGS)"
 
 log-cleanup: ## Local log cleanup
 	bash scripts/shell/log_cleanup.sh $(ARGS)
@@ -167,16 +167,16 @@ health-check: up ## Infrastructure liveness probe
 	bash scripts/shell/health_check.sh
 
 backup-postgres: ## Backup Postgres
-	bash scripts/shell/backup_postgres.sh $(ARGS)
+	bash scripts/shell/backup_postgres.sh "$(ARGS)"
 
 restore-postgres: ## Restore Postgres
-	bash scripts/shell/restore_postgres.sh $(ARGS)
+	bash scripts/shell/restore_postgres.sh "$(ARGS)"
 
 backup-mongo: ## Backup MongoDB
-	bash scripts/shell/backup_mongo.sh $(ARGS)
+	bash scripts/shell/backup_mongo.sh "$(ARGS)"
 
 restore-mongo: ## Restore MongoDB
-	bash scripts/shell/restore_mongo.sh $(ARGS)
+	bash scripts/shell/restore_mongo.sh "$(ARGS)"
 
 clean: ## Clean containers/volumes
 	docker compose down -v
@@ -213,7 +213,7 @@ doctor: check-deps ## Run dependency + import health check; exit non-zero if any
 	@echo All doctor checks passed.
 
 run-clean: ## Remove pipeline log files older than 7 days
-	@bash scripts/shell/log_cleanup.sh ${ARGS}
+	@bash scripts/shell/log_cleanup.sh "${ARGS}"
 
 # ----------------------------------------------------------------------------
 # Primary run targets
@@ -235,11 +235,11 @@ run-dq: check-deps ## Run only the PL/pgSQL data-quality suite
 	uv run python scripts/python/plpgsql_loops_tests.py
 
 run-gx: check-deps ## Run only the Great Expectations suite
-	uv run python scripts/python/run_gx.py $(GX_TABLES)
+	uv run python scripts/python/run_gx.py "$(GX_TABLES)"
 
 # Per-collection incremental ETL runs (ARGS=--collection orders --collection products)
 run-collection: check-deps ## Run ETL for specific collection(s): make run-collection ARGS="--collection orders"
-	uv run python scripts/python/mongo_to_postgres.py $(ARGS)
+	uv run python scripts/python/mongo_to_postgres.py "$(ARGS)"
 
 # Full-refresh for specific collection(s)
 run-collection-full: check-deps ## Run full-refresh ETL for specific collection(s): make run-collection-full ARGS="--collection orders --collection products"
@@ -255,4 +255,4 @@ run-etl-dq: check-deps ## Run ETL and PL/pgSQL suite; skip Great Expectations
 
 # Run Great Expectations only against specific tables
 run-gx-table: check-deps ## Run GX against named table(s): make run-gx-table GX_TABLES="orders products"
-	uv run python scripts/python/run_gx.py $(GX_TABLES)
+	uv run python scripts/python/run_gx.py "$(GX_TABLES)"

@@ -7,7 +7,7 @@ Run after every `mongo_to_postgres.py` load (see `run_book.md`), manually or in 
 
 ## How to run
 ```
-psql -h host -U user -d database -f tests/test_orders.sql
+psql -h host -U user -d database -f tests/generic/loops/05_test_orders.sql
 ```
 Wrap each query so a non-zero row count fails that check. Most queries in the final file already return a `check_name` column for this.
 

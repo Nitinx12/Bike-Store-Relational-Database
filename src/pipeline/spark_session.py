@@ -24,17 +24,26 @@ def get_spark(app_name: str = "MongoToPublicETL") -> SparkSession:
         "PYSPARK_DRIVER_PYTHON", sys.executable
     )
 
-    spark = (
+    master = os.getenv("SPARK_MASTER", "local[*]")
+    driver_mem = os.getenv("SPARK_DRIVER_MEMORY", "2g")
+    # Extra JVM modules (e.g. jdk.incubator.vector) — empty disables.
+    extra_modules = os.getenv("SPARK_EXTRA_JAVA_MODULES", "jdk.incubator.vector")
+    time_policy = os.getenv("SPARK_TIME_PARSER_POLICY", "LEGACY")
+
+    builder = (
         SparkSession.builder.appName(app_name)
-        .master("local[*]")
+        .master(master)
         .config("spark.driver.extraClassPath", JDBC_JAR_PATH)
         .config("spark.executor.extraClassPath", JDBC_JAR_PATH)
-        .config("spark.driver.extraJavaOptions", "--add-modules jdk.incubator.vector")
-        .config("spark.executor.extraJavaOptions", "--add-modules jdk.incubator.vector")
-        .config("spark.sql.legacy.timeParserPolicy", "LEGACY")
-        .config("spark.driver.memory", "2g")
+        .config("spark.driver.memory", driver_mem)
+        .config("spark.sql.legacy.timeParserPolicy", time_policy)
         .config("spark.logConf", "false")
-        .getOrCreate()
     )
-    spark.sparkContext.setLogLevel("WARN")
+    if extra_modules:
+        java_opt = f"--add-modules {extra_modules}"
+        builder = builder.config(
+            "spark.driver.extraJavaOptions", java_opt
+        ).config("spark.executor.extraJavaOptions", java_opt)
+    spark = builder.getOrCreate()
+    spark.sparkContext.setLogLevel(os.getenv("SPARK_LOG_LEVEL", "WARN"))
     return spark

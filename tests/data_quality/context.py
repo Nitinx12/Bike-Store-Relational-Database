@@ -1,6 +1,11 @@
 """
 Great Expectations Data Context for the Bike Store data-quality suites.
 
+Code-first GX: suites are built in tests/data_quality/suites/validation.py
+(TABLE_SUITES) at runtime against an ephemeral context. The legacy file
+config under gx/ (checkpoints/, validation_definitions/) is intentionally
+unused — do not add JSON/YML there; add expectations in suites/validation.py.
+
 This is the one place that turns your Postgres credentials into a live
 Great Expectations Data Source. Everything under tests/data_quality/
 should get its GX context from here rather than building its own, so

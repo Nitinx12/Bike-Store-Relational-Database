@@ -144,8 +144,8 @@ SELECT
     COALESCE(M.Total_orders, 0) AS Total_orders,
     COALESCE(M.Unique_customers, 0) AS Unique_customers,
     CASE
-        WHEN M.Total_units_sold > 0
-            THEN ROUND(M.Total_revenue / M.Total_units_sold, 2)
+        WHEN COALESCE(M.Total_units_sold, 0) > 0
+            THEN ROUND(M.Total_revenue / NULLIF(M.Total_units_sold, 0), 2)
     END AS Avg_selling_price,
     ROUND(COALESCE(M.Total_discount, 0), 2) AS Total_discount,
     Gd.Last_dataset_date - M.Last_sale_date AS Days_since_last_sale,

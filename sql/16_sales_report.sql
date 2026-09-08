@@ -11,14 +11,15 @@ WITH Monthly_base AS (
         COUNT(DISTINCT Oi.Order_id) AS Total_orders,
         SUM(Oi.Quantity) AS Units_sold,
         ROUND(SUM(Oi.List_price * Oi.Quantity), 2) AS Gross_revenue,
-        ROUND(SUM(Oi.List_price * Oi.Quantity * Oi.Discount), 2) AS Total_discounts,
+        ROUND(SUM(Oi.List_price * Oi.Quantity * Oi.Discount), 2)
+            AS Total_discounts,
         ROUND(SUM(Oi.Total_value), 2) AS Net_revenue
     FROM Orders AS O
     INNER JOIN Order_items AS Oi
         ON
             O.Order_id = Oi.Order_id
     WHERE O.Order_status = 'Completed'
-    GROUP BY Order_month
+    GROUP BY 1
 ),
 
 Monthly_kpi AS (
@@ -56,5 +57,22 @@ Monthly_kpi AS (
     FROM Monthly_base
 )
 
-SELECT *
+SELECT
+    Order_month,
+    Unique_customers,
+    Total_orders,
+    Units_sold,
+    Gross_revenue,
+    Total_discounts,
+    Net_revenue,
+    Avg_order_value,
+    Discount_rate_pct,
+    Revenue_per_customer,
+    Units_per_order,
+    Prev_month_revenue,
+    Prev_month_orders,
+    Prev_month_customers,
+    Revenue_growth_mom_pct,
+    Orders_growth_mom_pct,
+    Rolling_3m_avg_revenue
 FROM Monthly_kpi

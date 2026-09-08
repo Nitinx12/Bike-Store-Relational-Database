@@ -56,7 +56,10 @@ GX_DIR = REPO_ROOT / "tests" / "data_quality"
 if str(GX_DIR) not in sys.path:
     sys.path.insert(0, str(GX_DIR))
 
-import run as gx_run
+try:
+    import run as gx_run
+except ImportError:
+    from tests.data_quality import run as gx_run
 
 from src.pipeline.runner import run_pipeline
 from src.validation.plpgsql_loops import run_all
@@ -202,7 +205,7 @@ def run_gx_stage(tables: list[str] | None) -> list[dict] | None:
     try:
         context = gx_run.get_context()
         datasource = gx_run.get_datasource()
-    except (OSError, ValueError, TypeError, AttributeError) as exc:
+    except Exception as exc:  # noqa: BLE001 - GX/SQLAlchemy raise varied types
         console.print(f"[red]Could not set up GX context/datasource: {exc}[/red]")
         return None
 

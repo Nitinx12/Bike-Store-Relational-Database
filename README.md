@@ -218,7 +218,7 @@ make local-pipeline                       # full pipeline via PowerShell
 bike-store-relational-database/
 ├── docker/          — Dockerfile, entrypoint.sh, Prometheus config
 ├── docs/            — Architecture, run book, data catalog, testing guide
-├── gx/              — Great Expectations suites (9 table expectations)
+├── gx/              — Great Expectations legacy config (suites are code-first in tests/data_quality/suites/)
 ├── jars/            — PostgreSQL JDBC driver
 ├── ps1/             — PowerShell automation (local_runner.ps1)
 ├── scripts/         — ETL, DQ, schema inspection, infrastructure scripts

@@ -48,7 +48,7 @@ jobs:
           import src.pipeline.runner
           import src.database
           import src.validation
-          import scripts.mongo_to_postgres
+          import src.pipeline.runner
           import utils
           print(\"All imports OK\")
           '

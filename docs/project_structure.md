@@ -199,9 +199,9 @@ Validation layer wrappers.
 
 | File | Purpose |
 |---|---|
-| `plpgsql_loops.py` | Thin wrapper around `scripts/plpgsql_loops_tests.py` (re-exported) |
+| `plpgsql_loops.py` | Thin wrapper around `scripts/python/plpgsql_loops_tests.py` (re-exported) |
 
-### `src/utils/`
+### `utils/`
 
 Shared connection / engine / logger / metrics.
 
@@ -221,7 +221,7 @@ Shared connection / engine / logger / metrics.
 10 PL/pgSQL DO-block test files:
 
 ```
-01_unique_constraint_checks.sql
+01_test_brands.sql (see tests/generic/loops/01_test_brands.sql ... 10_test_stores.sql)
 02_basic_aggregation_sanity.sql
 03_null_check_columns.sql
 04_type_validation.sql

@@ -66,7 +66,7 @@ Deeper analytical scripts for behaviour patterns, operational health, and custom
 
 | File | Purpose |
 |------|---------|
-| `17_new_vs_return.sql` | Compare behaviour and revenue between new and returning customers |
+| `17_new_ve_return.sql` | Compare behaviour and revenue between new and returning customers |
 | `18_status_check.sql` | Data quality and pipeline health checks |
 | `19_cohort_analysis.sql` | Group customers by acquisition period to track retention over time |
 

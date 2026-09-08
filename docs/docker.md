@@ -128,10 +128,10 @@ flowchart TD
     A["docker compose run app <cmd>"]:::entry
     B{{"Which command?"}}:::default
     C["pipeline → ETL + PL/pgSQL + GX"]:::cmd
-    D["etl → scripts/mongo_to_postgres.py"]:::cmd
-    E["dq-loops → scripts/plpgsql_loops_tests.py"]:::cmd
-    F["dq-gx → scripts/run_gx.py"]:::cmd
-    G["inspect-schema → scripts/inspect_schema.py"]:::cmd
+    D["etl → scripts/python/mongo_to_postgres.py"]:::cmd
+    E["dq-loops → scripts/python/plpgsql_loops_tests.py"]:::cmd
+    F["dq-gx → scripts/python/run_gx.py"]:::cmd
+    G["inspect-schema → scripts/python/inspect_schema.py"]:::cmd
     H["monitor-logs → scripts/monitor_logs.sh"]:::cmd
     I["log-cleanup → scripts/log_cleanup.sh"]:::cmd
     J["shell → bash interactive"]:::cmd
