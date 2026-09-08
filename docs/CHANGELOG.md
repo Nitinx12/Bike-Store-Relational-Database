@@ -9,7 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `docs/makefile.md` — complete Makefile reference with all targets, examples, and troubleshooting guide
+- `docs/CHANGELOG.md` — moved from repo root (`CHANGELOG.md`) so all docs live under `docs/`; single source of truth
+- `src/pipeline/transform.py` — added `detect_pk_cols()` composite-aware helper and `PkCol = str | tuple[str, ...] | None` alias; `detect_pk_col()` now returns a `tuple` for `stocks`/`order_items` instead of a mistyped `list`
+- `src/pipeline/mongo_source.py` — added `to_iso()` watermark normalizer (`datetime | date | str | None` → ISO string, naive datetimes assumed UTC)
+- `src/pipeline/decision.py` — strict type hints (`dict[str, Any]`, `logging.Logger`) and `.get()`-based stat access instead of direct `dict[]`
+- `utils/engine.py` — typed `postgres_engine() -> Engine` / `mongo_client() -> Database`, lazy `%s` logging, no import-time logger side effect
+- `utils/logger.py` — repo-root-anchored `RotatingFileHandler`, name sanitizing, second-granularity log files
+- `utils/metrics.py` — safe `PUSHGATEWAY_TIMEOUT` parsing with fallback; documented local (`localhost:9091`) vs compose (`pushgateway:9091`) defaults
+- `utils/connection.py` — lazy `require_postgres_env()` validation (`ValueError`); opt-in strict check via `STRICT_ENV_CHECK`
+- `src/pipeline/spark_session.py`, `src/database/jdbc_writer.py` — Spark master/memory/JVM modules and JDBC `batchsize`/`numPartitions` now env-driven (`SPARK_*`, `JDBC_*`)
+- `docker/Dockerfile` — ships `gx/` + `sql/`, pinned `uv:0.8.22`, single `uv sync`, venv `PYSPARK_PYTHON`, non-root `USER app` + `HEALTHCHECK`
+- `.env.example` — documented `MONGO_URI` per environment, `ETL_SCHEMA`, `PUSHGATEWAY_*` / `WAIT_FOR_PUSHGATEWAY`
+- `scripts/ps1/local_runner.ps1` — `Set-StrictMode`, `Resolve-ProjectRoot`, nested `Join-Path`, quoted invocations, per-branch `$LASTEXITCODE`
+- `tests/data_quality/suites/validation.py` — canonical `order_status` `InSet` (`Pending/Processing/Completed/Rejected`), nullable-phone `row_condition` guards
 - `Makefile` — production-grade run targets: `run`, `run-verbose`, `run-full`, `run-etl`, `run-dq`, `run-gx`, `run-etl-only`, `run-etl-dq`, `run-collection`, `run-collection-full`, `run-gx-table`, `check-deps`, `doctor`, `run-clean`, `verify`
 - `README.md` — comprehensive Makefile commands table with 30+ targets documented; improved section structure, TOC, and contributing guide
 - `CHANGELOG.md` — project changelog for tracking notable changes
@@ -23,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pyproject.toml` — added `mypy>=1.15.0`, `pandas-stubs`, and `types-psycopg2` to `[dependency-groups].dev`; added `[tool.mypy]` config with `explicit_package_bases = true`, `mypy_path = "."`, and per-module error suppressions for pre-existing patterns (MongoClient indexing, flat-module imports from the repo root)
 - `src/__init__.py`, `utils/__init__.py` — added package markers so `src/` and `utils/` are proper Python packages; fixes the mypy "Source file found twice under different module names" error
 - `tests/data_quality/context.py` — `get_datasource()` now raises `RuntimeError` if the datasource is still `None` after `get_context()`; satisfies mypy's `return-value` check
+- `main.py` — `--collections` now accepts `--collection` alias; GX import falls back to `tests.data_quality.run`
+- `scripts/python/seed_mongo.py` — `--collection`/`--collections` alias; per-collection map completed to all 9 collections
+- `scripts/python/mongo_to_postgres.py` — `argparse` CLI (`--collection` repeatable + `=`, `--full-refresh`/`--full-load` aliases, unknown-arg warning)
+- `scripts/python/inspect_schema.py` — `main()` guard with `try/finally` dispose; fixed repo-root `sys.path` and usage path
+- `scripts/python/plpgsql_loops_tests.py` — `main(argv)` accepts/ignores extra `$(ARGS)`, driver-agnostic `notices` handling, guarded cleanup
 
 ### Changed
 
@@ -42,9 +59,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`Makefile`**: replaced Windows-only `2>nul` / `exit /b 1` / `forfiles` syntax in `check-deps`, `doctor`, and `run-clean` targets with POSIX-compatible primitives (`>/dev/null 2>&1`, `exit 1`, delegation to `scripts/shell/log_cleanup.sh`); cross-platform now works on cmd.exe, bash, zsh
 - **`docs/CHANGELOG.md`**: removed — content already lives in the root `CHANGELOG.md` (duplicate file)
 - **`docs/data_catlog.md` → `docs/data_catalog.md`**: renamed and all references updated (README.md, docs/ARCHITECTURE.md, docs/project_structure.md, AGENTS.md)
+- **`src/database/schema.py` / `src/database/staging.py` / `src/pipeline/runner.py`**: composite-PK aware (`tuple` → `ON CONFLICT (a, b)` / `UNIQUE (a, b)` / `dropDuplicates([...])`); `merge_staging_to_target()` returns `INSERT rowcount` (fallback staging count) instead of full target-table count
+- **`src/pipeline/mongo_source.py`**: removed blanket `astype(str)` — native dtypes preserved (`where(notnull, None)`); `MongoClient` via `with`, guarded `MAX(ts)` lookup, `to_iso()` log formatting
+- **`src/pipeline/runner.py`**: JDBC write catches `Exception` (Spark raises Py4J/Java) with staging cleanup + `unpersist`; `with MongoClient` peek; guarded auto-discovery; `try/finally` for `spark.stop()`/`engine.dispose()`; `sdf.cache()` before repeated `count()`
+- **`src/database/stats.py`**: `MAX(ts)` logging via `to_iso()` (handles `str`/`date` watermarks)
+- **`src/pipeline/transform.py`**: fixed `slugify()` `-` handling (dash → `_` before stripping)
+- **`src/validation/plpgsql_loops.py` + `scripts/python/plpgsql_loops_tests.py`**: driver-agnostic `notices` guard, `raw_conn = None` + guarded close/dispose
+- **`Makefile`**: full `.PHONY` (`run-full`, `run-collection`, `run-collection-full`, `run-etl-only`, `run-etl-dq`, `run-gx-table`); removed `cmd.exe ^` escapes; quoted `"$(ARGS)"` / `"$(GX_TABLES)"` / `"${ARGS}"`; portable `local-pipeline` pwsh guard
+- **`docker/Dockerfile`**: collapsed to a single `uv sync --frozen --no-dev`
+- **CI (`.github/workflows/`)**: `checkout@v4`, `setup-uv@v5`, `path: ./`, `severity: Error, Warning`, `sqlfluff lint sql/`, checkmake via release binary, fixed docker-build import (`src.pipeline.runner`), `uv sync --frozen`
+- **`tests/data_quality/run.py`**: package imports, get-or-create table asset/suite (re-run safe), broad `except` (never raises)
+- **`tests/data_quality/context.py`**: documented code-first GX (`gx/` file config intentionally unused)
+- **SQL**: `12_customer_report.sql` explicit columns + `ASC NULLS LAST` recency; `16_sales_report.sql` `GROUP BY 1` + explicit cols; `15_fn_store_performance.sql` `ord_rev` rename + `DECLARE` vs `#variable_conflict`; `13_product_report.sql` `NULLIF` avg-price guard; `19_cohort_analysis.sql` explicit cols; discount fixes (`SUM(list_price*quantity*discount)`) in `16`/`15`/`21`
+- **Docs**: `scripts/*.py → scripts/python/*.py`, `python -m scripts.* → scripts.python.*`, `17_new_ve_return.sql`, loop filenames, `utils/`, `test_orders` path, GX code-first notes, `README` gx line, `data_catalog` `updated_at` fix
 
 ### Fixed
 
+- **Bug register (`fix.md`)**: full P0→P3 audit completed and merged (`fix/bug-register-p0-p3`, `fix/bug-register-remaining`); `fix.md` removed after merge — this changelog is the record
+- **P0-1**: composite PK no longer returns `list` where `str | None` expected (`stocks`, `order_items` now `tuple` end-to-end)
+- **P0-2**: `merge_staging_to_target()` no longer reports total table size as rows merged
+- **P0-3**: Mongo source no longer stringifies numerics/dates (typed `COLUMN_TYPE_MAP` respected)
+- **P0-4**: watermark logging no longer crashes on `str`/`date` values
+- **P0-5**: JDBC write failures no longer escape accounting or leak staging tables
+- **P1-1**: shell scripts use `set -euo pipefail` and correct `PROJECT_ROOT` (`scripts/shell/` → repo root)
+- **P1-2**: `--collections` / `--collection` drift resolved (alias accepted everywhere)
+- **P1-3**: `dotenv` → `python-dotenv`; `uv.lock` tracked again (removed from `.gitignore`)
+- **P2-1**: discounts summed as money, not fractions
+- **P2-2**: contradictory `order_status` sets unified to `Pending/Processing/Completed/Rejected` (seed data); GX `InSet` added; loop SQL + docs aligned
+- **P2-4**: nullable-phone regex guarded; `order_items.updated_at` catalog contradiction resolved
 - **`scripts/python/plpgsql_loops_tests.py`**: moved `sys.path` setup before the `from utils...` import block, and corrected the parent-directory traversal from `SCRIPT_DIR.parent` to `SCRIPT_DIR.parent.parent` (was resolving to `scripts/` instead of the repo root) — `make local-pipeline` Stage 2 now works
 - **`scripts/python/run_gx.py`**: corrected `Path(__file__).resolve().parents[1]` to `parents[2]` so the repo root (and therefore `utils/`) is on `sys.path` — `make local-pipeline` Stage 3 now works
 - **`Makefile`**: rewrote `help` target to use plain `@echo` (no `grep`/`awk`) so it works on Windows `cmd.exe`; replaced bash-only `command -v` checks in `check-deps` and `doctor` with POSIX-compatible shell primitives (`>/dev/null 2>&1`, `exit 1`); replaced Windows-only `forfiles` in `run-clean` with a delegation to the existing `scripts/shell/log_cleanup.sh` so the target works on macOS/Linux as well
@@ -57,6 +99,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`sql/18_status_check.sql`**: added explicit `AS metric` and `AS metric_value` aliases (AL03), renamed `value` → `metric_value` (RF04)
 
 ### Removed
+
+- **`fix.md`** — temporary bug register; all items fixed and summarized here, file deleted
+- **`CHANGELOG.md` (repo root)** — moved to `docs/CHANGELOG.md`; single source of truth under `docs/`
 
 - **`main.js`** — stub file containing only `console.log("Hello Bike Store")`; project is Python-based (`main.py` is the real entry point), so this orphan was dead weight
 - **`docs/CHANGELOG.md`** — duplicate of the root `CHANGELOG.md`; single source of truth is now at the repo root
