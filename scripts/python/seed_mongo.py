@@ -343,6 +343,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--collection",
+        "--collections",
         dest="collection",
         default=None,
         help="Seed only a specific collection",
@@ -368,6 +369,32 @@ def main() -> None:
             "brands": lambda: seed_brands(db),
             "categories": lambda: seed_categories(db),
             "stores": lambda: seed_stores(db),
+            "staffs": lambda: seed_staffs(db, list(db.stores.distinct("store_id")) or seed_stores(db)),
+            "products": lambda: seed_products(
+                db,
+                list(db.brands.distinct("brand_id")) or seed_brands(db),
+                list(db.categories.distinct("category_id")) or seed_categories(db),
+            ),
+            "stocks": lambda: seed_stocks(
+                db,
+                list(db.stores.distinct("store_id")),
+                list(db.products.distinct("product_id")),
+            ),
+            "customers": lambda: seed_customers(db),
+            "orders": lambda: seed_orders(
+                db,
+                list(db.customers.distinct("customer_id")),
+                list(db.stores.distinct("store_id")),
+                list(db.staffs.distinct("staff_id")),
+            ),
+            "order_items": lambda: seed_order_items(
+                db,
+                [
+                    (d["order_id"], d.get("order_date"))
+                    for d in db.orders.find({}, {"order_id": 1, "order_date": 1})
+                ],
+                list(db.products.distinct("product_id")),
+            ),
         }
         if args.collection not in collections_map:
             print(f"[ERROR] Unknown collection: {args.collection}")

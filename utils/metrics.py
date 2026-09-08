@@ -45,8 +45,9 @@ Usage
 
 Configuration (env vars)
 -------------------------
-    PUSHGATEWAY_URL       default "localhost:9091"[cite: 7]
-    PUSHGATEWAY_TIMEOUT   default 5 (seconds)[cite: 7]
+    PUSHGATEWAY_URL       default "localhost:9091" locally,
+                          "pushgateway:9091" inside docker-compose
+    PUSHGATEWAY_TIMEOUT   default 5 (seconds)
 
 Design notes
 ------------
@@ -72,8 +73,17 @@ import time
 
 from prometheus_client import CollectorRegistry, Gauge, push_to_gateway
 
-PUSHGATEWAY_URL = os.getenv("PUSHGATEWAY_URL", "pushgateway:9091")
-PUSHGATEWAY_TIMEOUT = float(os.getenv("PUSHGATEWAY_TIMEOUT", "5"))
+
+def _gateway_timeout(default: float = 5.0) -> float:
+    """Parse PUSHGATEWAY_TIMEOUT safely; fall back to default on bad values."""
+    try:
+        return float(os.getenv("PUSHGATEWAY_TIMEOUT", str(default)))
+    except (TypeError, ValueError):
+        return default
+
+
+PUSHGATEWAY_URL = os.getenv("PUSHGATEWAY_URL", "localhost:9091")
+PUSHGATEWAY_TIMEOUT = _gateway_timeout(5.0)
 
 _module_logger = logging.getLogger("metrics")
 

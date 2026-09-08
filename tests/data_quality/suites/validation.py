@@ -82,8 +82,12 @@ def customers_suite() -> list:
             "updated_at",
         ),
         gxe.ExpectColumnValuesToMatchRegex(column="email", regex=EMAIL_REGEX),
-        # phone is allowed to be NULL, but if present should look like a phone number
-        gxe.ExpectColumnValuesToMatchRegex(column="phone", regex=PHONE_REGEX),
+        # phone is nullable: only validate non-null values.
+        gxe.ExpectColumnValuesToMatchRegex(
+            column="phone",
+            regex=PHONE_REGEX,
+            row_condition="phone IS NOT NULL",
+        ),
         gxe.ExpectColumnValueLengthsToEqual(column="state", value=2),
         # NOTE: zip_code is stored as bigint, so it can't preserve leading
         # zeros (e.g. "02138" -> 2138). That's a schema smell worth fixing
@@ -108,7 +112,11 @@ def staffs_suite() -> list:
             "updated_at",
         ),
         gxe.ExpectColumnValuesToMatchRegex(column="email", regex=EMAIL_REGEX),
-        gxe.ExpectColumnValuesToMatchRegex(column="phone", regex=PHONE_REGEX),
+        gxe.ExpectColumnValuesToMatchRegex(
+            column="phone",
+            regex=PHONE_REGEX,
+            row_condition="phone IS NOT NULL",
+        ),
         gxe.ExpectColumnValuesToBeInSet(column="active", value_set=[0, 1]),
         _fk_check(
             "staffs.store_id must reference an existing stores.store_id",
@@ -221,10 +229,10 @@ def orders_suite() -> list:
             "staff_id",
             "updated_at",
         ),
-        # NOTE: tighten to ExpectColumnValuesToBeInSet once the real statuses
-        # are confirmed: SELECT DISTINCT order_status FROM orders;
-        gxe.ExpectColumnValueLengthsToBeBetween(
-            column="order_status", min_value=1, max_value=50
+        # Canonical statuses from seed_mongo.py + 15_fn_store_performance.sql.
+        gxe.ExpectColumnValuesToBeInSet(
+            column="order_status",
+            value_set=["Pending", "Processing", "Completed", "Rejected"],
         ),
         gxe.ExpectColumnPairValuesAToBeGreaterThanB(
             column_A="required_date",

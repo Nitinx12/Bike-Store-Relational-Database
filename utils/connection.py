@@ -6,7 +6,8 @@ from pymongo import MongoClient
 load_dotenv()
 
 # =========================================================
-# POSTGRES
+# POSTGRES (validated lazily so `import` never crashes; call
+# require_postgres_env() before connecting)
 # =========================================================
 
 POSTGRES_HOST = os.getenv("POSTGRES_HOST")
@@ -15,18 +16,27 @@ POSTGRES_DATABASE = os.getenv("POSTGRES_DATABASE")
 POSTGRES_USERNAME = os.getenv("POSTGRES_USERNAME")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 
-_required = {
-    "POSTGRES_HOST": POSTGRES_HOST,
-    "POSTGRES_PORT": POSTGRES_PORT,
-    "POSTGRES_DATABASE": POSTGRES_DATABASE,
-    "POSTGRES_USERNAME": POSTGRES_USERNAME,
-    "POSTGRES_PASSWORD": POSTGRES_PASSWORD,
-}
 
-_missing = [k for k, v in _required.items() if not v]
+def require_postgres_env() -> dict[str, str]:
+    """Validate Postgres env vars. Raises ValueError listing missing keys."""
+    required = {
+        "POSTGRES_HOST": POSTGRES_HOST,
+        "POSTGRES_PORT": POSTGRES_PORT,
+        "POSTGRES_DATABASE": POSTGRES_DATABASE,
+        "POSTGRES_USERNAME": POSTGRES_USERNAME,
+        "POSTGRES_PASSWORD": POSTGRES_PASSWORD,
+    }
+    missing = [k for k, v in required.items() if not v]
+    if missing:
+        raise ValueError(
+            f"Missing required environment variables: {', '.join(missing)}"
+        )
+    return {k: str(v) for k, v in required.items()}
 
-if _missing:
-    raise OSError(f"Missing required environment variables: {', '.join(_missing)}")
+
+# Back-compat: validate eagerly only if explicitly requested via env.
+if os.getenv("STRICT_ENV_CHECK", "").lower() in ("1", "true", "yes"):
+    require_postgres_env()
 
 # =========================================================
 # MONGODB
@@ -42,7 +52,7 @@ def get_mongo_db():
     _missing_mongo = [k for k, v in _required_mongo.items() if not v]
 
     if _missing_mongo:
-        raise OSError(
+        raise ValueError(
             f"Missing required environment variables: {', '.join(_missing_mongo)}"
         )
 

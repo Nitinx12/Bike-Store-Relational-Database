@@ -28,9 +28,9 @@ for p in (THIS_DIR, ROOT_DIR):
         sys.path.insert(0, str(p))
 
 import great_expectations as gx
-from context import get_context, get_datasource
-from suites.validation import TABLE_SUITES
 
+from tests.data_quality.context import get_context, get_datasource
+from tests.data_quality.suites.validation import TABLE_SUITES
 from utils.logger import get_logger
 
 logger = get_logger("tests", "validation")
@@ -46,12 +46,21 @@ def validate_table(context, datasource, table_name: str) -> dict:
     try:
         suite_builder = TABLE_SUITES[table_name]
 
-        data_asset = datasource.add_table_asset(name=table_name, table_name=table_name)
+        # Reuse assets/suites across re-runs in the same process.
+        try:
+            data_asset = datasource.get_table_asset(table_name)
+        except Exception:  # noqa: BLE001 - GX get-or-create fallback
+            data_asset = datasource.add_table_asset(
+                name=table_name, table_name=table_name
+            )
         batch_definition = data_asset.add_batch_definition_whole_table(
             f"{table_name}_batch"
         )
 
-        suite = context.suites.add(gx.ExpectationSuite(name=f"{table_name}_suite"))
+        try:
+            suite = context.suites.get(gx.ExpectationSuite(name=f"{table_name}_suite"))
+        except Exception:  # noqa: BLE001 - GX get-or-create fallback
+            suite = context.suites.add(gx.ExpectationSuite(name=f"{table_name}_suite"))
         for expectation in suite_builder():
             suite.add_expectation(expectation)
 
@@ -88,7 +97,7 @@ def validate_table(context, datasource, table_name: str) -> dict:
             "failed_expectations": failed,
         }
 
-    except (OSError, ValueError, TypeError, RuntimeError) as e:
+    except Exception as e:  # noqa: BLE001 - validate_table never raises
         logger.error(f"[{table_name}] ERROR while validating: {e}")
         return {"table": table_name, "success": False, "error": str(e)}
 

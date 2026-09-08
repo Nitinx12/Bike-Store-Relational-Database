@@ -31,7 +31,7 @@ flowchart LR
 
 ## Layer 1: PL/pgSQL DO-Block Suite
 
-10 numbered `.sql` files in `tests/generic/loops/`, each containing multiple `DO $$ ... $$;` anonymous blocks. The Python wrapper `scripts/plpgsql_loops_tests.py` splits each file on `-- Test N:`, `-- Orphan N:`, `-- Business N:` markers, executes each block, and reports the result.
+10 numbered `.sql` files in `tests/generic/loops/`, each containing multiple `DO $$ ... $$;` anonymous blocks. The Python wrapper `scripts/python/plpgsql_loops_tests.py` splits each file on `-- Test N:`, `-- Orphan N:`, `-- Business N:` markers, executes each block, and reports the result.
 
 ```mermaid
 flowchart TD
@@ -39,7 +39,7 @@ flowchart TD
     classDef check fill:#fff8e1,stroke:#f9a825,color:#5d4037
     classDef cat fill:#fce4ec,stroke:#c2185b,color:#880e4f
 
-    A["01_unique_constraint_checks.sql"]:::file
+    A["01_test_brands.sql (see tests/generic/loops/01_test_brands.sql ... 10_test_stores.sql)"]:::file
     B["02_basic_aggregation_sanity.sql"]:::file
     C["03_null_check_columns.sql"]:::file
     D["04_type_validation.sql"]:::file
@@ -73,7 +73,7 @@ flowchart TD
 
 | File | Category | What it catches |
 |---|---|---|
-| `01_unique_constraint_checks.sql` | Uniqueness | Duplicate primary keys, non-unique natural keys |
+| `01_test_brands.sql (see tests/generic/loops/01_test_brands.sql ... 10_test_stores.sql)` | Uniqueness | Duplicate primary keys, non-unique natural keys |
 | `02_basic_aggregation_sanity.sql` | Sanity | Implausible aggregates (negative counts, zero rows in expected tables) |
 | `03_null_check_columns.sql` | Data quality | NULL values in NOT-NULL-equivalent columns |
 | `04_type_validation.sql` | Data quality | String values where numerics expected, malformed dates |
@@ -92,15 +92,15 @@ flowchart TD
 
 ```bash
 make dq-loops
-uv run python scripts/plpgsql_loops_tests.py
-uv run python scripts/plpgsql_loops_tests.py --show-failures --max-rows 5
+uv run python scripts/python/plpgsql_loops_tests.py
+uv run python scripts/python/plpgsql_loops_tests.py --show-failures --max-rows 5
 ```
 
 ---
 
 ## Layer 2: Great Expectations
 
-9 expectation suites, one per table, defined as JSON in `gx/expectations/`. The runner `scripts/run_gx.py` connects to Postgres, executes each suite against its table, and writes a JSON report to `tests/data_quality/reports/`.
+9 expectation suites, one per table, defined code-first in `tests/data_quality/suites/validation.py` (the legacy `gx/expectations/*.json` path is unused). The runner `scripts/python/run_gx.py` connects to Postgres, executes each suite against its table, and writes a JSON report to `tests/data_quality/reports/`.
 
 ```mermaid
 flowchart TD
@@ -138,7 +138,7 @@ flowchart TD
 ### What GX catches that PL/pgSQL doesn't
 
 - **Statistical distributions** — value ranges, quantile checks
-- **Value set membership** — `order_status IN ('Pending','Processing','Shipped','Delivered','Canceled')`
+- **Value set membership** — `order_status IN ('Pending','Processing','Completed','Rejected')`
 - **Schema validation** — `expect_column_to_exist`, `expect_column_values_to_be_of_type`
 - **Row count expectations** — `expect_table_row_count_to_be_between`
 
@@ -147,7 +147,7 @@ flowchart TD
 ```bash
 make dq-gx                                  # all 9 tables
 make dq-gx ARGS="orders products"           # specific tables
-uv run python scripts/run_gx.py
+uv run python scripts/python/run_gx.py
 ```
 
 Reports land in `tests/data_quality/reports/validation_report_<timestamp>.json`. The `monitor_logs.sh` script reads the latest report to set a `[FAIL]` line in its summary.
@@ -165,7 +165,7 @@ Reports land in `tests/data_quality/reports/validation_report_<timestamp>.json`.
 
 ### New GX expectation
 
-1. Add or edit `gx/expectations/<table>.json`
+1. Add or edit the `<table>_suite()` builder in `tests/data_quality/suites/validation.py`
 2. Use any [built-in expectation](https://greatexpectations.io/expectations/) — `expect_column_values_to_not_be_null`, `expect_column_values_to_be_between`, etc.
 3. The runner picks it up on the next run
 

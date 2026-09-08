@@ -44,9 +44,20 @@ WITH customer_metrics AS (
 
 rfm_scores AS (
     SELECT
-        *,
+        customer_id,
+        city,
+        state,
+        customer_name,
+        total_orders,
+        total_items_purchased,
+        lifetime_value,
+        avg_order_value,
+        first_order,
+        last_order,
+        days_since_last_order,
+        customer_tenure_days,
         NTILE(5) OVER (
-            ORDER BY days_since_last_order DESC NULLS FIRST
+            ORDER BY days_since_last_order ASC NULLS LAST
         ) AS recency_score,
         NTILE(5) OVER (
             ORDER BY total_orders ASC
@@ -59,7 +70,21 @@ rfm_scores AS (
 
 customer_analytics AS (
     SELECT
-        r.*,
+        r.customer_id,
+        r.city,
+        r.state,
+        r.customer_name,
+        r.total_orders,
+        r.total_items_purchased,
+        r.lifetime_value,
+        r.avg_order_value,
+        r.first_order,
+        r.last_order,
+        r.days_since_last_order,
+        r.customer_tenure_days,
+        r.recency_score,
+        r.frequency_score,
+        r.monetary_score,
         (
             r.recency_score
             + r.frequency_score
@@ -117,6 +142,27 @@ customer_analytics AS (
     FROM rfm_scores AS r
 )
 
-SELECT *
+SELECT
+    customer_id,
+    city,
+    state,
+    customer_name,
+    total_orders,
+    total_items_purchased,
+    lifetime_value,
+    avg_order_value,
+    first_order,
+    last_order,
+    days_since_last_order,
+    customer_tenure_days,
+    recency_score,
+    frequency_score,
+    monetary_score,
+    rfm_total,
+    revenue_contribution_pct,
+    orders_per_month,
+    projected_annual_clv,
+    churn_status,
+    customer_segment
 FROM customer_analytics
 ORDER BY lifetime_value DESC;

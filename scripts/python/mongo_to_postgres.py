@@ -1168,13 +1168,31 @@ def main(collections: list[str], full_load: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    _argv = sys.argv[1:]
+    import argparse
 
-    _full_load = "--full-load" in _argv or "--full-refresh" in _argv
-
+    parser = argparse.ArgumentParser(description="MongoDB -> Postgres incremental ETL")
+    parser.add_argument(
+        "--collection",
+        "--collections",
+        dest="collections",
+        nargs="*",
+        default=[],
+        help="Restrict to specific collections (supports --collection=X and repeated flags)",
+    )
+    parser.add_argument(
+        "--full-refresh",
+        "--full-load",
+        dest="full_load",
+        action="store_true",
+        help="Truncate and reload every collection",
+    )
+    _args, _unknown = parser.parse_known_args()
+    if _unknown:
+        print(f"[WARN] Ignoring unknown args: {_unknown}")
+    # Flatten possible repeated/space-separated values
     _collections: list[str] = []
-    for i, arg in enumerate(_argv):
-        if arg == "--collection" and i + 1 < len(_argv):
-            _collections.append(_argv[i + 1])
+    for _c in _args.collections or []:
+        _collections.extend(str(_c).split(","))
+    _collections = [c.strip() for c in _collections if c.strip()]
 
-    main(_collections, _full_load)
+    main(_collections, _args.full_load)

@@ -10,7 +10,13 @@ has no dependency on src/pipeline/.
 
 from __future__ import annotations
 
+import os
+
 from pyspark.sql import DataFrame
+
+
+def _jdbc_opt(name: str, default: str) -> str:
+    return os.getenv(name, default)
 
 
 def write_to_staging(
@@ -32,8 +38,8 @@ def write_to_staging(
         .option("user", user)
         .option("password", password)
         .option("driver", "org.postgresql.Driver")
-        .option("batchsize", "5000")
-        .option("numPartitions", "4")
+        .option("batchsize", _jdbc_opt("JDBC_BATCHSIZE", "5000"))
+        .option("numPartitions", _jdbc_opt("JDBC_NUM_PARTITIONS", "4"))
         .mode("overwrite")
         .save()
     )

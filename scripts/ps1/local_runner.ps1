@@ -58,6 +58,7 @@ param(
     [switch]$ContinueOnError
 )
 
+Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $env:PYTHONUTF8 = "1"
@@ -69,7 +70,7 @@ try {
     Write-Warning "Could not set console output encoding to UTF-8: $_"
 }
 
-function Find-ProjectRoot {
+function Resolve-ProjectRoot {
     param([Parameter(Mandatory)][string]$StartPath)
 
     $current = Get-Item -LiteralPath $StartPath
@@ -87,9 +88,9 @@ function Find-ProjectRoot {
 }
 
 $PipelineDir = $PSScriptRoot
-$ProjectRoot = Find-ProjectRoot -StartPath $PipelineDir
-$ScriptsDir  = Join-Path $ProjectRoot "scripts\python"
-$LogsDir     = Join-Path $ProjectRoot "logs\pipeline"
+$ProjectRoot = Resolve-ProjectRoot -StartPath $PipelineDir
+$ScriptsDir  = Join-Path (Join-Path $ProjectRoot "scripts") "python"
+$LogsDir     = Join-Path (Join-Path $ProjectRoot "logs") "pipeline"
 
 if (-not (Test-Path -LiteralPath $LogsDir)) {
     New-Item -ItemType Directory -Path $LogsDir -Force | Out-Null
@@ -117,7 +118,7 @@ function Write-Log {
 }
 
 $UseUv = [bool](Get-Command uv -ErrorAction SilentlyContinue)
-$VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
+$VenvPython = Join-Path (Join-Path (Join-Path $ProjectRoot ".venv") "Scripts") "python.exe"
 
 if (-not $UseUv -and -not (Test-Path -LiteralPath $VenvPython)) {
     throw "Neither 'uv' nor a venv at $VenvPython was found."
@@ -137,23 +138,25 @@ function Invoke-Stage {
     Write-Log "Command: $runnerDesc `"$ScriptPath`" $($Arguments -join ' ')"
 
     $stageStart = Get-Date
+    $exitCode = 0
     Push-Location $ProjectRoot
     try {
         if ($UseUv) {
-            & uv run python $ScriptPath @Arguments 2>&1 | ForEach-Object {
+            & uv run python "$ScriptPath" @Arguments 2>&1 | ForEach-Object {
                 $line = $_.ToString()
                 Add-Content -LiteralPath $LogFile -Value $line
                 Write-Host $line
             }
+            $exitCode = $LASTEXITCODE
         }
         else {
-            & $VenvPython $ScriptPath @Arguments 2>&1 | ForEach-Object {
+            & "$VenvPython" "$ScriptPath" @Arguments 2>&1 | ForEach-Object {
                 $line = $_.ToString()
                 Add-Content -LiteralPath $LogFile -Value $line
                 Write-Host $line
             }
+            $exitCode = $LASTEXITCODE
         }
-        $exitCode = $LASTEXITCODE
     }
     finally {
         Pop-Location

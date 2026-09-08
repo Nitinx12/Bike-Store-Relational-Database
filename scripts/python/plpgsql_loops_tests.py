@@ -63,12 +63,21 @@ def get_dbapi_connection(raw_conn):
 def run_test_file(dbapi_conn, sql_path: Path):
     """Run a single .sql DO-block test file. Returns (passed, message)."""
     sql = sql_path.read_text(encoding="utf-8")
-    del dbapi_conn.notices[:]
+    notices = getattr(dbapi_conn, "notices", None)
+    if notices is not None and hasattr(notices, "clear"):
+        try:
+            notices.clear()
+        except Exception:  # noqa: BLE001, S110 - notices optional per driver
+            pass
     cursor = dbapi_conn.cursor()
     try:
         cursor.execute(sql)
         dbapi_conn.commit()
-        message = "".join(dbapi_conn.notices).strip()
+        notices = getattr(dbapi_conn, "notices", None) or []
+        try:
+            message = "".join(str(n) for n in notices).strip()
+        except Exception:  # noqa: BLE001 - notices may be non-iterable
+            message = ""
         return True, message
     except (psycopg2.Error, SQLAlchemyError) as exc:
         dbapi_conn.rollback()
@@ -78,7 +87,9 @@ def run_test_file(dbapi_conn, sql_path: Path):
         cursor.close()
 
 
-def main():
+def main(argv: list[str] | None = None):
+    """Entry point. Accepts and ignores extra args so Makefile/entrypoint may pass $(ARGS)."""
+    _ = argv
     console.rule("[bold cyan]PL/pgSQL Loop Data Quality Tests[/bold cyan]")
 
     try:
@@ -115,6 +126,7 @@ def main():
         console.print(f"[yellow]No .sql test files found in {LOOPS_DIR}[/yellow]")
         sys.exit(0)
 
+    raw_conn = None
     raw_conn = engine.raw_connection()
     dbapi_conn = get_dbapi_connection(raw_conn)
 
@@ -138,8 +150,15 @@ def main():
                 table.add_row(name, "[bold red]FAIL[/bold red]", message)
                 failed.append(name)
     finally:
-        raw_conn.close()
-        engine.dispose()
+        if raw_conn is not None:
+            try:
+                raw_conn.close()
+            except Exception:  # noqa: BLE001, S110 - best-effort cleanup
+                pass
+        try:
+            engine.dispose()
+        except Exception:  # noqa: BLE001, S110 - best-effort cleanup
+            pass
 
     console.print(table)
 
@@ -172,4 +191,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])
