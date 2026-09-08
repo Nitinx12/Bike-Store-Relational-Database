@@ -82,11 +82,10 @@ def customers_suite() -> list:
             "updated_at",
         ),
         gxe.ExpectColumnValuesToMatchRegex(column="email", regex=EMAIL_REGEX),
-        # phone is nullable: only validate non-null values.
+        # phone is nullable: GX skips NULLs natively for regex checks.
         gxe.ExpectColumnValuesToMatchRegex(
             column="phone",
             regex=PHONE_REGEX,
-            row_condition="phone IS NOT NULL",
         ),
         gxe.ExpectColumnValueLengthsToEqual(column="state", value=2),
         # NOTE: zip_code is stored as bigint, so it can't preserve leading
@@ -112,10 +111,10 @@ def staffs_suite() -> list:
             "updated_at",
         ),
         gxe.ExpectColumnValuesToMatchRegex(column="email", regex=EMAIL_REGEX),
+        # phone is nullable: GX skips NULLs natively for regex checks.
         gxe.ExpectColumnValuesToMatchRegex(
             column="phone",
             regex=PHONE_REGEX,
-            row_condition="phone IS NOT NULL",
         ),
         gxe.ExpectColumnValuesToBeInSet(column="active", value_set=[0, 1]),
         _fk_check(
