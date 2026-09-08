@@ -20,7 +20,6 @@ flowchart TD
     ROOT --> C["gx/"]:::folder
     ROOT --> D["jars/"]:::folder
     ROOT --> E["logs/"]:::folder
-    ROOT --> F["ps1/"]:::folder
     ROOT --> G["scripts/"]:::folder
     ROOT --> H["sql/"]:::folder
     ROOT --> I["src/"]:::folder
@@ -123,30 +122,32 @@ logs/
 
 ---
 
-## Directory: `ps1/`
-
-PowerShell automation.
-
-| File | Purpose |
-|---|---|
-| `local_runner.ps1` | End-to-end pipeline runner (ETL + PL/pgSQL + GX) for Windows native execution |
-
----
-
 ## Directory: `scripts/`
 
-Standalone executable scripts (Python + Bash).
+Standalone executable scripts, organised into three subdirectories.
 
-| File | Type | Purpose |
-|---|---|---|
-| `__init__.py` | Python | Marks the folder as a package (enables `python -m scripts`) |
-| `mongo_to_postgres.py` | Python | PySpark incremental ETL |
-| `plpgsql_loops_tests.py` | Python | PL/pgSQL DO-block suite runner |
-| `run_gx.py` | Python | Great Expectations suite runner |
-| `inspect_schema.py` | Python | Print Postgres schema to stdout |
-| `docker_dev.sh` | Bash | Docker Compose lifecycle manager |
-| `monitor_logs.sh` | Bash | Operational health check + log monitoring |
-| `log_cleanup.sh` | Bash | Age/size-based log cleanup |
+```
+scripts/
+├── python/                         — Python entry-point scripts
+│   ├── mongo_to_postgres.py        — PySpark incremental ETL
+│   ├── plpgsql_loops_tests.py      — PL/pgSQL DO-block suite runner
+│   ├── run_gx.py                   — Great Expectations suite runner
+│   ├── inspect_schema.py           — Print Postgres schema to stdout
+│   ├── check_mongo.py              — MongoDB connectivity / collection check
+│   └── seed_mongo.py               — Seed MongoDB with sample data
+├── shell/                          — Bash operational scripts
+│   ├── docker_dev.sh               — Docker Compose lifecycle manager
+│   ├── monitor_logs.sh             — Operational health check + log monitoring
+│   ├── log_cleanup.sh              — Age/size-based log cleanup
+│   ├── health_check.sh             — Liveness probe for Postgres and MongoDB
+│   ├── init_db.sh                  — Database initialisation helper
+│   ├── backup_postgres.sh          — Postgres backup
+│   ├── restore_postgres.sh         — Postgres restore
+│   ├── backup_mongo.sh             — MongoDB backup
+│   └── restore_mongo.sh            — MongoDB restore
+└── ps1/                            — PowerShell automation (Windows)
+    └── local_runner.ps1            — End-to-end pipeline runner (ETL + PL/pgSQL + GX)
+```
 
 ---
 
@@ -155,12 +156,28 @@ Standalone executable scripts (Python + Bash).
 21 analytical SQL scripts organized by purpose (see [SQL.md](SQL.md)).
 
 ```
-sql/
-├── Exploration/     (01–04)
-├── Analysis/        (05–11)
-├── Reports/         (12–16)
-├── Advanced/        (17–19)
-└── Functions/       (20–21)
+sql/                                — all scripts live directly here (flat layout)
+├── 01_database_exploration.sql
+├── 02_dimensions_exploration.sql
+├── 03_date_range_exploration.sql
+├── 04_measures_exploration.sql
+├── 05_magnitude_analysis.sql
+├── 06_ranking_analysis.sql
+├── 07_change_over_time_analysis.sql
+├── 08_cumulative_analysis.sql
+├── 09_performance_analysis.sql
+├── 10_data_segmentation.sql
+├── 11_part_to_whole_analysis.sql
+├── 12_customer_report.sql
+├── 13_product_report.sql
+├── 14_brand_report.sql
+├── 15_fn_store_performance.sql
+├── 16_sales_report.sql
+├── 17_new_ve_return.sql
+├── 18_status_check.sql
+├── 19_cohort_analysis.sql
+├── 20_fn_inventory_summary.sql
+└── 21_fn_staff_performance.sql
 ```
 
 ---
@@ -218,19 +235,19 @@ Shared connection / engine / logger / metrics.
 
 ### `tests/generic/loops/`
 
-10 PL/pgSQL DO-block test files:
+10 PL/pgSQL DO-block test files, one per domain:
 
 ```
-01_test_brands.sql (see tests/generic/loops/01_test_brands.sql ... 10_test_stores.sql)
-02_basic_aggregation_sanity.sql
-03_null_check_columns.sql
-04_type_validation.sql
-05_referential_integrity.sql
-06_orphan_check_tables.sql
-07_business_logic_validations.sql
-08_advanced_logic.sql
-09_id_check.sql
-10_date_check.sql
+01_test_brands.sql
+02_test_categories.sql
+03_test_customers.sql
+04_test_order_items.sql
+05_test_orders.sql
+06_test_orphan_and_business_rules.sql
+07_test_products.sql
+08_test_staffs.sql
+09_test_stocks.sql
+10_test_stores.sql
 ```
 
 ### `tests/data_quality/`
