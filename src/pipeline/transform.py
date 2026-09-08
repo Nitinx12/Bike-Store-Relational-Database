@@ -56,24 +56,6 @@ def slugify(s: str) -> str:
 PkCol = str | tuple[str, ...] | None
 
 
-def detect_pk_cols(columns: list[str], collection: str, log) -> tuple[str, ...] | None:
-    """Return all PK columns (composite-aware). None if no match."""
-    slug = slugify(collection)
-    composite = COMPOSITE_PK.get(slug)
-    if composite and all(c in columns for c in composite):
-        log.info("PK DETECT : %s  (composite key from COMPOSITE_PK)", list(composite))
-        return tuple(composite)
-    exact = f"{slug}_id"
-    if exact in columns:
-        return (exact,)
-    candidates = [c for c in columns if c.endswith("_id")]
-    if candidates:
-        return (candidates[0],)
-    if "id" in columns:
-        return ("id",)
-    return None
-
-
 def detect_pk_col(
     columns: list[str], collection: str, log
 ) -> str | tuple[str, ...] | None:
