@@ -13,9 +13,9 @@
 #   ./scripts/restore_mongo.sh --help
 # ============================================================================
 
-set -uo pipefail
+set -euo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 if [[ -f "${PROJECT_ROOT}/.env" ]]; then
     set -a

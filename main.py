@@ -80,6 +80,7 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--collections",
+        "--collection",
         nargs="+",
         default=None,
         help="Only load these collections (default: every collection in MongoDB).",

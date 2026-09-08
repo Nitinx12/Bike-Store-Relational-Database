@@ -113,7 +113,7 @@ BEGIN
             O.order_id,
             SUM(OI.total_value) AS order_total,
             SUM(OI.quantity)    AS order_units,
-            SUM(OI.discount)    AS order_discount
+            SUM(OI.list_price * OI.quantity * OI.discount) AS order_discount
         FROM orders AS O
         INNER JOIN order_items AS OI ON OI.order_id = O.order_id
         WHERE O.order_status = 'Completed'

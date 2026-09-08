@@ -11,7 +11,7 @@ WITH Monthly_base AS (
         COUNT(DISTINCT Oi.Order_id) AS Total_orders,
         SUM(Oi.Quantity) AS Units_sold,
         ROUND(SUM(Oi.List_price * Oi.Quantity), 2) AS Gross_revenue,
-        ROUND(SUM(Oi.Discount), 2) AS Total_discounts,
+        ROUND(SUM(Oi.List_price * Oi.Quantity * Oi.Discount), 2) AS Total_discounts,
         ROUND(SUM(Oi.Total_value), 2) AS Net_revenue
     FROM Orders AS O
     INNER JOIN Order_items AS Oi

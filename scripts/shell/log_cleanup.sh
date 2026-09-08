@@ -15,9 +15,9 @@
 #   ./scripts/log_cleanup.sh clean -y        (Force deletion)
 # ============================================================================
 
-set -uo pipefail
+set -euo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LOG_DIR="${PROJECT_ROOT}/logs"
 MAX_AGE_DAYS="${MAX_AGE_DAYS:-7}"
 MAX_SIZE_MB="${MAX_SIZE_MB:-5}"

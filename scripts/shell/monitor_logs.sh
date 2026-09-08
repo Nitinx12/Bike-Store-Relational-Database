@@ -26,13 +26,13 @@
 
 # We intentionally do NOT use `-e` so the script can accumulate errors
 # and report them all at the end, rather than crashing on the first failure.
-set -uo pipefail
+set -euo pipefail
 
 # ------------------------------------------------------------
 # Project paths
 # ------------------------------------------------------------
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 LOG_DIR="$ROOT_DIR/logs"
 PIPELINE_LOG_DIR="$LOG_DIR/pipeline"

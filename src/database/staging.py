@@ -22,26 +22,33 @@ def merge_staging_to_target(
     table: str,
     staging: str,
     columns: list[str],
-    pk_col: str | None,
+    pk_col: str | tuple[str, ...] | list[str] | None,
     log,
 ) -> int:
     """
     INSERT … SELECT from staging into the target table.
-      Has-PK  → ON CONFLICT (pk_col)   DO UPDATE SET …   (upsert)
+      Has-PK  → ON CONFLICT (pk_col[, ...]) DO UPDATE SET …   (upsert)
       No-PK   → ON CONFLICT (_row_hash) DO NOTHING        (dedup)
-    Returns the row count of the staging table (= rows attempted).
+    Returns rows inserted/updated (source: staging row count / rowcount).
     """
     col_list = ", ".join(f'"{c}"' for c in columns)
 
-    if pk_col and pk_col in columns:
+    if isinstance(pk_col, (list, tuple)):
+        pk_cols = [c for c in pk_col if c in columns]
+    elif pk_col and pk_col in columns:
+        pk_cols = [pk_col]
+    else:
+        pk_cols = []
+    if pk_cols:
+        conflict = ", ".join(f'"{c}"' for c in pk_cols)
         update_set = (
-            ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in columns if c != pk_col)
-            or f'"{pk_col}" = EXCLUDED."{pk_col}"'
+            ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in columns if c not in pk_cols)
+            or f'"{pk_cols[0]}" = EXCLUDED."{pk_cols[0]}"'
         )
         sql = f"""
             INSERT INTO "{schema}"."{table}" ({col_list})
             SELECT {col_list} FROM "{schema}"."{staging}"
-            ON CONFLICT ("{pk_col}") DO UPDATE SET {update_set}
+            ON CONFLICT ({conflict}) DO UPDATE SET {update_set}
         """
     else:
         sql = f"""
@@ -50,12 +57,17 @@ def merge_staging_to_target(
             ON CONFLICT ("_row_hash") DO NOTHING
         """
 
-    conn.execute(text(sql))
-    count = conn.execute(
-        text(f'SELECT COUNT(*) FROM "{schema}"."{table}"')
-    ).scalar()
+    result = conn.execute(text(sql))
+    try:
+        count = result.rowcount
+    except Exception:  # noqa: BLE001 - rowcount may raise per DBAPI
+        count = None
+    if count is None or count < 0:
+        count = conn.execute(
+            text(f'SELECT COUNT(*) FROM "{schema}"."{staging}"')
+        ).scalar() or 0
     log.info("MERGE       : %d rows → %s.%s", count, schema, table)
-    return count
+    return int(count)
 
 
 def drop_staging(conn, schema: str, staging: str, log) -> None:

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Internal wrapper: restore native MongoDB dump into Docker container via compose exec.
 # Bypasses the dual-listener port issue by going through docker compose cp/exec.
-set -uo pipefail
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 COMPOSE_DIR="${PROJECT_ROOT}"
 
 SRC_DIR="${1:-${PROJECT_ROOT}/backups/mongo/bike_store_native}"

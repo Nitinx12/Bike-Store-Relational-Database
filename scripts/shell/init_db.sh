@@ -15,9 +15,9 @@
 #   ./scripts/init_db.sh --local        Run against a local install (no docker)
 # ============================================================================
 
-set -uo pipefail
+set -euo pipefail
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 if [[ -f "${PROJECT_ROOT}/.env" ]]; then
     set -a

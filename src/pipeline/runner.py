@@ -86,9 +86,8 @@ def process_collection(
 
     # ── Step 1: Peek at Mongo to discover column names ─────────────────────
     try:
-        client = MongoClient(MONGO_URI)
-        sample = list(client[MONGO_DB][collection].find({}, {"_id": 0}).limit(10))
-        client.close()
+        with MongoClient(MONGO_URI) as client:
+            sample = list(client[MONGO_DB][collection].find({}, {"_id": 0}).limit(10))
     except PyMongoError as exc:
         log.error("Cannot connect to Mongo for '%s': %s", collection, exc)
         base["failed"] = 1
@@ -149,18 +148,24 @@ def process_collection(
         "loaded_at",
         F.lit(datetime.now(UTC).strftime(ISO_FMT)).cast("timestamp"),
     )
+    sdf = sdf.cache()
     columns = sdf.columns
 
-    # Dedup on pk_col (guard against duplicate source docs)
-    if pk_col and pk_col in columns:
+    # Dedup on pk_col (guard against duplicate source docs; composite-aware)
+    pk_cols = []
+    if isinstance(pk_col, (list, tuple)):
+        pk_cols = [c for c in pk_col if c in columns]
+    elif pk_col and pk_col in columns:
+        pk_cols = [pk_col]
+    if pk_cols:
         before = sdf.count()
-        sdf = sdf.dropDuplicates([pk_col])
+        sdf = sdf.dropDuplicates(pk_cols)
         dupes = before - sdf.count()
         if dupes > 0:
             log.warning(
                 "DEDUP       : removed %d duplicate '%s' values in '%s'",
                 dupes,
-                pk_col,
+                ",".join(pk_cols),
                 collection,
             )
             rows_new = sdf.count()
@@ -193,9 +198,19 @@ def process_collection(
             POSTGRES_PASSWORD,
             log,
         )
-    except SQLAlchemyError as exc:
+    except Exception as exc:  # noqa: BLE001 - Spark raises Py4J/Java, not SQLAlchemy
         log.error("JDBC staging write failed: %s", exc)
         log.debug(traceback.format_exc())
+        try:
+            with engine.connect() as conn, conn.begin():
+                drop_staging(conn, schema, staging, log)
+        except Exception:  # noqa: BLE001 - best-effort cleanup
+            log.warning("Could not drop staging after JDBC failure")
+        finally:
+            try:
+                sdf.unpersist()
+            except Exception:
+                log.debug("unpersist failed", exc_info=True)
         base["failed"] = rows_new
         return base
 
@@ -257,13 +272,23 @@ def run_pipeline(
     — useful for advancing a progress bar. Both are optional.
     """
     log = get_logger(stage="extraction", name="mongo_public_main")
+    mode = "FULL REFRESH" if full_load else "INCREMENTAL"
 
     if not collections:
-        with MongoClient(MONGO_URI) as client:
-            collections = client[MONGO_DB].list_collection_names()
+        try:
+            with MongoClient(MONGO_URI) as client:
+                collections = client[MONGO_DB].list_collection_names()
+        except PyMongoError as exc:
+            log.error("Collection auto-discovery failed: %s", exc)
+            return {
+                "summaries": [],
+                "totals": {"rows_mongo": 0, "rows_new": 0, "rows_loaded": 0, "failed": 0},
+                "skipped_count": 0,
+                "collections": [],
+                "mode": mode,
+            }
         log.info("Discovered %d collections: %s", len(collections), collections)
 
-    mode = "FULL REFRESH" if full_load else "INCREMENTAL"
     log.info("Collections : %d", len(collections))
     log.info("Mode        : %s", mode)
 
@@ -273,20 +298,27 @@ def run_pipeline(
     spark = get_spark()
     engine = postgres_engine()
 
-    with engine.connect() as c:
-        c.execute(text("SELECT 1"))
-    log.info("Postgres connected ✓")
+    try:
+        with engine.connect() as c:
+            c.execute(text("SELECT 1"))
+        log.info("Postgres connected ✓")
 
-    summaries: list[dict] = []
-    for col in collections:
-        summary = process_collection(col, spark, engine, full_load=full_load)
-        summaries.append(summary)
-        if on_collection_done:
-            on_collection_done(col, summary)
-
-    spark.stop()
-    engine.dispose()
-    log.info("Spark stopped. Engine disposed.")
+        summaries: list[dict] = []
+        for col in collections:
+            summary = process_collection(col, spark, engine, full_load=full_load)
+            summaries.append(summary)
+            if on_collection_done:
+                on_collection_done(col, summary)
+    finally:
+        try:
+            spark.stop()
+        except Exception:
+            log.debug("spark.stop failed", exc_info=True)
+        try:
+            engine.dispose()
+        except Exception:
+            log.debug("engine.dispose failed", exc_info=True)
+        log.info("Spark stopped. Engine disposed.")
 
     totals = {"rows_mongo": 0, "rows_new": 0, "rows_loaded": 0, "failed": 0}
     skipped_count = 0
