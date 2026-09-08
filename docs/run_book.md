@@ -18,7 +18,7 @@ make pipeline
 # 5. Or run jobs individually
 make etl ARGS="--full-refresh"
 make dq-loops
-make dq-gx ARGS="orders products"
+make dq-gx GX_TABLES="orders products"
 ```
 
 Or locally without Docker:
@@ -78,7 +78,7 @@ All targets delegate to `docker compose`. See `Makefile` for the full list.
 | `make pipeline` | Full pipeline: ETL → PL/pgSQL → GX |
 | `make etl ARGS="..."` | ETL only — see ARGS below |
 | `make dq-loops` | PL/pgSQL data quality suite |
-| `make dq-gx ARGS="..."` | Great Expectations suite |
+| `make dq-gx GX_TABLES="..."` | Great Expectations suite |
 | `make inspect-schema` | Print Postgres public schema |
 | `make monitor-logs ARGS="..."` | Log manager (summary / clean) |
 | `make shell` | Debug bash shell inside the app container |
@@ -97,7 +97,7 @@ make etl ARGS="--collection orders --collection products"
 
 ```bash
 make dq-gx                          # all 9 tables
-make dq-gx ARGS="orders products"  # specific tables
+make dq-gx GX_TABLES="orders products"  # specific tables
 ```
 
 ### Monitor-logs ARGS
