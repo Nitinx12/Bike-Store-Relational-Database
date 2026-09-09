@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from pymongo import MongoClient
 from pymongo.database import Database
@@ -58,11 +59,12 @@ def postgres_engine() -> Engine:
 # =========================================================
 
 
-def mongo_client() -> Database:
+def mongo_client() -> Database[dict[str, Any]]:
     try:
-        client = MongoClient(MONGO_URI)
-        db = client[MONGO_DB]
-        logger.info("MongoDB connected → %s", MONGO_DB)
+        client: MongoClient[dict[str, Any]] = MongoClient(MONGO_URI)
+        db_name = MONGO_DB or "bike_store"
+        db = client[db_name]
+        logger.info("MongoDB connected → %s", db_name)
         return db
 
     except Exception as e:

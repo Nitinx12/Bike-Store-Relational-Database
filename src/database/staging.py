@@ -45,10 +45,17 @@ def merge_staging_to_target(
             ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in columns if c not in pk_cols)
             or f'"{pk_cols[0]}" = EXCLUDED."{pk_cols[0]}"'
         )
+        # Guard against overwriting newer rows with older data when updated_at exists
+        where_clause = ""
+        if "updated_at" in columns and "updated_at" not in pk_cols:
+            where_clause = (
+                f' WHERE "{table}"."updated_at" IS NULL'
+                f' OR EXCLUDED."updated_at" > "{table}"."updated_at"'
+            )
         sql = f"""
             INSERT INTO "{schema}"."{table}" ({col_list})
             SELECT {col_list} FROM "{schema}"."{staging}"
-            ON CONFLICT ({conflict}) DO UPDATE SET {update_set}
+            ON CONFLICT ({conflict}) DO UPDATE SET {update_set}{where_clause}
         """
     else:
         sql = f"""
@@ -76,5 +83,5 @@ def drop_staging(conn, schema: str, staging: str, log) -> None:
 
 
 def truncate_table(conn, schema: str, table: str, log) -> None:
-    conn.execute(text(f'TRUNCATE TABLE "{schema}"."{table}" RESTART IDENTITY'))
+    conn.execute(text(f'TRUNCATE TABLE "{schema}"."{table}" RESTART IDENTITY CASCADE'))
     log.info("TRUNCATED   → %s.%s  (full-refresh)", schema, table)

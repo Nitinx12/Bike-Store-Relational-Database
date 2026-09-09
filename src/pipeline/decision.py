@@ -11,7 +11,30 @@ Moved out of scripts/mongo_to_postgres.py unchanged in behaviour.
 from __future__ import annotations
 
 import logging
+from datetime import UTC, date, datetime
 from typing import Any
+
+
+def _normalize_ts(ts: Any) -> datetime | None:
+    """Normalize any datetime/date/string timestamp to UTC-aware datetime."""
+    if ts is None:
+        return None
+    if isinstance(ts, datetime):
+        if ts.tzinfo is None:
+            return ts.replace(tzinfo=UTC)
+        return ts.astimezone(UTC)
+    if isinstance(ts, date):
+        return datetime(ts.year, ts.month, ts.day, tzinfo=UTC)
+    if isinstance(ts, str):
+        try:
+            cleaned = ts.removesuffix("Z")
+            dt = datetime.fromisoformat(cleaned)
+            if dt.tzinfo is None:
+                return dt.replace(tzinfo=UTC)
+            return dt.astimezone(UTC)
+        except (ValueError, TypeError):
+            return None
+    return None
 
 
 def needs_load(
@@ -39,18 +62,16 @@ def needs_load(
         )
         return True
 
-    if (
-        ts_col
-        and mongo_stats.get("max_ts")
-        and pg_stats.get("max_ts")
-        and mongo_stats["max_ts"] > pg_stats["max_ts"]
-    ):
-        log.info(
-            "DECISION    : Mongo max_ts (%s) > PG max_ts (%s) → LOAD",
-            mongo_stats["max_ts"],
-            pg_stats["max_ts"],
-        )
-        return True
+    if ts_col and mongo_stats.get("max_ts"):
+        m_ts = _normalize_ts(mongo_stats["max_ts"])
+        p_ts = _normalize_ts(pg_stats.get("max_ts"))
+        if m_ts and (p_ts is None or m_ts > p_ts):
+            log.info(
+                "DECISION    : Mongo max_ts (%s) > PG max_ts (%s) → LOAD",
+                mongo_stats["max_ts"],
+                pg_stats.get("max_ts"),
+            )
+            return True
 
     log.info(
         "DECISION    : no changes detected (Mongo count=%d, PG count=%d) → SKIP",

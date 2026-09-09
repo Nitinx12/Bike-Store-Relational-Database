@@ -57,96 +57,71 @@ def drop_collections(db) -> None:
         db.drop_collection(coll)
 
 
-def seed_brands(db) -> list[dict]:
+def seed_brands(db) -> list[int]:
+    brand_names = [
+        "Trek", "Specialized", "Giant", "Cannondale", "Schwinn",
+        "Diamondback", "Brompton", "Bianchi", "Pinarello", "Santa Cruz",
+    ]
     brands = [
-        {"name": "Trek", "description": "High-performance road and mountain bikes"},
-        {"name": "Specialized", "description": "Premium cycling gear and accessories"},
-        {"name": "Giant", "description": "Value-focused performance bicycles"},
-        {"name": "Cannondale", "description": "Innovative aluminum and carbon frames"},
-        {"name": "Schwinn", "description": "Classic cruiser and hybrid bikes"},
-        {"name": "Diamondback", "description": "Mountain and BMX bikes"},
-        {"name": "Brompton", "description": "Folding bikes for urban commuting"},
-        {"name": "Bianchi", "description": "Italian racing and endurance bikes"},
-        {"name": "Pinarello", "description": "Professional road racing bicycles"},
-        {"name": "Santa Cruz", "description": "High-end mountain bikes"},
+        {
+            "brand_id": i + 1,
+            "brand_name": name,
+            "updated_at": _now(),
+        }
+        for i, name in enumerate(brand_names)
     ]
-    result = db.brands.insert_many(brands)
-    print(f"  ✓ brands: {len(result.inserted_ids)} documents")
-    return result.inserted_ids
+    db.brands.insert_many(brands)
+    print(f"  ✓ brands: {len(brands)} documents")
+    return list(range(1, len(brand_names) + 1))
 
 
-def seed_categories(db) -> list[dict]:
+def seed_categories(db) -> list[int]:
+    cat_names = [
+        "Road Bikes", "Mountain Bikes", "Hybrid Bikes", "Electric Bikes",
+        "Cruiser Bikes", "BMX Bikes", "Kids Bikes", "Folding Bikes",
+        "Gravel Bikes", "Accessories",
+    ]
     categories = [
-        {"name": "Road Bikes", "description": "Lightweight bikes for paved surfaces"},
-        {"name": "Mountain Bikes", "description": "Durable bikes for rough terrain"},
-        {"name": "Hybrid Bikes", "description": "Versatile bikes for commuting and leisure"},
-        {"name": "Electric Bikes", "description": "Assisted riding with battery power"},
-        {"name": "Cruiser Bikes", "description": "Comfort-focused casual riding"},
-        {"name": "BMX Bikes", "description": "Compact bikes for tricks and racing"},
-        {"name": "Kids Bikes", "description": "Smaller frames for young riders"},
-        {"name": "Folding Bikes", "description": "Collapsible bikes for transport"},
-        {"name": "Gravel Bikes", "description": "Adventure bikes for mixed terrain"},
-        {"name": "Accessories", "description": "Helmets, lights, locks, and more"},
+        {
+            "category_id": i + 1,
+            "category_name": name,
+            "updated_at": _now(),
+        }
+        for i, name in enumerate(cat_names)
     ]
-    result = db.categories.insert_many(categories)
-    print(f"  ✓ categories: {len(result.inserted_ids)} documents")
-    return result.inserted_ids
+    db.categories.insert_many(categories)
+    print(f"  ✓ categories: {len(categories)} documents")
+    return list(range(1, len(cat_names) + 1))
 
 
-def seed_stores(db) -> list[dict]:
+def seed_stores(db) -> list[int]:
+    store_data = [
+        ("Downtown Cycles", "(555) 101-0001", "downtown@bestbikes.com", "123 Main Street", "San Francisco", "CA", 94102),
+        ("Westside Wheels", "(555) 102-0002", "westside@bestbikes.com", "456 Ocean Avenue", "Los Angeles", "CA", 90401),
+        ("Harbor Bicycles", "(555) 103-0003", "harbor@bestbikes.com", "789 Waterfront Drive", "Seattle", "WA", 98101),
+        ("Mountain View Cycles", "(555) 104-0004", "mountain@bestbikes.com", "321 Tech Boulevard", "Mountain View", "CA", 94041),
+        ("Austin's Pedal Power", "(555) 105-0005", "austin@bestbikes.com", "555 Congress Avenue", "Austin", "TX", 78701),
+    ]
     stores = [
         {
-            "name": "Downtown Cycles",
-            "phone": "(555) 101-0001",
-            "email": "downtown@bestbikes.com",
-            "street": "123 Main Street",
-            "city": "San Francisco",
-            "state": "CA",
-            "zip_code": 94102,
-        },
-        {
-            "name": "Westside Wheels",
-            "phone": "(555) 102-0002",
-            "email": "westside@bestbikes.com",
-            "street": "456 Ocean Avenue",
-            "city": "Los Angeles",
-            "state": "CA",
-            "zip_code": 90401,
-        },
-        {
-            "name": "Harbor Bicycles",
-            "phone": "(555) 103-0003",
-            "email": "harbor@bestbikes.com",
-            "street": "789 Waterfront Drive",
-            "city": "Seattle",
-            "state": "WA",
-            "zip_code": 98101,
-        },
-        {
-            "name": "Mountain View Cycles",
-            "phone": "(555) 104-0004",
-            "email": "mountain@bestbikes.com",
-            "street": "321 Tech Boulevard",
-            "city": "Mountain View",
-            "state": "CA",
-            "zip_code": 94041,
-        },
-        {
-            "name": "Austin's Pedal Power",
-            "phone": "(555) 105-0005",
-            "email": "austin@bestbikes.com",
-            "street": "555 Congress Avenue",
-            "city": "Austin",
-            "state": "TX",
-            "zip_code": 78701,
-        },
+            "store_id": i + 1,
+            "store_name": item[0],
+            "phone": item[1],
+            "email": item[2],
+            "street": item[3],
+            "city": item[4],
+            "state": item[5],
+            "zip_code": item[6],
+            "updated_at": _now(),
+        }
+        for i, item in enumerate(store_data)
     ]
-    result = db.stores.insert_many(stores)
-    print(f"  ✓ stores: {len(result.inserted_ids)} documents")
-    return result.inserted_ids
+    db.stores.insert_many(stores)
+    print(f"  ✓ stores: {len(stores)} documents")
+    return list(range(1, len(store_data) + 1))
 
 
-def seed_staffs(db, store_ids: list) -> list[dict]:
+def seed_staffs(db, store_ids: list[int]) -> list[int]:
     first_names = [
         "Alice", "Bob", "Carol", "David", "Eve", "Frank", "Grace", "Henry",
         "Iris", "Jack", "Karen", "Leo", "Mia", "Nathan", "Olivia", "Paul",
@@ -157,7 +132,7 @@ def seed_staffs(db, store_ids: list) -> list[dict]:
         "Anderson", "Thomas", "Taylor",
     ]
     emails_seen: set[str] = set()
-    staffs: list[dict] = []
+    staffs = []
     for i in range(20):
         first = first_names[i % len(first_names)]
         last = last_names[i % len(last_names)]
@@ -166,21 +141,22 @@ def seed_staffs(db, store_ids: list) -> list[dict]:
             email = f"{first.lower()}.{last.lower()}{i}@bestbikes.com"
         emails_seen.add(email)
         staffs.append({
+            "staff_id": i + 1,
             "first_name": first,
             "last_name": last,
             "email": email,
             "phone": f"(555) {randint(100, 999)}-{randint(1000, 9999)}",
             "active": 1,
             "store_id": store_ids[i % len(store_ids)],
-            "manager_id": None,
+            "manager_id": 1 if i > 0 else None,
+            "updated_at": _now(),
         })
-    result = db.staffs.insert_many(staffs)
-    staff_ids = result.inserted_ids
-    print(f"  ✓ staffs: {len(staff_ids)} documents")
-    return staff_ids
+    db.staffs.insert_many(staffs)
+    print(f"  ✓ staffs: {len(staffs)} documents")
+    return [int(s["staff_id"]) for s in staffs]
 
 
-def seed_products(db, brand_ids: list, category_ids: list) -> list[dict]:
+def seed_products(db, brand_ids: list[int], category_ids: list[int]) -> list[int]:
     products = [
         {"name": "Domane AL 2", "model_year": 2024, "list_price": 849.99},
         {"name": "FX 3 Disc", "model_year": 2024, "list_price": 749.99},
@@ -196,7 +172,7 @@ def seed_products(db, brand_ids: list, category_ids: list) -> list[dict]:
         {"name": "Diverge E5", "model_year": 2024, "list_price": 1599.99},
         {"name": "Stumpjumper EVO", "model_year": 2024, "list_price": 3999.99},
         {"name": "Chisel Expert", "model_year": 2024, "list_price": 2199.99},
-        {"name": " TCR Advanced 2", "model_year": 2024, "list_price": 2299.99},
+        {"name": "TCR Advanced 2", "model_year": 2024, "list_price": 2299.99},
         {"name": "Defy Advanced", "model_year": 2024, "list_price": 2599.99},
         {"name": "CAAD 13", "model_year": 2023, "list_price": 1899.99},
         {"name": "Synapse Carbon", "model_year": 2024, "list_price": 2899.99},
@@ -211,32 +187,34 @@ def seed_products(db, brand_ids: list, category_ids: list) -> list[dict]:
     docs = []
     for i, p in enumerate(products):
         docs.append({
-            "name": p["name"],
+            "product_id": i + 1,
+            "product_name": p["name"],
             "brand_id": brand_ids[i % len(brand_ids)],
             "category_id": category_ids[i % len(category_ids)],
             "model_year": p["model_year"],
             "list_price": p["list_price"],
+            "updated_at": _now(),
         })
-    result = db.products.insert_many(docs)
-    print(f"  ✓ products: {len(result.inserted_ids)} documents")
-    return result.inserted_ids
+    db.products.insert_many(docs)
+    print(f"  ✓ products: {len(docs)} documents")
+    return [int(d["product_id"]) for d in docs]
 
 
-def seed_stocks(db, store_ids: list, product_ids: list) -> list[dict]:
-    docs: list[dict] = []
+def seed_stocks(db, store_ids: list[int], product_ids: list[int]) -> None:
+    docs = []
     for store_id in store_ids:
-        for product_id in product_ids[:10]:  # each store stocks first 10 products
+        for product_id in product_ids[:10]:
             docs.append({
                 "store_id": store_id,
                 "product_id": product_id,
-                "quantity": randint(0, 50),
+                "quantity": randint(5, 50),
+                "updated_at": _now(),
             })
-    result = db.stocks.insert_many(docs)
-    print(f"  ✓ stocks: {len(result.inserted_ids)} documents")
-    return result.inserted_ids
+    db.stocks.insert_many(docs)
+    print(f"  ✓ stocks: {len(docs)} documents")
 
 
-def seed_customers(db) -> list[dict]:
+def seed_customers(db) -> list[int]:
     first_names = [
         "Emma", "Liam", "Olivia", "Noah", "Ava", "Ethan", "Sophia", "Mason",
         "Isabella", "William", "Mia", "James", "Charlotte", "Benjamin", "Amelia",
@@ -258,12 +236,13 @@ def seed_customers(db) -> list[dict]:
         ("Chicago", "IL"), ("New York", "NY"), ("Boston", "MA"), ("Miami", "FL"),
     ]
     domains = ["gmail.com", "yahoo.com", "outlook.com", "icloud.com", "proton.me"]
-    docs: list[dict] = []
+    docs = []
     for i in range(50):
         fn = first_names[i % len(first_names)]
         ln = last_names[i % len(last_names)]
         city, state = cities[i % len(cities)]
         docs.append({
+            "customer_id": i + 1,
             "first_name": fn,
             "last_name": ln,
             "email": f"{fn.lower()}.{ln.lower()}{i}@{choice(domains)}",
@@ -272,28 +251,30 @@ def seed_customers(db) -> list[dict]:
             "city": city,
             "state": state,
             "zip_code": randint(10000, 99999),
+            "updated_at": _now(),
         })
-    result = db.customers.insert_many(docs)
-    print(f"  ✓ customers: {len(result.inserted_ids)} documents")
-    return result.inserted_ids
+    db.customers.insert_many(docs)
+    print(f"  ✓ customers: {len(docs)} documents")
+    return [int(d["customer_id"]) for d in docs]
 
 
 def seed_orders(
     db,
-    customer_ids: list,
-    store_ids: list,
-    staff_ids: list,
-) -> list[tuple]:
+    customer_ids: list[int],
+    store_ids: list[int],
+    staff_ids: list[int],
+) -> list[tuple[int, datetime]]:
     statuses = ["Pending", "Processing", "Completed", "Rejected"]
-    order_docs: list[dict] = []
+    order_docs = []
     for i in range(80):
-        order_date = _past(days=randint(0, 90))
+        order_date = _past(days=randint(10, 90))
         required_date = order_date + timedelta(days=randint(3, 14))
         shipped_date = None
         status = choice(statuses)
         if status == "Completed":
             shipped_date = order_date + timedelta(days=randint(1, 5))
         order_docs.append({
+            "order_id": i + 1,
             "customer_id": choice(customer_ids),
             "order_status": status,
             "order_date": order_date,
@@ -301,35 +282,35 @@ def seed_orders(
             "shipped_date": shipped_date,
             "store_id": choice(store_ids),
             "staff_id": choice(staff_ids),
+            "updated_at": _now(),
         })
-    result = db.orders.insert_many(order_docs)
-    order_ids = result.inserted_ids
-    print(f"  ✓ orders: {len(order_ids)} documents")
-    return list(zip(order_ids, [d["order_date"] for d in order_docs]))
+    db.orders.insert_many(order_docs)
+    print(f"  ✓ orders: {len(order_docs)} documents")
+    return [(int(d["order_id"]), d["order_date"]) for d in order_docs]
 
 
-def seed_order_items(db, orders: list[tuple], product_ids: list) -> list[dict]:
-    item_docs: list[dict] = []
-    for order_id, order_date in orders:
+def seed_order_items(db, orders: list[tuple[int, datetime]], product_ids: list[int]) -> None:
+    item_docs = []
+    for order_id, _order_date in orders:
         num_items = randint(1, 4)
         for item_num in range(1, num_items + 1):
             product_id = choice(product_ids)
             quantity = randint(1, 3)
-            list_price = uniform(300.0, 5000.0)
-            discount = uniform(0.0, 0.25)
+            list_price = round(uniform(300.0, 5000.0), 2)
+            discount = round(uniform(0.0, 0.25), 2)
             total_value = round(quantity * list_price * (1 - discount), 2)
             item_docs.append({
                 "order_id": order_id,
                 "item_id": item_num,
                 "product_id": product_id,
                 "quantity": quantity,
-                "list_price": round(list_price, 2),
-                "discount": round(discount, 4),
+                "list_price": list_price,
+                "discount": discount,
                 "total_value": total_value,
+                "updated_at": _now(),
             })
-    result = db.order_items.insert_many(item_docs)
-    print(f"  ✓ order_items: {len(result.inserted_ids)} documents")
-    return result.inserted_ids
+    db.order_items.insert_many(item_docs)
+    print(f"  ✓ order_items: {len(item_docs)} documents")
 
 
 def main() -> None:

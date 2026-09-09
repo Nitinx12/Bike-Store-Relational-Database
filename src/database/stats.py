@@ -10,6 +10,8 @@ Moved out of scripts/mongo_to_postgres.py unchanged in behaviour.
 
 from __future__ import annotations
 
+from typing import Any
+
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -18,9 +20,9 @@ from src.pipeline.mongo_source import to_iso
 
 def get_postgres_stats(
     engine, schema: str, table: str, ts_col: str | None, log
-) -> dict:
+) -> dict[str, Any]:
     """Returns {"count": int, "max_ts": datetime | None, "table_exists": bool}."""
-    result = {"count": 0, "max_ts": None, "table_exists": False}
+    result: dict[str, Any] = {"count": 0, "max_ts": None, "table_exists": False}
     try:
         with engine.connect() as conn:
             exists = conn.execute(

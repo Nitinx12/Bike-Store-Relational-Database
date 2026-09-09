@@ -184,6 +184,10 @@ def process_collection(
     except SQLAlchemyError as exc:
         log.error("Could not create schema '%s': %s", schema, exc)
         base["failed"] = rows_new
+        try:
+            sdf.unpersist()
+        except Exception:
+            log.debug("unpersist failed", exc_info=True)
         return base
 
     # ── Step 6: Write to staging via JDBC ───────────────────────────────────
@@ -240,6 +244,10 @@ def process_collection(
         except SQLAlchemyError:
             log.warning("Could not drop staging after merge failure")
         base["failed"] = rows_new
+        try:
+            sdf.unpersist()
+        except Exception:
+            log.debug("unpersist failed", exc_info=True)
         return base
 
     log.info(
@@ -250,6 +258,10 @@ def process_collection(
         base["failed"],
     )
     log.info("=" * 65)
+    try:
+        sdf.unpersist()
+    except Exception:
+        log.debug("unpersist failed", exc_info=True)
     return base
 
 

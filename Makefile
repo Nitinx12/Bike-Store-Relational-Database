@@ -17,8 +17,9 @@
 # NOTE: Make's `include` only handles plain unquoted `KEY=value` lines —
 # quoted values keep their literal quotes and inline `#` comments truncate
 # the value. Keep .env to plain `KEY=value` lines (see .env.example).
+# Requires WSL/Git-Bash on Windows; native cmd.exe is not supported.
 ifneq (,$(wildcard .env))
-    include .env
+    -include .env
     export
 endif
 
@@ -36,42 +37,31 @@ help: ## Show this help message
 	@echo -e "$(BOLD)Bike Store Pipeline Management$(RESET)"
 	@echo Usage: make "<target>" [ARGS=...]
 	@echo ""
-	@echo Quick Start "(production-grade)":
-	@echo   run                  Run the full pipeline in-process "(recommended)"
-	@echo   run-verbose          Run with verbose Python tracebacks
-	@echo   run-full             Full refresh: truncate and reload every collection
-	@echo   install              Sync dependencies from pyproject.toml
-	@echo   verify               Check that dependencies are installed
-	@echo   doctor               Full system + dependency + import health check
+	@echo -e "$(BOLD)Quick Start (production-grade):$(RESET)"
+	@echo "  run                      Run the full pipeline in-process (recommended)"
+	@echo "  install                  Sync dependencies from pyproject.toml"
+	@echo "  doctor                   Full system + dependency + import health check"
+	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(run|install|verify|doctor|check-env|check-deps):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>nul || true
 	@echo ""
-	@echo Stage-level targets:
-	@echo   run-etl              Run only the ETL stage "(MongoDB -> Postgres)"
-	@echo   run-dq               Run only the PL/pgSQL data-quality suite
-	@echo   run-gx               Run only the Great Expectations suite
-	@echo   run-etl-only         ETL + skip all validation
-	@echo   run-etl-dq           ETL + PL/pgSQL "(skip GX)"
+	@echo -e "$(BOLD)Stage-level targets:$(RESET)"
+	@echo "  run-etl                  Run only the ETL stage (MongoDB -> Postgres)"
+	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(run-etl|run-dq|run-gx|run-etl-only|run-etl-dq|etl|local-etl|dq-loops|local-dq-loops|dq-gx|local-dq-gx):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>nul || true
 	@echo ""
-	@echo Collection targets:
-	@echo   run-collection              make ARGS=--collection orders
-	@echo   run-collection-full         make ARGS=--collection orders --full-refresh
-	@echo   run-gx-table                make GX_TABLES=orders products
+	@echo -e "$(BOLD)Collection targets:$(RESET)"
+	@echo "  run-collection           make ARGS=\"--collection orders\""
+	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(run-collection|run-collection-full|run-gx-table):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>nul || true
+	@echo "    example: make run-collection ARGS=\"--collection orders\""
+	@echo "    example: make run-gx-table GX_TABLES=\"orders products\""
 	@echo ""
-	@echo Docker targets:
-	@echo   up                Start Postgres, MongoDB, and monitoring stack
-	@echo   pipeline          Full pipeline inside Docker
-	@echo   local-pipeline    Full pipeline via pwsh "(rich terminal UI)"
-	@echo   build             Build the Docker app image
-	@echo   down              Stop the stack
-	@echo   clean             Remove containers and volumes
+	@echo -e "$(BOLD)Docker targets:$(RESET)"
+	@echo "  up                       Start Postgres, MongoDB, and monitoring stack"
+	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(up|down|build|pipeline|local-pipeline|clean|prune|shell):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>nul || true
 	@echo ""
-	@echo DevOps / utilities:
-	@echo   lint               Run Ruff, Mypy, and SQLFluff
-	@echo   test               Run pytest
-	@echo   format             Format code with Ruff
-	@echo   run-clean          Remove pipeline logs older than 7 days
-	@echo   backup-postgres    Backup Postgres database
-	@echo   restore-postgres   Restore Postgres from backup
-	@echo   health-check       Liveness probe for Postgres and MongoDB
+	@echo -e "$(BOLD)DevOps / utilities:$(RESET)"
+	@echo "  lint                     Run Ruff, Mypy, and SQLFluff"
+	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(lint|test|format|health-check|init-db|seed|local-seed|inspect-schema|local-inspect-schema|monitor-logs|log-cleanup|backup-postgres|restore-postgres|backup-mongo|restore-mongo|run-clean):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>nul || true
+	@echo ""
+	@echo -e "$(CYAN)Tip: help auto-parses ## comments via grep + awk on WSL/Git-Bash$(RESET)"
 
 check-env: ## Verify .env exists
 	@if [[ ! -f .env ]]; then \
@@ -184,7 +174,8 @@ restore-mongo: ## Restore MongoDB
 clean: ## Clean containers/volumes
 	docker compose down -v
 
-prune: clean ## Deep prune Docker
+prune: clean ## Deep prune Docker (requires CONFIRM=1)
+	@if [ "$(CONFIRM)" != "1" ]; then echo "Refusing to prune without CONFIRM=1. Run: make prune CONFIRM=1"; exit 1; fi
 	docker system prune -af --volumes
 
 # ============================================================================
@@ -196,7 +187,9 @@ prune: clean ## Deep prune Docker
 check-deps: ## Verify required tools (uv, python, docker, etc.) are available
 	@echo Checking prerequisites...
 	@uv_version=$$(uv --version 2>/dev/null) && echo "  uv OK ($$uv_version)" || (echo "  FATAL: uv not found." && exit 1)
-	@uv lock --check >/dev/null 2>&1 && echo "  uv lockfile OK" || (echo "  FATAL: uv lockfile out of sync. Run uv lock." && exit 1)
+	@python --version >/dev/null 2>&1 && echo "  python OK ($$(python --version 2>&1))" || (echo "  FATAL: python not found." && exit 1)
+	@docker --version >/dev/null 2>&1 && echo "  docker OK ($$(docker --version 2>&1 | head -n1))" || echo "  WARN: docker not found (only needed for Docker targets)."
+	@uv lock --check >/dev/null 2>&1 && echo "  uv lockfile OK" || (echo "  FATAL: uv lockfile out of sync. Run 'uv lock'." && exit 1)
 	@echo All prerequisites met.
 
 install: check-deps ## Install / sync dependencies and verify
@@ -208,11 +201,11 @@ verify: check-deps ## Alias for 'check-deps' (runs dependency checks only)
 
 doctor: check-deps ## Run dependency + import health check; exit non-zero if anything is misconfigured
 	@echo === Doctor: uv lockfile ===
-	@uv lock --check >/dev/null 2>&1 && echo "  Lockfile OK" || (echo "  ERROR: Lockfile out of sync. Run make install." && exit 1)
+	@uv lock --check >/dev/null 2>&1 && echo "  Lockfile OK" || (echo "  ERROR: Lockfile out of sync. Run 'make install'." && exit 1)
 	@echo === Doctor: Pipeline imports ===
-	@uv run python -c "from src.pipeline.runner import run_pipeline; print('  Pipeline import OK')" 2>/dev/null || (echo   ERROR: Cannot import pipeline modules. && exit 1)
-	@uv run python -c "from src.validation.plpgsql_loops import run_all; print('  PL/pgSQL import OK')" 2>/dev/null || (echo   ERROR: Cannot import plpgsql modules. && exit 1)
-	@uv run python -c "from tests.data_quality import run; print('  GX import OK')" 2>/dev/null || (echo   ERROR: Cannot import GX modules. && exit 1)
+	@uv run python -c "from src.pipeline.runner import run_pipeline; print('  Pipeline import OK')" || (echo "  ERROR: Cannot import pipeline modules." && exit 1)
+	@uv run python -c "from src.validation.plpgsql_loops import run_all; print('  PL/pgSQL import OK')" || (echo "  ERROR: Cannot import plpgsql modules." && exit 1)
+	@uv run python -c "from tests.data_quality import run; print('  GX import OK')" || (echo "  ERROR: Cannot import GX modules." && exit 1)
 	@echo All doctor checks passed.
 
 run-clean: ## Remove pipeline log files older than 7 days

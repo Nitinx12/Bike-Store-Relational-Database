@@ -142,6 +142,26 @@ JDBC_URL = f"jdbc:postgresql://{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DATABAS
 # ─────────────────────────────────────────────────────────────────────────────
 
 COLUMN_TYPE_MAP: dict[tuple[str, str], str] = {
+    # primary & foreign keys (bigint)
+    ("brands", "brand_id"): "BIGINT",
+    ("categories", "category_id"): "BIGINT",
+    ("customers", "customer_id"): "BIGINT",
+    ("stores", "store_id"): "BIGINT",
+    ("staffs", "staff_id"): "BIGINT",
+    ("staffs", "store_id"): "BIGINT",
+    ("staffs", "manager_id"): "BIGINT",
+    ("products", "product_id"): "BIGINT",
+    ("products", "brand_id"): "BIGINT",
+    ("products", "category_id"): "BIGINT",
+    ("stocks", "store_id"): "BIGINT",
+    ("stocks", "product_id"): "BIGINT",
+    ("orders", "order_id"): "BIGINT",
+    ("orders", "customer_id"): "BIGINT",
+    ("orders", "store_id"): "BIGINT",
+    ("orders", "staff_id"): "BIGINT",
+    ("order_items", "order_id"): "BIGINT",
+    ("order_items", "item_id"): "BIGINT",
+    ("order_items", "product_id"): "BIGINT",
     # timestamps / dates
     ("brands", "updated_at"): "TIMESTAMPTZ",
     ("categories", "updated_at"): "TIMESTAMPTZ",
@@ -155,9 +175,16 @@ COLUMN_TYPE_MAP: dict[tuple[str, str], str] = {
     ("staffs", "updated_at"): "TIMESTAMPTZ",
     ("stocks", "updated_at"): "TIMESTAMPTZ",
     ("stores", "updated_at"): "TIMESTAMPTZ",
-    # numeric / boolean
+    # numeric / boolean / text
+    ("customers", "zip_code"): "BIGINT",
+    ("stores", "zip_code"): "BIGINT",
     ("staffs", "active"): "SMALLINT",
-    # order_items totals
+    ("products", "model_year"): "SMALLINT",
+    ("products", "list_price"): "NUMERIC(10,2)",
+    ("stocks", "quantity"): "BIGINT",
+    ("order_items", "quantity"): "BIGINT",
+    ("order_items", "list_price"): "NUMERIC(10,2)",
+    ("order_items", "discount"): "NUMERIC(4,2)",
     ("order_items", "total_value"): "NUMERIC(14,2)",
 }
 
@@ -165,6 +192,7 @@ COLUMN_TYPE_MAP: dict[tuple[str, str], str] = {
 # Composite (multi-column) primary key overrides — (table_slug, columns)
 COMPOSITE_PK: dict[str, tuple[str, ...]] = {
     "stocks": ("store_id", "product_id"),
+    "order_items": ("order_id", "item_id"),
 }
 
 
@@ -182,7 +210,9 @@ _PG_TO_SPARK_CAST: dict[str, str] = {
     "INTEGER": "INTEGER",
     "BIGINT": "BIGINT",
     "NUMERIC": "DECIMAL(20,6)",
+    "NUMERIC(10,2)": "DECIMAL(10,2)",
     "NUMERIC(14,2)": "DECIMAL(14,2)",
+    "NUMERIC(4,2)": "DECIMAL(4,2)",
     "DOUBLE PRECISION": "DOUBLE",
     "REAL": "FLOAT",
 }
@@ -309,8 +339,8 @@ def _print_summary_table(
 def _slugify(s: str) -> str:
     """Normalise a field name to a safe Postgres column identifier."""
     s = str(s).strip().lower()
-    s = re.sub(r"[^\w\s]", "", s)
     s = re.sub(r"[\s\-]+", "_", s)
+    s = re.sub(r"[^\w]", "", s)
     return re.sub(r"_+", "_", s).strip("_") or "col"
 
 
@@ -328,13 +358,18 @@ def _fmt_ts(val: object) -> str:
 
 
 def _to_datetime(val: object) -> datetime | None:
-    """Coerce a datetime/str to a datetime for comparison, or None."""
+    """Coerce a datetime/date/str to a UTC-aware datetime for comparison, or None."""
+    from datetime import date as _date
+
     if val is None:
         return None
     if isinstance(val, datetime):
-        return val
+        return val.replace(tzinfo=UTC) if val.tzinfo is None else val.astimezone(UTC)
+    if isinstance(val, _date):
+        return datetime(val.year, val.month, val.day, tzinfo=UTC)
     try:
-        return datetime.fromisoformat(str(val).removesuffix("Z"))
+        dt = datetime.fromisoformat(str(val).removesuffix("Z"))
+        return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
     except (ValueError, TypeError):
         return None
 
@@ -349,9 +384,8 @@ def detect_pk_col(columns: list[str], collection: str, log) -> list[str] | None:
     Heuristic PK detection from slugified column names.
 
     Priority:
-      1. Explicit composite-PK override in COMPOSITE_PK (e.g. stocks)
-      2. Exact match for the collection name + '_id'
-         e.g.  collection='artist'  → 'artist_id'
+      1. Explicit composite-PK override in COMPOSITE_PK (e.g. stocks, order_items)
+      2. Singular or exact match for collection name + '_id' (e.g. 'brands' → 'brand_id')
       3. Any column that ends with '_id'
       4. Exact column named 'id'
 
@@ -364,6 +398,18 @@ def detect_pk_col(columns: list[str], collection: str, log) -> list[str] | None:
     if composite and all(c in columns for c in composite):
         log.info("PK DETECT : %s  (composite key from COMPOSITE_PK)", list(composite))
         return list(composite)
+
+    # Singular form heuristic: 'categories' → 'category_id', 'brands' → 'brand_id'
+    singular = slug
+    if slug.endswith("ies"):
+        singular = slug[:-3] + "y"
+    elif slug.endswith("s"):
+        singular = slug[:-1]
+
+    singular_exact = f"{singular}_id"
+    if singular_exact in columns:
+        log.info("PK DETECT : '%s'  (singular match for collection name)", singular_exact)
+        return [singular_exact]
 
     exact = f"{slug}_id"
 
@@ -659,10 +705,10 @@ def needs_load(
         )
         return True
 
-    if ts_col and mongo_stats["max_ts"] and pg_stats["max_ts"]:
+    if ts_col and mongo_stats.get("max_ts"):
         mongo_ts = _to_datetime(mongo_stats["max_ts"])
-        pg_ts = _to_datetime(pg_stats["max_ts"])
-        if mongo_ts and pg_ts and mongo_ts > pg_ts:
+        pg_ts = _to_datetime(pg_stats.get("max_ts"))
+        if mongo_ts and (pg_ts is None or mongo_ts > pg_ts):
             log.info(
                 "DECISION    : Mongo max_ts (%s) > PG max_ts (%s) → LOAD",
                 _fmt_ts(mongo_ts),
@@ -845,10 +891,16 @@ def merge_staging_to_target(
         update_set = ", ".join(
             f'"{c}" = EXCLUDED."{c}"' for c in columns if c not in pk_set
         ) or ", ".join(f'"{c}" = EXCLUDED."{c}"' for c in pk_list)
+        where_clause = ""
+        if "updated_at" in columns and "updated_at" not in pk_set:
+            where_clause = (
+                f' WHERE "{table}"."updated_at" IS NULL'
+                f' OR EXCLUDED."updated_at" > "{table}"."updated_at"'
+            )
         sql = f"""
             INSERT INTO "{schema}"."{table}" ({col_list})
             SELECT {select_list} FROM "{schema}"."{staging}"
-            ON CONFLICT ({conflict_cols}) DO UPDATE SET {update_set}
+            ON CONFLICT ({conflict_cols}) DO UPDATE SET {update_set}{where_clause}
         """
     else:
         sql = f"""

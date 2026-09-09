@@ -15,6 +15,7 @@ Moved out of scripts/mongo_to_postgres.py unchanged in behaviour.
 from __future__ import annotations
 
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.pipeline.transform import COLUMN_TYPE_MAP
 
@@ -96,6 +97,61 @@ def ensure_target_table(
                 pg_type,
                 schema,
                 table,
+            )
+
+    # Type migration: promote existing TEXT columns to their target Postgres
+    # type. One-time fix-up for tables created before COLUMN_TYPE_MAP existed
+    # and now hold typed data in TEXT columns. Wrapped per-column in a
+    # savepoint so one bad column doesn't abort the whole migration.
+    type_rows = conn.execute(
+        text("""
+            SELECT column_name, data_type
+            FROM   information_schema.columns
+            WHERE  table_schema = :schema
+            AND    table_name   = :table
+        """),
+        {"schema": schema, "table": table},
+    ).fetchall()
+
+    for col, actual_type in type_rows:
+        if col == "_etl_id":
+            continue
+        target_type = _pg_type_for(table, col)
+        if target_type == "TEXT":
+            continue
+        actual_norm = actual_type.lower().split("(")[0].strip()
+        target_norm = target_type.lower().split("(")[0].strip()
+        if actual_norm == target_norm:
+            continue
+
+        savepoint = f"sp_mig_{col}"
+        try:
+            conn.execute(text(f"SAVEPOINT {savepoint}"))
+            conn.execute(
+                text(
+                    f'ALTER TABLE "{schema}"."{table}" '
+                    f'ALTER COLUMN "{col}" TYPE {target_type} '
+                    f'USING "{col}"::{target_type}'
+                )
+            )
+            conn.execute(text(f"RELEASE SAVEPOINT {savepoint}"))
+            log.info(
+                "Type migration → %s.%s  %s → %s",
+                schema,
+                table,
+                actual_type,
+                target_type,
+            )
+        except SQLAlchemyError as exc:
+            conn.execute(text(f"ROLLBACK TO SAVEPOINT {savepoint}"))
+            log.warning(
+                "Type migration FAILED for %s.%s (%s → %s): %s — column left as %s",
+                schema,
+                table,
+                actual_type,
+                target_type,
+                exc,
+                actual_type,
             )
 
     log.info("Table ready → %s.%s  (pk=%s)", schema, table, pk_col or "row_hash")

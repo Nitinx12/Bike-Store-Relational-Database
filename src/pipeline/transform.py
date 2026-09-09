@@ -26,6 +26,26 @@ COMPOSITE_PK: dict[str, tuple[str, ...]] = {
 # Column type map  (table_slug, column) → Postgres type string.
 # Columns not in this map default to TEXT.
 COLUMN_TYPE_MAP: dict[tuple[str, str], str] = {
+    # primary & foreign keys (bigint)
+    ("brands", "brand_id"): "BIGINT",
+    ("categories", "category_id"): "BIGINT",
+    ("customers", "customer_id"): "BIGINT",
+    ("stores", "store_id"): "BIGINT",
+    ("staffs", "staff_id"): "BIGINT",
+    ("staffs", "store_id"): "BIGINT",
+    ("staffs", "manager_id"): "BIGINT",
+    ("products", "product_id"): "BIGINT",
+    ("products", "brand_id"): "BIGINT",
+    ("products", "category_id"): "BIGINT",
+    ("stocks", "store_id"): "BIGINT",
+    ("stocks", "product_id"): "BIGINT",
+    ("orders", "order_id"): "BIGINT",
+    ("orders", "customer_id"): "BIGINT",
+    ("orders", "store_id"): "BIGINT",
+    ("orders", "staff_id"): "BIGINT",
+    ("order_items", "order_id"): "BIGINT",
+    ("order_items", "item_id"): "BIGINT",
+    ("order_items", "product_id"): "BIGINT",
     # timestamps / dates
     ("brands", "updated_at"): "TIMESTAMPTZ",
     ("categories", "updated_at"): "TIMESTAMPTZ",
@@ -39,8 +59,16 @@ COLUMN_TYPE_MAP: dict[tuple[str, str], str] = {
     ("staffs", "updated_at"): "TIMESTAMPTZ",
     ("stocks", "updated_at"): "TIMESTAMPTZ",
     ("stores", "updated_at"): "TIMESTAMPTZ",
-    # numeric / boolean
+    # numeric / boolean / text
+    ("customers", "zip_code"): "BIGINT",
+    ("stores", "zip_code"): "BIGINT",
     ("staffs", "active"): "SMALLINT",
+    ("products", "model_year"): "SMALLINT",
+    ("products", "list_price"): "NUMERIC(10,2)",
+    ("stocks", "quantity"): "BIGINT",
+    ("order_items", "quantity"): "BIGINT",
+    ("order_items", "list_price"): "NUMERIC(10,2)",
+    ("order_items", "discount"): "NUMERIC(4,2)",
     ("order_items", "total_value"): "NUMERIC(14,2)",
 }
 
@@ -64,7 +92,7 @@ def detect_pk_col(
 
     Priority:
       1. Explicit composite-PK override in COMPOSITE_PK (e.g. stocks, order_items)
-      2. Exact match for the collection name + '_id'  e.g. 'artist' → 'artist_id'
+      2. Singular or exact match for collection name + '_id' (e.g. 'brands' → 'brand_id')
       3. Any column that ends with '_id'
       4. Exact column named 'id'
 
@@ -77,8 +105,19 @@ def detect_pk_col(
         log.info("PK DETECT : %s  (composite key from COMPOSITE_PK)", list(composite))
         return tuple(composite)
 
-    exact = f"{slug}_id"
+    # Singular form heuristic: 'categories' -> 'category_id', 'brands' -> 'brand_id'
+    singular = slug
+    if slug.endswith("ies"):
+        singular = slug[:-3] + "y"
+    elif slug.endswith("s"):
+        singular = slug[:-1]
 
+    singular_exact = f"{singular}_id"
+    if singular_exact in columns:
+        log.info("PK DETECT : '%s'  (singular match for collection name)", singular_exact)
+        return singular_exact
+
+    exact = f"{slug}_id"
     if exact in columns:
         log.info("PK DETECT : '%s'  (exact match for collection name)", exact)
         return exact
