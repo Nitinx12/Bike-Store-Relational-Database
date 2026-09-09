@@ -41,25 +41,25 @@ help: ## Show this help message
 	@echo "  run                      Run the full pipeline in-process (recommended)"
 	@echo "  install                  Sync dependencies from pyproject.toml"
 	@echo "  doctor                   Full system + dependency + import health check"
-	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(run|install|verify|doctor|check-env|check-deps):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>nul || true
+	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(run|install|verify|doctor|check-env|check-deps):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>/dev/null || true
 	@echo ""
 	@echo -e "$(BOLD)Stage-level targets:$(RESET)"
 	@echo "  run-etl                  Run only the ETL stage (MongoDB -> Postgres)"
-	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(run-etl|run-dq|run-gx|run-etl-only|run-etl-dq|etl|local-etl|dq-loops|local-dq-loops|dq-gx|local-dq-gx):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>nul || true
+	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(run-etl|run-dq|run-gx|run-etl-only|run-etl-dq|etl|local-etl|dq-loops|local-dq-loops|dq-gx|local-dq-gx):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>/dev/null || true
 	@echo ""
 	@echo -e "$(BOLD)Collection targets:$(RESET)"
 	@echo "  run-collection           make ARGS=\"--collection orders\""
-	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(run-collection|run-collection-full|run-gx-table):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>nul || true
+	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(run-collection|run-collection-full|run-gx-table):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>/dev/null || true
 	@echo "    example: make run-collection ARGS=\"--collection orders\""
 	@echo "    example: make run-gx-table GX_TABLES=\"orders products\""
 	@echo ""
 	@echo -e "$(BOLD)Docker targets:$(RESET)"
 	@echo "  up                       Start Postgres, MongoDB, and monitoring stack"
-	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(up|down|build|pipeline|local-pipeline|clean|prune|shell):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>nul || true
+	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(up|down|build|pipeline|local-pipeline|clean|prune|shell):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>/dev/null || true
 	@echo ""
 	@echo -e "$(BOLD)DevOps / utilities:$(RESET)"
 	@echo "  lint                     Run Ruff, Mypy, and SQLFluff"
-	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(lint|test|format|health-check|init-db|seed|local-seed|inspect-schema|local-inspect-schema|monitor-logs|log-cleanup|backup-postgres|restore-postgres|backup-mongo|restore-mongo|run-clean):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>nul || true
+	-@bash -c 'grep -h -E "^[a-zA-Z0-9_.-]+:.*?## " $(MAKEFILE_LIST) 2>/dev/null | grep -E "^(lint|test|format|health-check|init-db|seed|local-seed|inspect-schema|local-inspect-schema|monitor-logs|log-cleanup|backup-postgres|restore-postgres|backup-mongo|restore-mongo|run-clean):" | awk -F ":.*?## " "{printf \"  $(CYAN)%-22s$(RESET) %s\n\", $$1, $$2}" | sort' 2>/dev/null || true
 	@echo ""
 	@echo -e "$(CYAN)Tip: help auto-parses ## comments via grep + awk on WSL/Git-Bash$(RESET)"
 
@@ -187,7 +187,7 @@ prune: clean ## Deep prune Docker (requires CONFIRM=1)
 check-deps: ## Verify required tools (uv, python, docker, etc.) are available
 	@echo Checking prerequisites...
 	@uv_version=$$(uv --version 2>/dev/null) && echo "  uv OK ($$uv_version)" || (echo "  FATAL: uv not found." && exit 1)
-	@python --version >/dev/null 2>&1 && echo "  python OK ($$(python --version 2>&1))" || (echo "  FATAL: python not found." && exit 1)
+	@uv run python --version >/dev/null 2>&1 && echo "  python OK ($$(uv run python --version 2>&1))" || (echo "  FATAL: python not found (uv could not resolve one)." && exit 1)
 	@docker --version >/dev/null 2>&1 && echo "  docker OK ($$(docker --version 2>&1 | head -n1))" || echo "  WARN: docker not found (only needed for Docker targets)."
 	@uv lock --check >/dev/null 2>&1 && echo "  uv lockfile OK" || (echo "  FATAL: uv lockfile out of sync. Run 'uv lock'." && exit 1)
 	@echo All prerequisites met.
