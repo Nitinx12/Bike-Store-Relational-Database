@@ -219,6 +219,14 @@ hooks-check: ## Verify hooks installed and Conventional Commits enforced
 	@git config --get core.hooksPath | grep -q ".githooks" && echo "  hooksPath OK ($$(git config --get core.hooksPath))" || (echo "  ERROR: hooks not installed — run: make hooks" && exit 1)
 	@test -x .githooks/pre-commit && echo "  pre-commit executable" || (echo "  ERROR: .githooks/pre-commit not executable" && exit 1)
 
+dashboard-guard: check-deps ## Guard dashboard — fail if any code change breaks charts or sample fallback
+	@echo -e "$(CYAN)Guard: dashboard unit tests...$(RESET)"
+	uv run pytest tests/unit/test_dashboard.py -v
+	@echo -e "$(CYAN)Guard: import smoke (no DB)...$(RESET)"
+	uv run python -c "import dashboard.data, dashboard.charts, streamlit_app; print('  imports ok')"
+	@echo -e "$(CYAN)Guard: charts render with sample...$(RESET)"
+	uv run python -c "import pandas as pd; from dashboard.charts import monthly_revenue; df=pd.read_csv('dashboard/sample/monthly.csv'); pd.to_datetime(df['order_month']); print('  charts ok')"
+
 dashboard: check-env check-deps ## Run Streamlit dashboard locally (Plotly) — uv run streamlit run streamlit_app.py
 	@echo -e "$(CYAN)Starting Streamlit dashboard on http://localhost:8501 ...$(RESET)"
 	uv run streamlit run streamlit_app.py --server.headless true

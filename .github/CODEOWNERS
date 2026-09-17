@@ -32,6 +32,13 @@
 /uv.lock                   @Nitinx12
 /.gitattributes            @Nitinx12
 
+# Dashboard — protected (any change that breaks charts blocks PR)
+## Dashboard is public-facing; all edits need owner review.
+## Tests in tests/unit/test_dashboard.py gate every PR.
+/streamlit_app.py          @Nitinx12
+/dashboard/                @Nitinx12
+/.streamlit/               @Nitinx12
+
 # Docs — lighter review but still owned
 /docs/                     @Nitinx12
 /reports/                  @Nitinx12

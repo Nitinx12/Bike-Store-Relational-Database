@@ -1,0 +1,67 @@
+name: "Dashboard — guard production Streamlit"
+
+on:
+  push:
+    branches: [main, "feat/**", "fix/**", "chore/**"]
+    paths:
+      - "streamlit_app.py"
+      - "dashboard/**"
+      - ".streamlit/**"
+      - "sql/**"
+      - "pyproject.toml"
+      - "uv.lock"
+  pull_request:
+    branches: [main]
+    paths:
+      - "streamlit_app.py"
+      - "dashboard/**"
+      - ".streamlit/**"
+      - "sql/**"
+      - "pyproject.toml"
+      - "uv.lock"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    name: Dashboard — tests, charts & deploy check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+
+      - name: Sync deps (frozen)
+        run: uv sync --frozen
+
+      - name: Ruff + mypy (dashboard)
+        run: |
+          uv run ruff check dashboard/ streamlit_app.py
+          uv run mypy dashboard/ --ignore-missing-imports
+
+      - name: Unit tests — dashboard fallback & charts
+        run: uv run pytest tests/unit/test_dashboard.py -v
+
+      - name: Import smoke (no DB — sample fallback)
+        run: uv run python -c "from dashboard.data import fetch_kpis, fetch_monthly_sales; from unittest.mock import patch; patch('dashboard.data._engine', side_effect=Exception('no db')).start(); k=fetch_kpis(); m=fetch_monthly_sales(); assert not m.empty; print('sample fallback ok', k['customers'])"
+
+      - name: Streamlit — static health check
+        run: uv run python -c "import streamlit_app; print('streamlit_app imports ok (no secrets file needed)')"
+
+      - name: Check README live badge points to deployed app
+        run: |
+          if ! grep -q "bike-store-relational-database.*streamlit.app" README.md; then
+            echo "::error::README missing live dashboard badge — keep the Streamlit badge"
+            exit 1
+          fi
+          echo "README badge ok"
+
+      - name: SQL that backs dashboard still lints
+        run: uv run sqlfluff lint sql/12_customer_report.sql sql/13_product_report.sql sql/15_fn_store_performance.sql sql/16_sales_report.sql --dialect postgres

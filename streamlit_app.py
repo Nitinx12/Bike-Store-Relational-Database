@@ -73,7 +73,11 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
     st.caption("TTL 5 min • `uv run streamlit run streamlit_app.py` locally")
-    if st.secrets.get("postgres", None) is None:  # type: ignore[attr-defined]
+    try:
+        has_pg = "postgres" in st.secrets  # type: ignore[attr-defined]
+    except Exception:
+        has_pg = False
+    if not has_pg:
         st.info("Using `.env` (local). On Cloud set `postgres.*` in Secrets.", icon="ℹ️")
     else:
         st.success("Using `st.secrets` (Cloud).", icon="✅")
