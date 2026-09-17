@@ -6,7 +6,7 @@
 
 An incremental data pipeline that moves retail data from **MongoDB** into **PostgreSQL**, checks it with a SQL data quality suite, and turns it into business reports.
 
-[![Live Dashboard](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://bike-store-relational-database.streamlit.app)
+[![Live Dashboard](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://bike-store-relational-database-grvahmynq59w6zgckat2hx.streamlit.app/)
 **🚀 Live Dashboard → https://bike-store-relational-database.streamlit.app** — no localhost needed, sample data fallback for public viewers (or connect your own Postgres via Streamlit Secrets)
 
 </div>
