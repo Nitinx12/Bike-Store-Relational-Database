@@ -1,27 +1,51 @@
 <div align="center">
 
-![Tech Stack](https://skillicons.dev/icons?i=mongodb,postgres,py,git,github,powershell)
+<!-- ── Banner / Logo ── -->
+<img src="assets/pyspark-logo.png" width="84" alt="Bike Store Logo" />
 
 # Bike Store Relational Database
 
-An incremental data pipeline that moves retail data from **MongoDB** into **PostgreSQL**, checks it with a SQL data quality suite, and turns it into business reports.
+**Incremental ETL • SQL Analytics • Live Dashboard**
+
+Incremental data pipeline moving retail data from **MongoDB** to **PostgreSQL**, validated by a SQL data quality suite and surfaced through business reports and a live dashboard.
+
+<!-- ── Badges (shields.io + skillicons + streamlit) — keep on one visual row ── -->
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue?logo=python&logoColor=white)](pyproject.toml)
+[![Ubuntu](https://img.shields.io/badge/ubuntu-22.04-E95420?logo=ubuntu&logoColor=white)](https://ubuntu.com)
+[![PySpark 4.1](https://img.shields.io/badge/PySpark-4.1.2-orange?logo=apachespark&logoColor=white)](https://spark.apache.org)
+[![Postgres](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.64-FF4B4B?logo=streamlit&logoColor=white)](streamlit_app.py)
+[![Plotly](https://img.shields.io/badge/Plotly-7.1-3F4F75?logo=plotly&logoColor=white)](https://plotly.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Last Release](https://img.shields.io/github/v/release/Nitinx12/Bike-Store-Relational-Database?label=last%20release)](https://github.com/Nitinx12/Bike-Store-Relational-Database/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/Nitinx12/Bike-Store-Relational-Database/ci.yml?branch=main&label=CI)](https://github.com/Nitinx12/Bike-Store-Relational-Database/actions)
+[![Ruff](https://img.shields.io/badge/code%20style-Ruff-000000?logo=ruff)](https://github.com/astral-sh/ruff)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=precommit)](.pre-commit-config.yaml)
+
+[![Discord](https://img.shields.io/badge/chat-Discord-5865F2?logo=discord&logoColor=white)](https://discord.com)
+[![LinkedIn](https://img.shields.io/badge/follow-LinkedIn-0A66C2?logo=linkedin&logoColor=white)](https://www.linkedin.com/in/nitinx12)
+[![Twitter](https://img.shields.io/badge/follow-Twitter-1DA1F2?logo=twitter&logoColor=white)](https://twitter.com)
+[![Awesome Python](https://img.shields.io/badge/Awesome-Python-3776AB?logo=python&logoColor=white)](https://github.com/vinta/awesome-python)
 
 [![Live Demo](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://bike-store-relational-database-grvahmynq59w6zgckat2hx.streamlit.app/)
+
+![Tech Stack](https://skillicons.dev/icons?i=mongodb,postgres,py,docker,git,github,powershell,bash,grafana,prometheus)
 
 </div>
 
 ---
 
-## Table of Contents
+## ✨ Live Demo
 
-- [Architecture](#architecture)
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [Makefile Commands](#makefile-commands)
-- [Developer Workflow](#developer-workflow)
-- [Project Structure](#project-structure)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
+> **Public dashboard — no localhost needed.**
+> On Streamlit Cloud without `postgres` secrets it auto-uses `dashboard/sample/*.csv` demo data. With secrets it hits your live Postgres.
+
+<p align="center">
+  <a href="https://bike-store-relational-database-grvahmynq59w6zgckat2hx.streamlit.app/">
+    <img src="assets/revenue_by_brand.png" width="720" alt="Dashboard preview — revenue by brand" />
+  </a>
+</p>
 
 ---
 
@@ -43,21 +67,19 @@ flowchart LR
     C --> F["Streamlit + Plotly<br/>Dashboard"]:::dash
 ```
 
-Only new or changed rows move on each run. Postgres itself is compared against Mongo every time, so no checkpoint files or watermark tables are needed.
+Stateless incremental load — PostgreSQL is compared against MongoDB by row count + `updated_at` on every run. No watermark tables, no checkpoint files.
 
 ---
 
 ## Features
 
-- **Stateless incremental ETL** — count + `updated_at` comparison decides what to load, nothing else to configure
-- **Schema evolution** — new MongoDB fields are added as Postgres columns automatically
-- **Upsert logic** — updated records are refreshed in place, never duplicated
-- **10-file PL/pgSQL data quality suite** — nulls, uniqueness, types, referential integrity, business rules
-- **21-script SQL analytics library** — exploration, reporting, cohort analysis, reusable functions
-- **One-command pipeline automation** — `make run` orchestrates ETL + tests with logging
- - **Streamlit + Plotly dashboard** — production 5-tab ops view (KPIs, sales, customers, products, stores) with `st.cache_data` TTL 5 min, deployable on Streamlit Cloud (`streamlit_app.py`)
- - **Production-grade Makefile** — `check-deps`, `doctor`, and per-stage run targets
- - **Dual-mode execution** — Local (fast dev with `uv`) and Docker (consistent environment)
+| Area | Highlights |
+|---|---|
+| **ETL** | PySpark `local[*]`, `updated_at` incremental, auto schema evolution, `ON CONFLICT … DO UPDATE WHERE EXCLUDED.updated_at >` upsert, staging `_row_hash` dedup |
+| **Quality** | 10-file PL/pgSQL loop suite + Great Expectations (9 suites) — nulls, uniqueness, FK, business rules |
+| **Analytics** | 21-script SQL library — exploration, ranking, cohort, `fn_store_performance`, `fn_inventory_summary` |
+| **Dashboard** | Streamlit + Plotly 5-tab ops view (`st.cache_data` TTL 5 min, `st.secrets` → `.env` fallback, sample CSV demo) — [Live](https://bike-store-relational-database-grvahmynq59w6zgckat2hx.streamlit.app/) |
+| **Ops** | Makefile `check-deps`/`doctor`, Docker + `uv`, Prometheus/Pushgateway/Grafana, `CODEOWNERS` + `pre-commit` + branch protection |
 
 ---
 
@@ -67,160 +89,38 @@ Only new or changed rows move on each run. Postgres itself is compared against M
 git clone https://github.com/Nitinx12/Bike-Store-Relational-Database
 cd bike-store-relational-database
 
-# Install dependencies (uses uv, NOT pip)
-uv sync
-
-# Set up credentials
-cp .env.example .env   # edit .env with your Postgres + MongoDB credentials
-
-# Verify everything is wired up
-make doctor
-
-# Run the full pipeline (ETL + PL/pgSQL + Great Expectations in one process)
-make run
-
-# Launch the dashboard (Plotly, live from Postgres)
-make dashboard          # → http://localhost:8501
-# or: uv run streamlit run streamlit_app.py
-# Deployed on Streamlit Cloud — see badge above
+uv sync                              # install deps (uv, NOT pip)
+cp .env.example .env                 # add Postgres + Mongo credentials
+make doctor                          # verify setup
+make run                             # ETL + PL/pgSQL + GX
+make dashboard                       # → http://localhost:8501
 ```
 
-Or use Docker for a fully managed stack:
+With Docker:
 
 ```bash
-make build       # build the app image
-make up          # start Postgres, MongoDB, monitoring
-make pipeline    # run the full pipeline inside Docker
+make build && make up && make pipeline
 ```
 
-The first run loads every collection from MongoDB into Postgres. Every subsequent run is incremental and only moves new or updated rows.
+First run is a full load; every run after is incremental.
 
 ---
 
-## Makefile Commands
-
-The Makefile is the project's main entry point. All run targets use `uv run` so dependencies are always resolved from `pyproject.toml` and the venv — never invoke the interpreter directly.
-
-> Run `make help` on your machine to see the live, formatted output.
-
-### Quick Start targets
+## Key Makefile Commands
 
 | Target | What it does |
-| :--- | :--- |
-| `make run` | Run the full pipeline in-process (ETL + PL/pgSQL + GX) — **recommended default** |
-| `make run-verbose` | Same as `run`, with full Python tracebacks |
-| `make run-full` | Full refresh — truncate and reload every collection |
-| `make install` | `uv sync` and verify dependencies |
-| `make doctor` | Pre-flight check: uv lockfile + Python imports of all 3 pipeline modules |
-| `make check-deps` | Quick `uv` and lockfile sanity check (run before any pipeline target) |
+|---|---|
+| `make run` | Full pipeline (ETL + DQ + GX) — recommended |
+| `make run-etl` | ETL only |
+| `make run-dq` / `make run-gx` | PL/pgSQL / GX only |
+| `make doctor` | Pre-flight health check |
+| `make lint` / `make test` / `make format` | Ruff, Mypy, SQLFluff / pytest / format |
+| `make up` / `make down` | Start / stop Docker stack |
+| `make dashboard` | Streamlit locally |
+| `make dashboard-guard` | Guard — fail if any change breaks dashboard |
+| `make backup-postgres` / `make backup-mongo` | Backups |
 
-### Per-stage targets
-
-| Target | What it does |
-| :--- | :--- |
-| `make run-etl` | Run only the ETL stage (MongoDB → Postgres) |
-| `make run-dq` | Run only the PL/pgSQL data-quality suite |
-| `make run-gx` | Run only the Great Expectations suite |
-| `make run-etl-only` | ETL + skip all validation (fast dev loop) |
-| `make run-etl-dq` | ETL + PL/pgSQL, skip GX |
-
-### Collection-level targets
-
-| Target | Usage |
-| :--- | :--- |
-| `make run-collection` | `make run-collection ARGS="--collection orders"` |
-| `make run-collection-full` | `make run-collection-full ARGS="--collection orders"` |
-| `make run-gx-table` | `make run-gx-table GX_TABLES="orders products"` |
-
-### Docker and local-pipeline targets
-
-| Target | What it does |
-| :--- | :--- |
-| `make up` | Start Postgres, MongoDB, Pushgateway, Prometheus, Grafana |
-| `make down` | Stop the Docker stack |
-| `make pipeline` | Full pipeline inside Docker |
-| `make local-pipeline` | Full pipeline via PowerShell (rich terminal UI, per-stage logs) |
-| `make build` | Build the Docker app image |
-| `make shell` | Open a shell inside the app container |
-| `make clean` | Remove containers and volumes |
-
-### Quality assurance
-
-| Target | What it does |
-| :--- | :--- |
-| `make lint` | Run Ruff, Mypy, and SQLFluff |
-| `make test` | Run pytest |
-| `make format` | Format code with Ruff |
-
-### Utilities
-
-| Target | What it does |
-| :--- | :--- |
-| `make run-clean` | Remove pipeline logs older than 7 days |
-| `make backup-postgres` | Backup Postgres database |
-| `make restore-postgres` | Restore Postgres from a backup |
-| `make backup-mongo` | Backup MongoDB |
-| `make restore-mongo` | Restore MongoDB |
-| `make dashboard` | Run Streamlit + Plotly dashboard locally |
-| `make dashboard-test` | Smoke-test dashboard imports (no DB) |
-| `make health-check` | Liveness probe for Postgres and MongoDB |
-| `make seed` | Seed MongoDB with sample data |
-| `make local-seed` | Seed MongoDB locally (no Docker) |
-| `make monitor-logs` | Manage Docker pipeline logs |
-| `make log-cleanup` | Local log cleanup |
-
-> See [`docs/makefile.md`](docs/makefile.md) for the complete reference, including advanced usage and examples.
-
----
-
-## Developer Workflow
-
-This project supports dual-mode execution: **Local** (fast development) and **Docker** (consistent environment).
-
-### Local Development (Non-Docker)
-Requires `uv` and `PowerShell` installed.
-
-1. **Setup**
-   ```bash
-   uv sync
-   cp .env.example .env   # edit .env with credentials
-   make doctor            # verify the install is healthy
-   ```
-
-2. **Run the pipeline**
-   ```bash
-   make run                                # full pipeline
-   make run-etl                            # ETL only
-   make run-full                           # full refresh
-   make run-collection ARGS="--collection orders"   # one collection
-   ```
-
-3. **Quality**
-   ```bash
-   make lint    # Ruff, Mypy, SQLFluff
-   make test    # Pytest
-   make format  # Auto-format with Ruff
-   ```
-
-### Dockerized Development
-
-```bash
-make build                                # build app image
-make up                                   # start the stack
-make pipeline                             # full pipeline in Docker
-make local-pipeline                       # full pipeline via PowerShell
-```
-
-### Summary Table
-
-| Action | Docker Target | Local Target | Tool Used |
-| :--- | :--- | :--- | :--- |
-| Run full pipeline | `make pipeline` | `make run` / `make local-pipeline` | `uv` / `pwsh` |
-| Run ETL | `make etl` | `make run-etl` | `uv` / `python` |
-| Run PL/pgSQL tests | `make dq-loops` | `make run-dq` | `uv` / `python` |
-| Run Great Expectations | `make dq-gx` | `make run-gx` | `uv` / `python` |
-| Lint code | `make lint` | `make lint` | `ruff` / `sqlfluff` |
-| Health check | `make health-check` | `make doctor` | `bash` / `uv` |
+Full reference: [`docs/makefile.md`](docs/makefile.md)
 
 ---
 
@@ -228,26 +128,32 @@ make local-pipeline                       # full pipeline via PowerShell
 
 ```
 bike-store-relational-database/
-├── docker/          — Dockerfile, entrypoint.sh, Prometheus config
-├── docs/            — Architecture, run book, data catalog, testing guide
-├── gx/              — Great Expectations legacy config (suites are code-first in tests/data_quality/suites/)
-├── jars/            — PostgreSQL JDBC driver
-├── ps1/             — PowerShell automation (local_runner.ps1)
-├── scripts/         — ETL, DQ, schema inspection, infrastructure scripts
-├── sql/             — 21 analytical SQL scripts
-├── src/             — Pipeline, database, validation, and utility modules
-│   ├── pipeline/    — config, decision, spark_session, transform, mongo_source, runner
-│   ├── database/    — jdbc_writer, schema, staging, stats
-│   ├── validation/  — plpgsql_loops wrapper
-│   └── utils/       — connection, engine, logger, metrics
-├── tests/
-│   ├── data_quality/    — Python Great Expectations runner
-│   └── generic/loops/   — 10 PL/pgSQL DO-block test files
-├── docker-compose.yml    — Full stack: postgres, mongodb, pushgateway, prometheus, grafana, app
-├── Makefile              — One-command pipeline automation
-├── pyproject.toml        — uv dependency manifest
-└── .env.example          — Environment variable template
+├── streamlit_app.py      — Streamlit entry (Cloud main file)
+├── dashboard/            — data.py (secrets→env→sample), charts.py (Plotly)
+│   └── sample/           — pre-exported CSVs for public demo fallback
+├── .streamlit/           — config.toml (teal theme) + secrets.toml.example
+├── docker/               — Dockerfile, entrypoint.sh, Prometheus
+├── docs/                 — run_book, data_catalog, incremental_loading, dashboard.md
+├── ps1/                  — PowerShell automation
+├── scripts/              — ETL, DQ, schema, infra
+├── sql/                  — 21 analytics scripts
+├── src/                  — pipeline, database, validation, utils
+├── tests/                — GX runner + 10 PL/pgSQL loops + unit (incl. dashboard)
+├── docker-compose.yml
+├── Makefile
+├── pyproject.toml
+└── .env.example
 ```
+
+---
+
+## Screenshots
+
+<p align="center">
+  <img src="assets/revenue_share_donut.png" width="320" alt="Revenue share" />
+  <img src="assets/chart_total_revenue.png" width="320" alt="Total revenue" />
+  <img src="assets/chart_repeat_customer_rate.png" width="320" alt="Repeat customers" />
+</p>
 
 ---
 
@@ -255,40 +161,22 @@ bike-store-relational-database/
 
 | Doc | What's in it |
 |---|---|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Visual system overview, Mermaid diagrams, container topology |
-| [docs/run_book.md](docs/run_book.md) | How to run, configure, and troubleshoot |
-| [docs/makefile.md](docs/makefile.md) | **Complete Makefile reference** — every target with examples |
-| [docs/data_catalog.md](docs/data_catalog.md) | Full schema reference for all 9 tables |
-| [docs/incremental_loading.md](docs/incremental_loading.md) | How the ETL's incremental logic works, step by step |
-| [docs/testing.md](docs/testing.md) | Data quality strategy, suite overview |
-| [docs/docker.md](docs/docker.md) | Docker setup, image build, docker-compose services |
-| [docs/monitoring.md](docs/monitoring.md) | Prometheus, Pushgateway, Grafana observability stack |
-| [docs/dashboard.md](docs/dashboard.md) | **Streamlit + Plotly dashboard** — deploy on Streamlit Cloud |
-| [docs/project_structure.md](docs/project_structure.md) | Full file-tree breakdown with descriptions |
-| [docs/SQL.md](docs/SQL.md) | SQL analytics library overview (21 scripts) |
-| [docs/scripts.md](docs/scripts.md) | All scripts documented with run modes and diagrams |
-| [docs/utils.md](docs/utils.md) | Utility modules reference |
-| [docs/tests.md](docs/tests.md) | Test suite overview |
-| [CHANGELOG.md](CHANGELOG.md) | Release history of all notable changes |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System overview, diagrams, container topology |
+| [docs/run_book.md](docs/run_book.md) | Running, configuring, troubleshooting |
+| [docs/makefile.md](docs/makefile.md) | Complete Makefile reference |
+| [docs/data_catalog.md](docs/data_catalog.md) | Schema for all 9 tables |
+| [docs/incremental_loading.md](docs/incremental_loading.md) | How incremental works |
+| [docs/testing.md](docs/testing.md) | Quality strategy |
+| [docs/dashboard.md](docs/dashboard.md) | Dashboard deploy guide |
+| [CHANGELOG.md](CHANGELOG.md) | Release history |
 
 ---
 
 ## Contributing
 
-1. Fork and clone the repository.
-2. Create a feature branch: `git checkout -b feat/your-feature`.
-3. Make your changes.
-4. Run quality checks locally:
-   ```bash
-   make format
-   make lint
-   make test
-   make doctor
-   ```
-5. Commit using [Conventional Commits](https://www.conventionalcommits.org/):
-   ```bash
-   git commit -m "feat: describe your change"
-   ```
-6. Open a Pull Request.
+1. `git checkout -b feat/your-feature`
+2. `make format && make lint && make test && make doctor`
+3. `git commit -m "feat: describe your change"` — Conventional Commits enforced by `.githooks/commit-msg`
+4. Open a PR — `CODEOWNERS` + `Dashboard guard` + `CI` must pass
 
-See [AGENTS.md](AGENTS.md) for project conventions and coding standards.
+See [AGENTS.md](AGENTS.md) for conventions.
