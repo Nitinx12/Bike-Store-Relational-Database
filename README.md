@@ -7,7 +7,7 @@
 An incremental data pipeline that moves retail data from **MongoDB** into **PostgreSQL**, checks it with a SQL data quality suite, and turns it into business reports.
 
 [![Live Dashboard](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://bike-store-relational-database-grvahmynq59w6zgckat2hx.streamlit.app/)
-**🚀 Live Dashboard → https://bike-store-relational-database.streamlit.app** — no localhost needed, sample data fallback for public viewers (or connect your own Postgres via Streamlit Secrets)
+**🚀 Live Dashboard → https://bike-store-relational-database-grvahmynq59w6zgckat2hx.streamlit.app/** — no localhost needed, sample data fallback for public viewers (or connect your own Postgres via Streamlit Secrets)
 
 </div>
 
@@ -83,7 +83,7 @@ make run
 # Launch the dashboard (Plotly, live from Postgres)
 make dashboard          # → http://localhost:8501
 # or: uv run streamlit run streamlit_app.py
-# Live public URL: https://bike-store-relational-database.streamlit.app
+# Live public URL: https://bike-store-relational-database-grvahmynq59w6zgckat2hx.streamlit.app/
 #  → On Cloud without Postgres secrets it auto-uses dashboard/sample/*.csv demo
 ```
 
