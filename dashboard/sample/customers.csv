@@ -1,0 +1,201 @@
+customer_id,customer_name,city,state,total_orders,lifetime_value,total_items,first_order,last_order
+94,Sharyn Hopkins,Baldwinsville,NY,2,34807.93,15.0,2016-01-04,2018-04-01
+10,Pamelia Newman,Monroe,NY,3,33634.24,18.0,2017-04-07,2018-08-23
+75,Abby Gamble,Amityville,NY,2,32802.99,11.0,2017-12-27,2018-04-08
+6,Lyndsey Bean,Fairport,NY,3,32675.06,16.0,2017-08-14,2018-09-06
+16,Emmitt Sanchez,New York,NY,3,31925.87,19.0,2016-08-03,2018-04-09
+73,Melanie Hayes,Liverpool,NY,2,31913.68,12.0,2017-06-11,2018-04-17
+1,Debra Burks,Orchard Park,NY,3,27888.17,17.0,2016-12-09,2018-11-18
+61,Elinore Aguilar,San Angelo,TX,3,25636.43,17.0,2016-08-23,2018-04-10
+93,Corrina Sawyer,Troy,NY,2,25612.69,12.0,2017-06-09,2018-04-23
+122,Shena Carter,Howard Beach,NY,1,24890.62,5.0,2018-01-25,2018-01-25
+1224,Abram Copeland,Harlingen,TX,1,24607.02,8.0,2017-06-05,2017-06-05
+9,Genoveva Baldwin,Port Washington,NY,3,24433.87,13.0,2016-02-16,2018-04-27
+12,Robby Sykes,Hempstead,NY,3,24305.13,12.0,2016-03-06,2018-04-23
+3,Tameka Fisher,Redondo Beach,CA,3,24051.51,19.0,2018-03-27,2018-10-21
+85,Teofila Fischer,Huntington Station,NY,2,23195.06,14.0,2017-12-04,2018-04-08
+43,Mozelle Carter,Houston,TX,3,23049.04,17.0,2016-04-03,2018-04-29
+66,Lorrie Becker,Garland,TX,3,23026.28,13.0,2016-06-01,2018-04-11
+35,Guillermina Noble,Baldwinsville,NY,2,22061.06,14.0,2018-03-31,2018-04-02
+38,Zelma Browning,Astoria,NY,2,21535.66,10.0,2017-02-16,2018-04-12
+58,Damien Dorsey,Central Islip,NY,2,21514.44,16.0,2017-02-05,2018-04-16
+4,Daryl Spence,Uniondale,NY,3,21150.88,13.0,2017-02-07,2018-04-18
+1214,Brigid Sharp,Santa Clara,CA,1,20648.95,5.0,2018-01-15,2018-01-15
+425,Augustina Joyner,Mount Vernon,NY,1,20509.42,8.0,2018-01-07,2018-01-07
+238,Cindi Larson,Howard Beach,NY,1,20177.74,7.0,2017-06-24,2017-06-24
+63,Tenisha Lyons,Amityville,NY,2,20086.36,14.0,2018-02-12,2018-04-19
+28,Jeanice Frost,Ossining,NY,2,19992.85,15.0,2017-12-20,2018-04-13
+31,Williemae Holloway,Oakland,CA,3,19756.63,15.0,2016-04-06,2018-04-06
+1023,Adena Blake,Ballston Spa,NY,1,19329.94,6.0,2017-09-08,2017-09-08
+2,Kasha Todd,Campbell,CA,3,19329.07,15.0,2017-02-05,2018-04-09
+33,Deloris Burke,Palos Verdes Peninsula,CA,3,19043.89,11.0,2016-11-27,2018-07-11
+82,Lizzie Joyner,Coachella,CA,2,18995.0,12.0,2017-06-19,2018-04-04
+91,Marvin Mullins,San Diego,CA,2,18856.87,8.0,2016-01-06,2018-04-17
+464,Bess Mcbride,Garden City,NY,1,18853.35,7.0,2018-01-15,2018-01-15
+1100,Penny Acevedo,Ballston Spa,NY,1,18670.92,8.0,2017-09-07,2017-09-07
+227,Danielle Bond,Patchogue,NY,1,18553.72,8.0,2017-12-01,2017-12-01
+108,Shae Hickman,Floral Park,NY,1,18281.47,5.0,2017-12-14,2017-12-14
+1007,Jimmy Russell,Howard Beach,NY,1,18278.94,6.0,2018-02-01,2018-02-01
+525,Andreas Mayer,New Rochelle,NY,1,18114.92,8.0,2017-06-14,2017-06-14
+32,Araceli Golden,Fullerton,CA,3,18037.28,10.0,2016-04-04,2018-04-10
+157,Carola Rodriquez,Banning,CA,2,17861.19,13.0,2016-05-17,2018-04-26
+289,Charmain Webster,Richardson,TX,1,17834.96,4.0,2017-11-17,2017-11-17
+39,Janetta Aguirre,Lancaster,NY,2,17783.48,12.0,2017-12-31,2018-04-17
+1037,Ashanti Hammond,Nanuet,NY,1,17758.34,8.0,2018-01-14,2018-01-14
+182,Jenniffer Bullock,Bay Shore,NY,1,17746.59,7.0,2017-08-15,2017-08-15
+1005,Ruthanne Franco,Astoria,NY,1,17611.95,5.0,2018-02-27,2018-02-27
+607,Paul Lester,Vista,CA,1,17580.71,9.0,2017-03-27,2017-03-27
+5,Charolette Rice,Sacramento,CA,3,17520.28,13.0,2016-06-10,2018-04-17
+1421,Edris Barrett,Plattsburgh,NY,1,17494.93,7.0,2017-10-04,2017-10-04
+339,Tamela Harrell,Central Islip,NY,1,17479.95,5.0,2017-06-16,2017-06-16
+383,Ashlee Pena,Whitestone,NY,1,17305.93,7.0,2017-01-18,2017-01-18
+40,Ronna Butler,Encino,CA,3,17240.55,16.0,2016-12-09,2018-04-27
+54,Fran Yang,Utica,NY,2,17225.44,8.0,2016-10-22,2018-04-22
+109,Monica Sears,San Jose,CA,2,17193.89,11.0,2018-03-01,2018-04-26
+21,Tobie Little,Victoria,TX,3,17123.99,12.0,2017-10-12,2018-04-28
+1391,Sheryl Chase,Floral Park,NY,1,17086.93,7.0,2017-01-17,2017-01-17
+153,Laraine Robbins,San Angelo,TX,2,17068.48,12.0,2016-09-10,2017-04-01
+976,Ayanna Cherry,Smithtown,NY,1,16950.07,8.0,2017-01-31,2017-01-31
+47,Bridgette Guerra,San Lorenzo,CA,3,16935.62,16.0,2017-05-20,2018-04-11
+651,Laure Pena,Wappingers Falls,NY,1,16890.14,6.0,2017-05-15,2017-05-15
+534,Alejandro Haney,Wantagh,NY,1,16846.95,5.0,2017-10-05,2017-10-05
+119,Thalia Dillard,San Angelo,TX,2,16764.12,8.0,2017-02-28,2018-07-10
+19,Lizzette Stein,Orchard Park,NY,3,16739.98,14.0,2017-10-27,2018-04-14
+22,Adelle Larsen,East Northport,NY,2,16651.04,12.0,2016-04-19,2018-04-08
+1382,Wynona Douglas,Harlingen,TX,1,16491.51,9.0,2017-08-26,2017-08-26
+184,Klara Stanley,Webster,NY,1,16436.06,5.0,2017-02-27,2017-02-27
+70,Tomasa Carson,East Elmhurst,NY,2,16338.93,7.0,2017-08-04,2018-04-17
+50,Cleotilde Booth,Sugar Land,TX,3,16179.11,10.0,2016-02-11,2018-04-12
+79,Ashanti Parks,Baldwin,NY,2,16025.06,14.0,2017-02-09,2018-04-15
+971,Samual Warner,Brentwood,NY,1,15876.42,8.0,2017-05-20,2017-05-20
+172,Jeanie Kirkland,Santa Clara,CA,2,15841.09,7.0,2017-07-02,2018-04-18
+14,Garry Espinoza,Forney,TX,3,15766.69,13.0,2016-08-05,2018-04-22
+1199,Consuela Collier,North Tonawanda,NY,1,15455.62,8.0,2017-01-08,2017-01-08
+908,Delmar Wise,Lockport,NY,1,15439.94,6.0,2017-01-26,2017-01-26
+809,Elnora Simpson,Bellmore,NY,1,15416.15,9.0,2017-01-28,2017-01-28
+136,Sarita Parks,Forney,TX,2,15314.0,12.0,2018-01-14,2018-12-28
+1132,Parthenia Holman,Ithaca,NY,1,15205.92,8.0,2017-09-12,2017-09-12
+840,Gilbert Calhoun,East Elmhurst,NY,1,15097.9,6.0,2017-10-30,2017-10-30
+531,Kimberely Bowen,Troy,NY,1,15087.26,6.0,2017-03-06,2017-03-06
+195,Addie Hahn,Franklin Square,NY,1,14935.02,8.0,2018-03-08,2018-03-08
+18,Georgetta Hardin,Canandaigua,NY,3,14877.27,15.0,2016-12-11,2018-04-14
+13,Lashawn Ortiz,Longview,TX,3,14774.45,13.0,2016-05-27,2018-04-12
+374,Candelaria Coffey,Merrick,NY,1,14735.41,7.0,2017-03-24,2017-03-24
+663,Alissa Hood,New Windsor,NY,1,14567.15,5.0,2017-09-17,2017-09-17
+1131,Desmond Rose,Mount Vernon,NY,1,14566.43,7.0,2018-03-21,2018-03-21
+25,Regenia Vaughan,Mahopac,NY,2,14529.25,13.0,2017-08-17,2018-04-09
+263,Dortha Jarvis,Oceanside,NY,1,14405.04,7.0,2018-03-15,2018-03-15
+904,Jana Thomas,San Jose,CA,1,14397.13,7.0,2018-01-09,2018-01-09
+1171,Earlean Pena,Rome,NY,1,14249.64,6.0,2018-02-19,2018-02-19
+192,Bong Hebert,Torrance,CA,2,14208.38,9.0,2017-10-19,2018-04-21
+24,Corene Wall,Atwater,CA,3,14199.94,16.0,2016-04-20,2018-04-23
+167,Loreta Johnston,Spring Valley,NY,1,14172.21,9.0,2017-06-14,2017-06-14
+1020,Lorraine Marks,San Carlos,CA,1,14141.33,7.0,2017-05-23,2017-05-23
+53,Saturnina Garner,Glendora,CA,3,14068.22,15.0,2016-08-22,2018-07-12
+37,Melia Brady,Maspeth,NY,2,14011.81,10.0,2017-12-11,2018-04-12
+292,Monty Frost,Hempstead,NY,1,13947.54,6.0,2017-10-09,2017-10-09
+72,Petronila Norris,South El Monte,CA,2,13914.33,9.0,2016-09-05,2018-04-21
+59,Latasha Stanley,Rockville Centre,NY,2,13854.59,11.0,2016-06-25,2018-04-12
+692,Dorothea Chang,Astoria,NY,1,13821.53,3.0,2018-03-23,2018-03-23
+170,Regine Gonzales,Oxnard,CA,2,13801.29,9.0,2016-03-26,2018-04-17
+123,Robena Hill,Corpus Christi,TX,2,13783.77,11.0,2017-12-01,2018-07-01
+296,Sophia Mcmillan,Uniondale,NY,1,13773.62,8.0,2018-03-19,2018-03-19
+1063,Tammy Austin,Lake Jackson,TX,1,13765.54,8.0,2017-09-21,2017-09-21
+169,Karla Kirk,Palos Verdes Peninsula,CA,2,13678.35,7.0,2016-09-12,2018-04-17
+187,Hedwig Paul,Apple Valley,CA,2,13611.62,8.0,2016-08-09,2018-04-16
+87,Yan Mcgowan,Duarte,CA,2,13546.94,9.0,2017-03-03,2018-04-10
+734,Alina Mcleod,Patchogue,NY,1,13287.52,8.0,2017-11-27,2017-11-27
+503,Marlo Jefferson,Niagara Falls,NY,1,13242.96,4.0,2017-07-14,2017-07-14
+595,Frederica Rojas,Ithaca,NY,1,13191.93,7.0,2018-03-14,2018-03-14
+681,Reatha Perez,Holbrook,NY,1,13130.82,7.0,2017-01-20,2017-01-20
+883,Gilberte Duke,El Paso,TX,1,13107.43,7.0,2017-04-21,2017-04-21
+226,Kiana Rivera,Richmond Hill,NY,1,13033.59,7.0,2017-11-04,2017-11-04
+175,Nova Hess,Duarte,CA,2,13023.92,8.0,2016-01-03,2018-04-11
+1438,Lee Dunn,San Jose,CA,1,12980.93,7.0,2017-06-03,2017-06-03
+441,Dorthea Walker,Port Washington,NY,1,12965.74,6.0,2016-08-07,2016-08-07
+310,Gilberto Parsons,Middle Village,NY,1,12935.94,6.0,2018-01-23,2018-01-23
+140,Cleopatra Tate,East Elmhurst,NY,1,12909.91,9.0,2017-08-12,2017-08-12
+803,Bernardina Cooper,Whitestone,NY,1,12867.95,5.0,2017-10-31,2017-10-31
+231,Jenee Rasmussen,Sacramento,CA,2,12861.87,13.0,2017-12-14,2018-04-26
+116,Merlene Vinson,Euless,TX,3,12793.62,13.0,2016-10-28,2018-04-15
+1070,Olimpia Mays,Oakland Gardens,NY,1,12774.24,6.0,2017-07-15,2017-07-15
+334,Somer Jordan,Huntington Station,NY,1,12663.95,5.0,2017-09-08,2017-09-08
+1403,Mila Moody,Troy,NY,1,12595.07,5.0,2017-06-21,2017-06-21
+86,Lissa Vargas,Oswego,NY,2,12551.98,13.0,2016-03-18,2018-04-05
+700,Collene Knox,Corpus Christi,TX,1,12541.76,4.0,2017-03-18,2017-03-18
+105,Marget Hodge,Woodhaven,NY,1,12461.54,7.0,2016-05-05,2016-05-05
+95,Letitia Franco,Saratoga Springs,NY,1,12433.45,5.0,2017-03-29,2017-03-29
+1237,Luke Kramer,Bethpage,NY,1,12420.7,10.0,2016-03-01,2016-03-01
+1086,Cori Schwartz,Jamaica,NY,1,12400.84,6.0,2017-08-19,2017-08-19
+1090,Ira Erickson,Port Jefferson Station,NY,1,12392.95,5.0,2017-10-15,2017-10-15
+1258,Todd Waters,Bay Shore,NY,1,12381.82,8.0,2018-01-12,2018-01-12
+203,Minerva Decker,Houston,TX,1,12369.62,8.0,2018-01-06,2018-01-06
+1103,Ardelia Cooley,Canyon Country,CA,1,12334.95,5.0,2016-12-12,2016-12-12
+194,Dorine Roberson,Santa Cruz,CA,2,12320.11,11.0,2017-08-09,2018-04-03
+1332,Novella Ross,Glendora,CA,1,12307.96,4.0,2017-04-15,2017-04-15
+690,Yevette Elliott,Jackson Heights,NY,1,12104.78,7.0,2017-03-12,2017-03-12
+905,Hae Ramirez,Baldwinsville,NY,1,12089.98,2.0,2018-01-10,2018-01-10
+135,Dorthey Jackson,Houston,TX,2,12026.93,10.0,2017-03-09,2018-11-28
+138,Jone Bernard,Anaheim,CA,2,12010.48,14.0,2017-06-14,2018-04-27
+1195,Chantell Bridges,Buffalo,NY,1,11993.97,3.0,2017-05-13,2017-05-13
+29,Syreeta Hendricks,Mahopac,NY,2,11979.94,6.0,2017-01-21,2018-04-22
+330,Sheba Knapp,Woodside,NY,1,11972.92,8.0,2018-03-18,2018-03-18
+1019,Janie Herrera,Elmhurst,NY,1,11950.47,6.0,2016-07-15,2016-07-15
+165,Jeromy Burch,San Jose,CA,2,11907.89,11.0,2017-11-29,2018-04-27
+322,Merideth Preston,Poughkeepsie,NY,1,11832.45,5.0,2017-12-16,2017-12-16
+747,Margret Barnett,Forney,TX,1,11831.33,5.0,2017-09-01,2017-09-01
+509,Terra Pickett,Amsterdam,NY,1,11787.55,5.0,2017-11-23,2017-11-23
+104,Katharina Bates,Campbell,CA,2,11776.4,10.0,2016-11-13,2018-04-24
+48,Cesar Jackson,Liverpool,NY,2,11705.84,12.0,2017-10-23,2018-04-23
+473,Lashawna Richardson,Baldwin,NY,1,11596.42,8.0,2017-04-27,2017-04-27
+871,Erlinda Humphrey,New Windsor,NY,1,11588.64,9.0,2017-05-11,2017-05-11
+583,Lashandra Turner,Long Beach,NY,1,11578.65,7.0,2016-01-25,2016-01-25
+627,Deloris Larson,Duarte,CA,1,11479.53,7.0,2016-07-12,2016-07-12
+275,Pinkie Kirkland,San Angelo,TX,1,11476.53,9.0,2017-09-13,2017-09-13
+224,Moses Pope,Lawndale,CA,2,11471.88,14.0,2017-05-07,2018-04-23
+462,Efren Oliver,Nanuet,NY,1,11463.95,5.0,2017-11-06,2017-11-06
+350,Christoper Mccall,Bay Shore,NY,1,11462.59,7.0,2016-06-13,2016-06-13
+1136,Kallie Best,Rochester,NY,1,11428.65,7.0,2017-11-19,2017-11-19
+541,Lanita Burton,Coachella,CA,1,11406.42,8.0,2016-01-14,2016-01-14
+375,Yan Trevino,Uniondale,NY,1,11391.42,8.0,2017-11-19,2017-11-19
+415,Gwendolyn Miller,Harlingen,TX,1,11349.95,5.0,2017-04-06,2017-04-06
+780,Ouida Gregory,Merrick,NY,1,11314.07,4.0,2016-06-25,2016-06-25
+1284,Shanice Spears,Brooklyn,NY,1,11299.97,3.0,2017-12-09,2017-12-09
+1423,Dollie Cervantes,Fort Worth,TX,1,11238.65,6.0,2017-06-26,2017-06-26
+547,Tena Huber,Newburgh,NY,1,11183.04,6.0,2018-02-14,2018-02-14
+1348,Yvone Guerrero,Merrick,NY,1,11183.03,6.0,2016-01-20,2016-01-20
+65,Kanesha Vega,Rome,NY,2,11151.6,9.0,2016-05-27,2018-04-20
+880,Phebe Turner,Sunnyside,NY,1,11120.32,6.0,2017-06-17,2017-06-17
+20,Aleta Shepard,Sugar Land,TX,3,11102.46,10.0,2016-11-09,2018-04-12
+798,Alyse Jacobson,Massapequa Park,NY,1,11062.41,9.0,2017-09-05,2017-09-05
+295,Danny Kim,South Ozone Park,NY,1,11055.93,7.0,2017-02-13,2017-02-13
+609,Eliana Reese,Woodhaven,NY,1,11035.84,6.0,2017-05-23,2017-05-23
+34,Brittney Woodward,East Northport,NY,2,11035.75,6.0,2017-10-16,2018-04-14
+159,Regina Burns,Garland,TX,1,11013.93,7.0,2016-06-22,2016-06-22
+783,Celestine Kent,Lancaster,NY,1,10998.02,8.0,2017-10-28,2017-10-28
+997,Trinidad Mcclain,Baldwin,NY,1,10986.9,5.0,2016-09-22,2016-09-22
+810,Ivelisse Nixon,Houston,TX,1,10951.55,7.0,2017-09-20,2017-09-20
+196,Edythe Valencia,North Tonawanda,NY,1,10949.94,6.0,2017-05-09,2017-05-09
+245,Delila Hamilton,Palos Verdes Peninsula,CA,1,10869.96,4.0,2017-01-29,2017-01-29
+403,Elouise Fry,Canyon Country,CA,1,10866.96,4.0,2016-03-16,2016-03-16
+89,Arvilla Osborn,Upland,CA,2,10805.33,5.0,2017-11-05,2018-04-21
+68,Jayne Kirkland,Rowlett,TX,3,10802.62,8.0,2017-06-02,2018-04-09
+550,Felicidad Golden,Lockport,NY,1,10794.35,5.0,2017-01-06,2017-01-06
+1018,Carita Salinas,Maspeth,NY,1,10792.24,6.0,2017-03-15,2017-03-15
+888,Coleen Navarro,Webster,NY,1,10728.43,7.0,2017-10-01,2017-10-01
+27,Santos Valencia,Sunnyside,NY,2,10719.09,11.0,2016-12-29,2018-04-01
+815,Leanna Manning,Hicksville,NY,1,10620.04,8.0,2016-05-06,2016-05-06
+1312,Tereasa Bird,Ronkonkoma,NY,1,10617.97,3.0,2017-02-15,2017-02-15
+576,Shirely Stanley,El Paso,TX,1,10574.96,4.0,2016-08-22,2016-08-22
+247,Muriel Juarez,Palos Verdes Peninsula,CA,1,10570.47,3.0,2018-01-15,2018-01-15
+1205,Emmaline Huber,Mount Vernon,NY,1,10563.64,7.0,2016-07-05,2016-07-05
+1138,Hubert Stone,Ridgecrest,CA,1,10541.96,4.0,2017-02-20,2017-02-20
+867,Rosalva Hamilton,Campbell,CA,1,10529.96,4.0,2017-06-16,2017-06-16
+1443,Lezlie Lamb,Central Islip,NY,1,10372.09,7.0,2016-11-15,2016-11-15
+1440,Ernest Rollins,Oakland Gardens,NY,1,10360.25,7.0,2016-09-28,2016-09-28
+30,Jamaal Albert,Torrance,CA,3,10355.38,14.0,2016-08-03,2018-04-18
+543,Jasmin Young,Helotes,TX,1,10336.96,4.0,2017-02-06,2017-02-06
+147,Bernetta Marquez,Smithtown,NY,1,10322.97,3.0,2017-02-26,2017-02-26
+126,Lavina Dejesus,Newburgh,NY,1,10314.92,8.0,2018-03-07,2018-03-07
+255,Flossie Holder,Massapequa Park,NY,1,10269.85,5.0,2017-03-04,2017-03-04
+463,Jerlene Rios,Plainview,NY,1,10266.95,5.0,2018-03-15,2018-03-15

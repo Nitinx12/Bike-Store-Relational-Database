@@ -1,0 +1,60 @@
+name: "Bug report"
+description: "Report a pipeline, validation, or infra bug"
+title: "fix: "
+labels: ["bug", "triage"]
+assignees: ["Nitinx12"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before filing:** `uv run ruff check . && uv run mypy . && uv run pytest` and `uv run python main.py` — paste the failing log. Use `fix:` prefix so `bug-fix.yml` can auto-triage.
+  - type: input
+    id: component
+    attributes:
+      label: "Component"
+      description: "Where did it break?"
+      placeholder: "e.g. src/pipeline/runner.py, GX suite, docker-compose"
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: "Severity"
+      options: ["sev: critical (data loss / pipeline blocked)", "sev: high", "sev: medium", "sev: low"]
+      default: 2
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: "Reproduction"
+      description: "Exact commands, env, and minimal data to reproduce"
+      placeholder: |
+        1. uv sync
+        2. uv run python main.py --full-refresh
+        3. Observe SparkUI BindException at src/pipeline/spark_session.py:47
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected vs. Actual"
+      placeholder: "Expected: incremental load skips. Actual: …"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs / Screenshots"
+      description: "Paste the `main.py` summary, traceback, or `logs/pipeline/*.log` excerpt. Redact secrets."
+      render: shell
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Checklist"
+      options:
+        - label: "I searched existing issues and didn't find a duplicate"
+          required: true
+        - label: "I included `pyproject.toml` / `uv.lock` state (`uv lock --check`)"
+          required: false

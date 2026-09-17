@@ -59,8 +59,16 @@ def drop_collections(db) -> None:
 
 def seed_brands(db) -> list[int]:
     brand_names = [
-        "Trek", "Specialized", "Giant", "Cannondale", "Schwinn",
-        "Diamondback", "Brompton", "Bianchi", "Pinarello", "Santa Cruz",
+        "Trek",
+        "Specialized",
+        "Giant",
+        "Cannondale",
+        "Schwinn",
+        "Diamondback",
+        "Brompton",
+        "Bianchi",
+        "Pinarello",
+        "Santa Cruz",
     ]
     brands = [
         {
@@ -77,9 +85,16 @@ def seed_brands(db) -> list[int]:
 
 def seed_categories(db) -> list[int]:
     cat_names = [
-        "Road Bikes", "Mountain Bikes", "Hybrid Bikes", "Electric Bikes",
-        "Cruiser Bikes", "BMX Bikes", "Kids Bikes", "Folding Bikes",
-        "Gravel Bikes", "Accessories",
+        "Road Bikes",
+        "Mountain Bikes",
+        "Hybrid Bikes",
+        "Electric Bikes",
+        "Cruiser Bikes",
+        "BMX Bikes",
+        "Kids Bikes",
+        "Folding Bikes",
+        "Gravel Bikes",
+        "Accessories",
     ]
     categories = [
         {
@@ -96,11 +111,51 @@ def seed_categories(db) -> list[int]:
 
 def seed_stores(db) -> list[int]:
     store_data = [
-        ("Downtown Cycles", "(555) 101-0001", "downtown@bestbikes.com", "123 Main Street", "San Francisco", "CA", 94102),
-        ("Westside Wheels", "(555) 102-0002", "westside@bestbikes.com", "456 Ocean Avenue", "Los Angeles", "CA", 90401),
-        ("Harbor Bicycles", "(555) 103-0003", "harbor@bestbikes.com", "789 Waterfront Drive", "Seattle", "WA", 98101),
-        ("Mountain View Cycles", "(555) 104-0004", "mountain@bestbikes.com", "321 Tech Boulevard", "Mountain View", "CA", 94041),
-        ("Austin's Pedal Power", "(555) 105-0005", "austin@bestbikes.com", "555 Congress Avenue", "Austin", "TX", 78701),
+        (
+            "Downtown Cycles",
+            "(555) 101-0001",
+            "downtown@bestbikes.com",
+            "123 Main Street",
+            "San Francisco",
+            "CA",
+            94102,
+        ),
+        (
+            "Westside Wheels",
+            "(555) 102-0002",
+            "westside@bestbikes.com",
+            "456 Ocean Avenue",
+            "Los Angeles",
+            "CA",
+            90401,
+        ),
+        (
+            "Harbor Bicycles",
+            "(555) 103-0003",
+            "harbor@bestbikes.com",
+            "789 Waterfront Drive",
+            "Seattle",
+            "WA",
+            98101,
+        ),
+        (
+            "Mountain View Cycles",
+            "(555) 104-0004",
+            "mountain@bestbikes.com",
+            "321 Tech Boulevard",
+            "Mountain View",
+            "CA",
+            94041,
+        ),
+        (
+            "Austin's Pedal Power",
+            "(555) 105-0005",
+            "austin@bestbikes.com",
+            "555 Congress Avenue",
+            "Austin",
+            "TX",
+            78701,
+        ),
     ]
     stores = [
         {
@@ -123,13 +178,40 @@ def seed_stores(db) -> list[int]:
 
 def seed_staffs(db, store_ids: list[int]) -> list[int]:
     first_names = [
-        "Alice", "Bob", "Carol", "David", "Eve", "Frank", "Grace", "Henry",
-        "Iris", "Jack", "Karen", "Leo", "Mia", "Nathan", "Olivia", "Paul",
+        "Alice",
+        "Bob",
+        "Carol",
+        "David",
+        "Eve",
+        "Frank",
+        "Grace",
+        "Henry",
+        "Iris",
+        "Jack",
+        "Karen",
+        "Leo",
+        "Mia",
+        "Nathan",
+        "Olivia",
+        "Paul",
     ]
     last_names = [
-        "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller",
-        "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Wilson",
-        "Anderson", "Thomas", "Taylor",
+        "Smith",
+        "Johnson",
+        "Williams",
+        "Brown",
+        "Jones",
+        "Garcia",
+        "Miller",
+        "Davis",
+        "Rodriguez",
+        "Martinez",
+        "Hernandez",
+        "Lopez",
+        "Wilson",
+        "Anderson",
+        "Thomas",
+        "Taylor",
     ]
     emails_seen: set[str] = set()
     staffs = []
@@ -140,17 +222,19 @@ def seed_staffs(db, store_ids: list[int]) -> list[int]:
         while email in emails_seen:
             email = f"{first.lower()}.{last.lower()}{i}@bestbikes.com"
         emails_seen.add(email)
-        staffs.append({
-            "staff_id": i + 1,
-            "first_name": first,
-            "last_name": last,
-            "email": email,
-            "phone": f"(555) {randint(100, 999)}-{randint(1000, 9999)}",
-            "active": 1,
-            "store_id": store_ids[i % len(store_ids)],
-            "manager_id": 1 if i > 0 else None,
-            "updated_at": _now(),
-        })
+        staffs.append(
+            {
+                "staff_id": i + 1,
+                "first_name": first,
+                "last_name": last,
+                "email": email,
+                "phone": f"(555) {randint(100, 999)}-{randint(1000, 9999)}",
+                "active": 1,
+                "store_id": store_ids[i % len(store_ids)],
+                "manager_id": 1 if i > 0 else None,
+                "updated_at": _now(),
+            }
+        )
     db.staffs.insert_many(staffs)
     print(f"  ✓ staffs: {len(staffs)} documents")
     return [int(s["staff_id"]) for s in staffs]
@@ -186,15 +270,17 @@ def seed_products(db, brand_ids: list[int], category_ids: list[int]) -> list[int
     ]
     docs = []
     for i, p in enumerate(products):
-        docs.append({
-            "product_id": i + 1,
-            "product_name": p["name"],
-            "brand_id": brand_ids[i % len(brand_ids)],
-            "category_id": category_ids[i % len(category_ids)],
-            "model_year": p["model_year"],
-            "list_price": p["list_price"],
-            "updated_at": _now(),
-        })
+        docs.append(
+            {
+                "product_id": i + 1,
+                "product_name": p["name"],
+                "brand_id": brand_ids[i % len(brand_ids)],
+                "category_id": category_ids[i % len(category_ids)],
+                "model_year": p["model_year"],
+                "list_price": p["list_price"],
+                "updated_at": _now(),
+            }
+        )
     db.products.insert_many(docs)
     print(f"  ✓ products: {len(docs)} documents")
     return [int(d["product_id"]) for d in docs]
@@ -204,36 +290,86 @@ def seed_stocks(db, store_ids: list[int], product_ids: list[int]) -> None:
     docs = []
     for store_id in store_ids:
         for product_id in product_ids[:10]:
-            docs.append({
-                "store_id": store_id,
-                "product_id": product_id,
-                "quantity": randint(5, 50),
-                "updated_at": _now(),
-            })
+            docs.append(
+                {
+                    "store_id": store_id,
+                    "product_id": product_id,
+                    "quantity": randint(5, 50),
+                    "updated_at": _now(),
+                }
+            )
     db.stocks.insert_many(docs)
     print(f"  ✓ stocks: {len(docs)} documents")
 
 
 def seed_customers(db) -> list[int]:
     first_names = [
-        "Emma", "Liam", "Olivia", "Noah", "Ava", "Ethan", "Sophia", "Mason",
-        "Isabella", "William", "Mia", "James", "Charlotte", "Benjamin", "Amelia",
-        "Lucas", "Harper", "Henry", "Evelyn", "Alexander",
+        "Emma",
+        "Liam",
+        "Olivia",
+        "Noah",
+        "Ava",
+        "Ethan",
+        "Sophia",
+        "Mason",
+        "Isabella",
+        "William",
+        "Mia",
+        "James",
+        "Charlotte",
+        "Benjamin",
+        "Amelia",
+        "Lucas",
+        "Harper",
+        "Henry",
+        "Evelyn",
+        "Alexander",
     ]
     last_names = [
-        "Anderson", "Baker", "Carter", "Davis", "Evans", "Foster", "Green",
-        "Harris", "Irving", "Jones", "King", "Lee", "Miller", "Nelson",
-        "Owens", "Parker", "Quinn", "Roberts", "Scott", "Turner",
+        "Anderson",
+        "Baker",
+        "Carter",
+        "Davis",
+        "Evans",
+        "Foster",
+        "Green",
+        "Harris",
+        "Irving",
+        "Jones",
+        "King",
+        "Lee",
+        "Miller",
+        "Nelson",
+        "Owens",
+        "Parker",
+        "Quinn",
+        "Roberts",
+        "Scott",
+        "Turner",
     ]
     streets = [
-        "100 Oak Street", "200 Pine Avenue", "300 Maple Drive", "400 Elm Court",
-        "500 Cedar Lane", "600 Birch Way", "700 Willow Road", "800 Spruce Boulevard",
-        "900 Aspen Circle", "1000 Redwood Drive",
+        "100 Oak Street",
+        "200 Pine Avenue",
+        "300 Maple Drive",
+        "400 Elm Court",
+        "500 Cedar Lane",
+        "600 Birch Way",
+        "700 Willow Road",
+        "800 Spruce Boulevard",
+        "900 Aspen Circle",
+        "1000 Redwood Drive",
     ]
     cities = [
-        ("San Francisco", "CA"), ("Los Angeles", "CA"), ("Seattle", "WA"),
-        ("Portland", "OR"), ("Austin", "TX"), ("Denver", "CO"),
-        ("Chicago", "IL"), ("New York", "NY"), ("Boston", "MA"), ("Miami", "FL"),
+        ("San Francisco", "CA"),
+        ("Los Angeles", "CA"),
+        ("Seattle", "WA"),
+        ("Portland", "OR"),
+        ("Austin", "TX"),
+        ("Denver", "CO"),
+        ("Chicago", "IL"),
+        ("New York", "NY"),
+        ("Boston", "MA"),
+        ("Miami", "FL"),
     ]
     domains = ["gmail.com", "yahoo.com", "outlook.com", "icloud.com", "proton.me"]
     docs = []
@@ -241,18 +377,20 @@ def seed_customers(db) -> list[int]:
         fn = first_names[i % len(first_names)]
         ln = last_names[i % len(last_names)]
         city, state = cities[i % len(cities)]
-        docs.append({
-            "customer_id": i + 1,
-            "first_name": fn,
-            "last_name": ln,
-            "email": f"{fn.lower()}.{ln.lower()}{i}@{choice(domains)}",
-            "phone": f"(555) {randint(100, 999)}-{randint(1000, 9999)}",
-            "street": streets[i % len(streets)],
-            "city": city,
-            "state": state,
-            "zip_code": randint(10000, 99999),
-            "updated_at": _now(),
-        })
+        docs.append(
+            {
+                "customer_id": i + 1,
+                "first_name": fn,
+                "last_name": ln,
+                "email": f"{fn.lower()}.{ln.lower()}{i}@{choice(domains)}",
+                "phone": f"(555) {randint(100, 999)}-{randint(1000, 9999)}",
+                "street": streets[i % len(streets)],
+                "city": city,
+                "state": state,
+                "zip_code": randint(10000, 99999),
+                "updated_at": _now(),
+            }
+        )
     db.customers.insert_many(docs)
     print(f"  ✓ customers: {len(docs)} documents")
     return [int(d["customer_id"]) for d in docs]
@@ -273,23 +411,27 @@ def seed_orders(
         status = choice(statuses)
         if status == "Completed":
             shipped_date = order_date + timedelta(days=randint(1, 5))
-        order_docs.append({
-            "order_id": i + 1,
-            "customer_id": choice(customer_ids),
-            "order_status": status,
-            "order_date": order_date,
-            "required_date": required_date,
-            "shipped_date": shipped_date,
-            "store_id": choice(store_ids),
-            "staff_id": choice(staff_ids),
-            "updated_at": _now(),
-        })
+        order_docs.append(
+            {
+                "order_id": i + 1,
+                "customer_id": choice(customer_ids),
+                "order_status": status,
+                "order_date": order_date,
+                "required_date": required_date,
+                "shipped_date": shipped_date,
+                "store_id": choice(store_ids),
+                "staff_id": choice(staff_ids),
+                "updated_at": _now(),
+            }
+        )
     db.orders.insert_many(order_docs)
     print(f"  ✓ orders: {len(order_docs)} documents")
     return [(int(d["order_id"]), d["order_date"]) for d in order_docs]
 
 
-def seed_order_items(db, orders: list[tuple[int, datetime]], product_ids: list[int]) -> None:
+def seed_order_items(
+    db, orders: list[tuple[int, datetime]], product_ids: list[int]
+) -> None:
     item_docs = []
     for order_id, _order_date in orders:
         num_items = randint(1, 4)
@@ -299,16 +441,18 @@ def seed_order_items(db, orders: list[tuple[int, datetime]], product_ids: list[i
             list_price = round(uniform(300.0, 5000.0), 2)
             discount = round(uniform(0.0, 0.25), 2)
             total_value = round(quantity * list_price * (1 - discount), 2)
-            item_docs.append({
-                "order_id": order_id,
-                "item_id": item_num,
-                "product_id": product_id,
-                "quantity": quantity,
-                "list_price": list_price,
-                "discount": discount,
-                "total_value": total_value,
-                "updated_at": _now(),
-            })
+            item_docs.append(
+                {
+                    "order_id": order_id,
+                    "item_id": item_num,
+                    "product_id": product_id,
+                    "quantity": quantity,
+                    "list_price": list_price,
+                    "discount": discount,
+                    "total_value": total_value,
+                    "updated_at": _now(),
+                }
+            )
     db.order_items.insert_many(item_docs)
     print(f"  ✓ order_items: {len(item_docs)} documents")
 
@@ -316,7 +460,9 @@ def seed_order_items(db, orders: list[tuple[int, datetime]], product_ids: list[i
 def main() -> None:
     import argparse
 
-    parser = argparse.ArgumentParser(description="Seed MongoDB with sample bike store data.")
+    parser = argparse.ArgumentParser(
+        description="Seed MongoDB with sample bike store data."
+    )
     parser.add_argument(
         "--drop",
         action="store_true",
@@ -350,7 +496,9 @@ def main() -> None:
             "brands": lambda: seed_brands(db),
             "categories": lambda: seed_categories(db),
             "stores": lambda: seed_stores(db),
-            "staffs": lambda: seed_staffs(db, list(db.stores.distinct("store_id")) or seed_stores(db)),
+            "staffs": lambda: seed_staffs(
+                db, list(db.stores.distinct("store_id")) or seed_stores(db)
+            ),
             "products": lambda: seed_products(
                 db,
                 list(db.brands.distinct("brand_id")) or seed_brands(db),

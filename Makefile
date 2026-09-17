@@ -31,7 +31,7 @@ CYAN  := \033[36m
 RESET := \033[0m
 BOLD  := \033[1m
 
-.PHONY: help build up down pipeline local-pipeline etl local-etl dq-loops local-dq-loops dq-gx local-dq-gx seed local-seed inspect-schema local-inspect-schema monitor-logs log-cleanup shell clean prune check-env health-check init-db backup-postgres restore-postgres backup-mongo restore-mongo lint test format run run-verbose run-full run-etl run-dq run-gx run-collection run-collection-full run-etl-only run-etl-dq run-gx-table install verify run-clean check-deps doctor
+.PHONY: help build up down pipeline local-pipeline etl local-etl dq-loops local-dq-loops dq-gx local-dq-gx seed local-seed inspect-schema local-inspect-schema monitor-logs log-cleanup shell clean prune check-env health-check init-db backup-postgres restore-postgres backup-mongo restore-mongo lint test format run run-verbose run-full run-etl run-dq run-gx run-collection run-collection-full run-etl-only run-etl-dq run-gx-table install verify run-clean check-deps doctor dashboard dashboard-test hooks hooks-check
 
 help: ## Show this help message
 	@echo -e "$(BOLD)Bike Store Pipeline Management$(RESET)"
@@ -207,6 +207,25 @@ doctor: check-deps ## Run dependency + import health check; exit non-zero if any
 	@uv run python -c "from src.validation.plpgsql_loops import run_all; print('  PL/pgSQL import OK')" || (echo "  ERROR: Cannot import plpgsql modules." && exit 1)
 	@uv run python -c "from tests.data_quality import run; print('  GX import OK')" || (echo "  ERROR: Cannot import GX modules." && exit 1)
 	@echo All doctor checks passed.
+
+hooks: ## Install git hooks (pre-commit / commit-msg / pre-push)
+	@bash scripts/setup-hooks.sh
+	@if command -v pre-commit >/dev/null 2>&1 || uv run pre-commit --version >/dev/null 2>&1; then \
+		echo "  Installing pre-commit framework hooks..."; \
+		uv run pre-commit install --hook-type pre-commit --hook-type commit-msg --hook-type pre-push 2>&1 | sed 's/^/  /'; \
+	else echo "  WARN: pre-commit not found — native .githooks installed only"; fi
+
+hooks-check: ## Verify hooks installed and Conventional Commits enforced
+	@git config --get core.hooksPath | grep -q ".githooks" && echo "  hooksPath OK ($$(git config --get core.hooksPath))" || (echo "  ERROR: hooks not installed — run: make hooks" && exit 1)
+	@test -x .githooks/pre-commit && echo "  pre-commit executable" || (echo "  ERROR: .githooks/pre-commit not executable" && exit 1)
+
+dashboard: check-env check-deps ## Run Streamlit dashboard locally (Plotly) — uv run streamlit run streamlit_app.py
+	@echo -e "$(CYAN)Starting Streamlit dashboard on http://localhost:8501 ...$(RESET)"
+	uv run streamlit run streamlit_app.py --server.headless true
+
+dashboard-test: check-deps ## Smoke-test dashboard imports (no DB needed)
+	uv run python -c "import dashboard.data, dashboard.charts; print('  dashboard imports OK')"
+	uv run python -c "import streamlit, plotly; print(f'  streamlit {streamlit.__version__} / plotly {plotly.__version__} OK')"
 
 run-clean: ## Remove pipeline log files older than 7 days
 	@bash scripts/shell/log_cleanup.sh $(ARGS)

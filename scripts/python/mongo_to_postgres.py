@@ -408,7 +408,9 @@ def detect_pk_col(columns: list[str], collection: str, log) -> list[str] | None:
 
     singular_exact = f"{singular}_id"
     if singular_exact in columns:
-        log.info("PK DETECT : '%s'  (singular match for collection name)", singular_exact)
+        log.info(
+            "PK DETECT : '%s'  (singular match for collection name)", singular_exact
+        )
         return [singular_exact]
 
     exact = f"{slug}_id"
@@ -483,19 +485,27 @@ def get_spark(app_name: str = "MongoToPublicETL") -> SparkSession:
         "PYSPARK_DRIVER_PYTHON", sys.executable
     )
 
+    ui_enabled = os.getenv("SPARK_UI_ENABLED", "false").lower() in ("1", "true", "yes")
+    ui_port = os.getenv("SPARK_UI_PORT", "0" if not ui_enabled else "4040")
     spark = (
         SparkSession.builder.appName(app_name)
-        .master("local[*]")
+        .master(os.getenv("SPARK_MASTER", "local[*]"))
         .config("spark.driver.extraClassPath", JDBC_JAR_PATH)
         .config("spark.executor.extraClassPath", JDBC_JAR_PATH)
         .config("spark.driver.extraJavaOptions", "--add-modules jdk.incubator.vector")
         .config("spark.executor.extraJavaOptions", "--add-modules jdk.incubator.vector")
         .config("spark.sql.legacy.timeParserPolicy", "LEGACY")
-        .config("spark.driver.memory", "2g")
+        .config("spark.driver.memory", os.getenv("SPARK_DRIVER_MEMORY", "2g"))
         .config("spark.logConf", "false")
+        .config("spark.driver.host", os.getenv("SPARK_DRIVER_HOST", "127.0.0.1"))
+        .config("spark.driver.bindAddress", os.getenv("SPARK_DRIVER_BIND", "127.0.0.1"))
+        .config("spark.ui.enabled", str(ui_enabled).lower())
+        .config("spark.ui.port", ui_port)
+        .config("spark.port.maxRetries", os.getenv("SPARK_PORT_MAX_RETRIES", "32"))
+        .config("spark.ui.showConsoleProgress", "false")
         .getOrCreate()
     )
-    spark.sparkContext.setLogLevel("WARN")
+    spark.sparkContext.setLogLevel(os.getenv("SPARK_LOG_LEVEL", "WARN"))
     return spark
 
 

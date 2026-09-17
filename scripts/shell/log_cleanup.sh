@@ -117,13 +117,13 @@ classify_file() {
     local f="$1" latest="$2" size age status is_old=0 is_large=0
     size=$(file_size_mb "$f")
     age=$(file_age_days "$f")
-    
+
     if [[ "$f" == "$latest" ]]; then
         status="LATEST"
     else
         (( age  > MAX_AGE_DAYS  )) && is_old=1
         (( size > MAX_SIZE_MB   )) && is_large=1
-        
+
         if   (( is_old && is_large )); then status="OLD+LARGE"
         elif (( is_old ));             then status="OLD"
         elif (( is_large ));           then status="LARGE"
@@ -154,7 +154,7 @@ cmd_summary() {
 
     while IFS= read -r -d '' f; do
         read -r size age status <<< "$(classify_file "$f" "$latest")"
-        
+
         # Colorize status output
         local status_colored="$status"
         case "$status" in

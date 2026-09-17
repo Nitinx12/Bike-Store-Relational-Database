@@ -2,74 +2,73 @@ name: "Linting (Bash, PS1, Make, SQL)"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main, "feat/**", "fix/**", "bugfix/**"]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 permissions:
   contents: read
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   bash-check:
     name: Check Bash (ShellCheck)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
         with:
-          scandir: './'
-          # Optional: add ignore patterns if needed
-          # ignore_paths: 'vendor/**'
+          scandir: ./scripts/shell
+          severity: warning
+      - name: Enforce LF line endings for shell scripts
+        run: |
+          if file scripts/shell/*.sh | grep -q "CRLF"; then
+            echo "::error::CRLF detected in scripts/shell/*.sh — must be LF. See .gitattributes."
+            file scripts/shell/*.sh
+            exit 1
+          fi
 
   powershell-check:
     name: Check PowerShell (PSScriptAnalyzer)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Run PSScriptAnalyzer
         uses: microsoft/psscriptanalyzer-action@v1.1
         with:
-          path: ./
+          path: ./scripts/ps1
           recurse: true
-          # Fail the build on Error and Warning level violations
           severity: Error, Warning
 
   sql-check:
-    name: Check SQL (SQLFluff)
+    name: Check SQL (SQLFluff postgres)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - run: uv sync --frozen
       - name: Run SQLFluff Linting
         run: uv run sqlfluff lint sql/ --dialect postgres
 
   makefile-check:
     name: Check Makefile (checkmake)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Install checkmake via release binary
         run: |
           CHECKMAKE_VERSION=0.2.1
           curl -sSL -o checkmake "https://github.com/mrtazz/checkmake/releases/download/${CHECKMAKE_VERSION}/checkmake_linux_amd64"
           chmod +x checkmake
           sudo mv checkmake /usr/local/bin/checkmake
-
       - name: Run checkmake
         run: find . -type f -name "Makefile" -exec checkmake {} +

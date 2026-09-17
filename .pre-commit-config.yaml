@@ -1,0 +1,108 @@
+# .pre-commit-config.yaml — production pre-commit framework config
+# Install: uv run pre-commit install --hook-type pre-commit --hook-type commit-msg --hook-type pre-push
+# Run:     uv run pre-commit run --all-files
+# See: https://pre-commit.com/  Docs: AGENTS.md §7, .githooks/ is the native fallback
+minimum_pre_commit_version: "3.0.0"
+default_language_version:
+  python: python3.13
+exclude: '^(\\.venv/|\\.mypy_cache/|\\.ruff_cache/|\\.pytest_cache/|gx/uncommitted/)'
+
+repos:
+  # ──────────────────────────────────────────────────────────────
+  # 1. Standard hygiene — no secrets, no CRLF, no large files
+  # ──────────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-added-large-files
+        args: [--maxkb=5120] # 5 MB — matches .githooks/pre-commit
+      - id: mixed-line-ending
+        args: [--fix=lf] # enforces .gitattributes LF
+      # Note: no-commit-to-branch is enforced by .githooks/pre-commit (with ALLOW_COMMIT_TO_MAIN=1 bypass)
+      # so the pre-commit framework hook is omitted here to allow `pre-commit run --all-files` on main.
+      - id: check-vcs-permalinks
+      - id: detect-private-key
+
+  # ──────────────────────────────────────────────────────────────
+  # 2. Ruff — lint + format (pinned to pyproject.toml version)
+  # ──────────────────────────────────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.6
+    hooks:
+      - id: ruff
+        args: [--fix]
+        types: [python]
+      - id: ruff-format
+        types: [python]
+
+  # ──────────────────────────────────────────────────────────────
+  # 3. SQLFluff — postgres dialect for sql/ (mirrors CI)
+  # ──────────────────────────────────────────────────────────────
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 4.3.0
+    hooks:
+      - id: sqlfluff-lint
+        args: [--dialect=postgres]
+        types: [sql]
+        files: ^sql/
+
+  # ──────────────────────────────────────────────────────────────
+  # 4. Local project gates — use `uv run` so version is pinned to uv.lock
+  #    (pre-commit framework isolates envs; local hooks run in repo env)
+  # ──────────────────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: mypy-local
+        name: mypy (uv run)
+        entry: uv run mypy .
+        language: system
+        types: [python]
+        pass_filenames: false
+        require_serial: true
+
+      - id: pytest-local
+        name: pytest — pre-push only (fast unit)
+        entry: uv run pytest -q
+        language: system
+        pass_filenames: false
+        require_serial: true
+        stages: [pre-push]
+
+      - id: shellcheck
+        name: shellcheck (scripts/shell)
+        entry: bash -c 'command -v shellcheck >/dev/null 2>&1 || { echo "shellcheck not installed — skipping"; exit 0; }; shellcheck scripts/shell/*.sh'
+        language: system
+        pass_filenames: false
+        require_serial: true
+
+      - id: check-env-not-staged
+        name: forbid .env commit
+        entry: bash -c '! git diff --cached --name-only | grep -qx ".env" || { echo "Refusing to commit .env"; exit 1; }'
+        language: system
+        pass_filenames: false
+
+      - id: uv-lock-check
+        name: uv lock --check (when pyproject.toml staged)
+        entry: bash -c 'git diff --cached --name-only | grep -q "pyproject.toml" || exit 0; uv lock --check'
+        language: system
+        pass_filenames: false
+        require_serial: true
+
+  # ──────────────────────────────────────────────────────────────
+  # 5. Conventional Commits — commit-msg stage
+  # ──────────────────────────────────────────────────────────────
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.2.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, chore, refactor, docs, test, style, perf, ci, build, revert]

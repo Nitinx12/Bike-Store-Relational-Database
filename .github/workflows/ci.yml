@@ -1,0 +1,82 @@
+name: "CI — unified quality gate"
+
+on:
+  push:
+    branches: [main, "fix/**", "bugfix/**", "feat/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ruff-mypy-pytest:
+    name: Ruff / Mypy / Pytest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - run: uv sync --frozen
+      - name: Ruff check
+        run: uv run ruff check .
+      - name: Ruff format (check)
+        run: uv run ruff format --check .
+      - name: Mypy
+        run: uv run mypy .
+      - name: Pytest (unit)
+        run: uv run pytest -q
+      - name: Import smoke test
+        run: uv run python -c "from src.pipeline.runner import run_pipeline; print('smoke ok')"
+
+  sql-and-shell:
+    name: SQL + Shell + PS + Make
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - run: uv sync --frozen
+      - name: SQLFluff (postgres)
+        run: uv run sqlfluff lint sql/ --dialect postgres
+      - name: ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: ./scripts/shell
+          severity: warning
+      - name: Check CRLF in shell scripts (must be LF)
+        run: |
+          if file scripts/shell/*.sh | grep -q "CRLF"; then
+            echo "::error::Shell scripts must be LF (not CRLF). Run: dos2unix scripts/shell/*.sh"
+            file scripts/shell/*.sh
+            exit 1
+          fi
+      - name: Make help parses
+        run: make help >/dev/null
+
+  docker-smoke:
+    name: Docker build + import smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -f docker/Dockerfile -t bike-store-app:ci .
+      - name: Entrypoint --help
+        run: docker run --rm bike-store-app:ci --help
+      - name: Imports inside image
+        run: |
+          docker run --rm --entrypoint bash bike-store-app:ci -c "
+            uv run python -c '
+          import src.pipeline.runner
+          import src.validation.plpgsql_loops
+          import utils.engine
+          print(\"image imports ok\")
+          '
+          "

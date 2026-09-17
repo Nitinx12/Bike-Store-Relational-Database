@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# .githooks/pre-push — last gate before push (heavier checks)
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT_DIR"
+
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; RESET='\033[0m'
+pass() { echo -e "${GREEN}[PASS]${RESET} $1"; }
+fail() { echo -e "${RED}[FAIL]${RESET} $1" >&2; }
+
+echo -e "${CYAN}pre-push: running push gates...${RESET}"
+
+if command -v uv >/dev/null 2>&1; then
+  echo -e "${CYAN}→ pytest (unit)${RESET}"
+  if ! uv run pytest -q 2>&1; then
+    fail "pytest failed — fix before pushing"
+    exit 1
+  fi
+  pass "pytest"
+
+  echo -e "${CYAN}→ import smoke test${RESET}"
+  if ! uv run python -c "from src.pipeline.runner import run_pipeline; from src.validation.plpgsql_loops import run_all; print('imports ok')" 2>&1; then
+    fail "import smoke test failed"
+    exit 1
+  fi
+  pass "imports"
+
+  if ! uv lock --check >/dev/null 2>&1; then
+    fail "uv.lock out of sync — run: uv lock"
+    exit 1
+  fi
+  pass "uv.lock"
+else
+  echo -e "${YELLOW}[WARN] uv not found — skipping pytest${RESET}"
+fi
+
+# Branch naming guard: fix/*, feat/*, chore/*, etc.
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+if [[ -n "$branch" && "$branch" != "main" ]]; then
+  if ! echo "$branch" | grep -Eq '^(feat|fix|bugfix|hotfix|chore|refactor|docs|test|ci)/'; then
+    echo -e "${YELLOW}[WARN] Branch '$branch' doesn't follow 'type/slug' (e.g. fix/spark-ui-bind). Pushing anyway.${RESET}"
+  fi
+fi
+
+echo -e "${GREEN}pre-push: all gates passed${RESET}"

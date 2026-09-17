@@ -1,0 +1,17 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+categories:
+  - title: "Features"
+    labels: ["feat", "feature", "enhancement"]
+  - title: "Bug Fixes"
+    labels: ["fix", "bug"]
+  - title: "Chores & Infra"
+    labels: ["chore", "ci", "build", "refactor"]
+  - title: "Docs"
+    labels: ["docs"]
+exclude-labels: ["skip-changelog"]
+change-template: "- $TITLE @$AUTHOR (#$NUMBER)"
+version-resolver:
+  default: patch
+change-title-escapes: '\<*_&'
+autocategorize: true

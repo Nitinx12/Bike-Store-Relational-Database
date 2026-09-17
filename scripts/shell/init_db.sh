@@ -57,7 +57,7 @@ MONGO_DB="${MONGO_DB:-bike_store}"
 
 run_psql() {
     if command -v docker >/dev/null 2>&1 && docker compose ps postgres >/dev/null 2>&1; then
-        docker compose exec -T postgres psql -U "$POSTGRES_USERNAME" "$@"
+        docker compose exec -T -e PGPASSWORD="$PGPASSWORD" postgres psql -U "$POSTGRES_USERNAME" "$@"
     else
         psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USERNAME" "$@"
     fi

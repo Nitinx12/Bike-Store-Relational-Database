@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# .githooks/pre-commit — production gate before every commit
+# Install: git config core.hooksPath .githooks  (or run scripts/setup-hooks.sh)
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT_DIR"
+
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; RESET='\033[0m'
+pass() { echo -e "${GREEN}[PASS]${RESET} $1"; }
+fail() { echo -e "${RED}[FAIL]${RESET} $1" >&2; }
+
+# Only check staged files; but ruff/mypy need full project for correct results.
+# We run full-project checks — fast with .venv cached (<5s).
+
+echo -e "${CYAN}pre-commit: running quality gates...${RESET}"
+
+# 1) CRLF guard for shell scripts (must be LF — see .gitattributes)
+if command -v file >/dev/null 2>&1; then
+  if file scripts/shell/*.sh 2>/dev/null | grep -q "CRLF"; then
+    fail "CRLF detected in scripts/shell/*.sh — convert to LF: dos2unix scripts/shell/*.sh"
+    file scripts/shell/*.sh | grep CRLF || true
+    exit 1
+  fi
+  pass "CRLF check"
+fi
+
+# 2) No secrets: block .env, private keys, large files
+staged=$(git diff --cached --name-only 2>/dev/null || true)
+if echo "$staged" | grep -q "^\.env$"; then
+  fail "Refusing to commit .env — contains secrets. Use .env.example."
+  exit 1
+fi
+if echo "$staged" | grep -qE '\.pem$|\.key$|id_rsa'; then
+  fail "Private key file staged — remove it."
+  exit 1
+fi
+# Large file guard (>5MB)
+large=$(git diff --cached --name-only --diff-filter=A 2>/dev/null | xargs -I{} sh -c 'test -f "{}" && wc -c < "{}" 2>/dev/null | awk "{if (\$1>5242880) print \"{}\"} "' 2>/dev/null || true)
+if [[ -n "$large" ]]; then
+  fail "Large file staged (>5MB): $large — use Git LFS or remove."
+  exit 1
+fi
+
+# 3) Check staged Python files exist with uv available
+if command -v uv >/dev/null 2>&1; then
+  echo -e "${CYAN}→ ruff check${RESET}"
+  if ! uv run ruff check . 2>&1; then
+    fail "ruff check failed — run: uv run ruff check . --fix && uv run ruff format ."
+    exit 1
+  fi
+  pass "ruff check"
+
+  echo -e "${CYAN}→ ruff format --check${RESET}"
+  if ! uv run ruff format --check . 2>&1; then
+    fail "ruff format needed — run: uv run ruff format ."
+    exit 1
+  fi
+  pass "ruff format"
+
+  echo -e "${CYAN}→ mypy${RESET}"
+  if ! uv run mypy . 2>&1; then
+    fail "mypy failed"
+    exit 1
+  fi
+  pass "mypy"
+
+  # Only run sqlfluff if sql/ changed
+  if echo "$staged" | grep -q "^sql/"; then
+    echo -e "${CYAN}→ sqlfluff (sql/ changed)${RESET}"
+    if ! uv run sqlfluff lint sql/ --dialect postgres 2>&1; then
+      fail "sqlfluff failed"
+      exit 1
+    fi
+    pass "sqlfluff"
+  fi
+
+  # uv.lock sync check — if pyproject.toml staged, lock must be staged
+  if echo "$staged" | grep -q "pyproject.toml"; then
+    if ! uv lock --check >/dev/null 2>&1; then
+      fail "pyproject.toml changed but uv.lock out of sync — run: uv lock"
+      exit 1
+    fi
+    pass "uv.lock sync"
+  fi
+else
+  echo -e "${YELLOW}[WARN] uv not found — skipping ruff/mypy (install uv)${RESET}"
+fi
+
+# 4) Forbid direct commit to main (use PR)
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+if [[ "$branch" == "main" ]]; then
+  # Allow if explicitly bypassed via env
+  if [[ "${ALLOW_COMMIT_TO_MAIN:-}" != "1" ]]; then
+    fail "Direct commit to 'main' blocked — create a feature branch: git checkout -b feat/<name>"
+    echo -e "${YELLOW}Bypass: ALLOW_COMMIT_TO_MAIN=1 git commit ...${RESET}"
+    exit 1
+  fi
+fi
+
+echo -e "${GREEN}pre-commit: all gates passed${RESET}"

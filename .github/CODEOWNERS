@@ -1,0 +1,38 @@
+# CODEOWNERS — production rule: every change requires owner review.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# Order matters: last matching pattern wins. Put most-specific first.
+
+# Global owner (fallback)
+*                          @Nitinx12
+
+# Pipeline core — ETL, DB, validation are critical paths
+/src/pipeline/             @Nitinx12
+/src/database/             @Nitinx12
+/src/validation/           @Nitinx12
+/utils/                    @Nitinx12
+/main.py                   @Nitinx12
+
+# Data-quality is blocking: GX suites + PL/pgSQL loops
+/gx/                       @Nitinx12
+/tests/data_quality/       @Nitinx12
+/tests/generic/loops/      @Nitinx12
+/sql/                      @Nitinx12
+
+# Infra & orchestration — changes can break deploys
+/docker-compose.yml        @Nitinx12
+/docker/                   @Nitinx12
+/scripts/shell/            @Nitinx12
+/scripts/ps1/              @Nitinx12
+/Makefile                  @Nitinx12
+
+# CI / GitHub config — sensitive
+/.github/                  @Nitinx12
+/.githooks/                @Nitinx12
+/pyproject.toml            @Nitinx12
+/uv.lock                   @Nitinx12
+/.gitattributes            @Nitinx12
+
+# Docs — lighter review but still owned
+/docs/                     @Nitinx12
+/reports/                  @Nitinx12
+/README.md                 @Nitinx12

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# .githooks/post-merge — after pull/merge, re-sync deps if lockfile changed
+set -euo pipefail
+if git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep -qE 'uv\.lock|pyproject\.toml'; then
+  echo "[post-merge] uv.lock/pyproject.toml changed — running: uv sync"
+  if command -v uv >/dev/null 2>&1; then uv sync || true; fi
+fi

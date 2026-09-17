@@ -6,6 +6,9 @@
 
 An incremental data pipeline that moves retail data from **MongoDB** into **PostgreSQL**, checks it with a SQL data quality suite, and turns it into business reports.
 
+[![Live Dashboard](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://bike-store-relational-database.streamlit.app)
+**🚀 Live Dashboard → https://bike-store-relational-database.streamlit.app** — no localhost needed, sample data fallback for public viewers (or connect your own Postgres via Streamlit Secrets)
+
 </div>
 
 ---
@@ -32,11 +35,13 @@ flowchart LR
     classDef target fill:#4285f4,stroke:#1a73e8,color:#ffffff
     classDef qa fill:#9c27b0,stroke:#6a1b9a,color:#ffffff
     classDef output fill:#db4437,stroke:#a52714,color:#ffffff
+    classDef dash fill:#0F766E,stroke:#0b5c53,color:#ffffff
 
     A[("MongoDB<br/>source")]:::source --> B["Incremental ETL<br/>(PySpark)"]:::etl
     B --> C[("PostgreSQL")]:::target
     C --> D["Data Quality Tests<br/>(PL/pgSQL + GX)"]:::qa
     D --> E["Analytics & Reports"]:::output
+    C --> F["Streamlit + Plotly<br/>Dashboard"]:::dash
 ```
 
 Only new or changed rows move on each run. Postgres itself is compared against Mongo every time, so no checkpoint files or watermark tables are needed.
@@ -51,8 +56,9 @@ Only new or changed rows move on each run. Postgres itself is compared against M
 - **10-file PL/pgSQL data quality suite** — nulls, uniqueness, types, referential integrity, business rules
 - **21-script SQL analytics library** — exploration, reporting, cohort analysis, reusable functions
 - **One-command pipeline automation** — `make run` orchestrates ETL + tests with logging
-- **Production-grade Makefile** — `check-deps`, `doctor`, and per-stage run targets
-- **Dual-mode execution** — Local (fast dev with `uv`) and Docker (consistent environment)
+ - **Streamlit + Plotly dashboard** — production 5-tab ops view (KPIs, sales, customers, products, stores) with `st.cache_data` TTL 5 min, deployable on Streamlit Cloud (`streamlit_app.py`)
+ - **Production-grade Makefile** — `check-deps`, `doctor`, and per-stage run targets
+ - **Dual-mode execution** — Local (fast dev with `uv`) and Docker (consistent environment)
 
 ---
 
@@ -73,6 +79,12 @@ make doctor
 
 # Run the full pipeline (ETL + PL/pgSQL + Great Expectations in one process)
 make run
+
+# Launch the dashboard (Plotly, live from Postgres)
+make dashboard          # → http://localhost:8501
+# or: uv run streamlit run streamlit_app.py
+# Live public URL: https://bike-store-relational-database.streamlit.app
+#  → On Cloud without Postgres secrets it auto-uses dashboard/sample/*.csv demo
 ```
 
 Or use Docker for a fully managed stack:
@@ -151,6 +163,8 @@ The Makefile is the project's main entry point. All run targets use `uv run` so 
 | `make restore-postgres` | Restore Postgres from a backup |
 | `make backup-mongo` | Backup MongoDB |
 | `make restore-mongo` | Restore MongoDB |
+| `make dashboard` | Run Streamlit + Plotly dashboard locally |
+| `make dashboard-test` | Smoke-test dashboard imports (no DB) |
 | `make health-check` | Liveness probe for Postgres and MongoDB |
 | `make seed` | Seed MongoDB with sample data |
 | `make local-seed` | Seed MongoDB locally (no Docker) |
@@ -251,6 +265,7 @@ bike-store-relational-database/
 | [docs/testing.md](docs/testing.md) | Data quality strategy, suite overview |
 | [docs/docker.md](docs/docker.md) | Docker setup, image build, docker-compose services |
 | [docs/monitoring.md](docs/monitoring.md) | Prometheus, Pushgateway, Grafana observability stack |
+| [docs/dashboard.md](docs/dashboard.md) | **Streamlit + Plotly dashboard** — deploy on Streamlit Cloud |
 | [docs/project_structure.md](docs/project_structure.md) | Full file-tree breakdown with descriptions |
 | [docs/SQL.md](docs/SQL.md) | SQL analytics library overview (21 scripts) |
 | [docs/scripts.md](docs/scripts.md) | All scripts documented with run modes and diagrams |

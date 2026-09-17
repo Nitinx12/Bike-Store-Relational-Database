@@ -1,16 +1,16 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    Runs the complete Bike Store pipeline end-to-end: Mongo -> Postgres ETL, 
+    Runs the complete Bike Store pipeline end-to-end: Mongo -> Postgres ETL,
     PL/pgSQL Loop Data Quality tests, and the Great Expectations suite.
 
 .DESCRIPTION
-    Lives in pipeline\, one level below the project root. Resolves the project 
+    Lives in pipeline\, one level below the project root. Resolves the project
     root by walking upward looking for a folder containing both scripts\ and utils\.
-    
-    Uses `uv run` to execute each stage against the managed virtual environment, 
+
+    Uses `uv run` to execute each stage against the managed virtual environment,
     falling back to .venv\Scripts\python.exe if uv is not on PATH.
-    
+
     Writes a full run log to logs\pipeline\pipeline_<timestamp>.log.
 
 .PARAMETER FullRefresh

@@ -1,0 +1,130 @@
+name: "Bug Fix — triage, validate & guard"
+
+# Production-grade bug workflow:
+#  - Auto-labels/triages issues with `bug`
+#  - Hard-fails PRs that claim `fix:` but don't touch tests or link an issue
+#  - Runs the full quality gate on every `fix/*` or `bugfix/*` branch push
+#  - Posts a checklist comment so reviewers can verify the fix
+
+on:
+  issues:
+    types: [labeled, opened]
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled]
+    branches: [main]
+  push:
+    branches: ["fix/**", "bugfix/**", "hotfix/**"]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: bug-fix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  triage-issue:
+    name: Triage bug issue
+    if: github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'bug')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add triage checklist comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            **Bug triage — @Nitinx12**
+            - [ ] Repro confirmed (`uv run python main.py` log attached)
+            - [ ] Severity set (`sev:*`)
+            - [ ] Fix branch created: `fix/<issue-number>-short-slug`
+            - [ ] `fix:` commit will close this issue (`Closes #${{ github.event.issue.number }}`)
+            > Workflow: `.github/workflows/bug-fix.yml` will gate any `fix:` PR on `ruff`/`mypy`/`pytest`/`sqlfluff` + linked issue.
+
+      - name: Auto-label sev if missing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.issue.labels.map(l => l.name);
+            const hasSev = labels.some(l => l.startsWith('sev:'));
+            if (!hasSev) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number, labels: ['sev: medium']
+              });
+            }
+
+  guard-fix-pr:
+    name: Guard fix PR (link + tests)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Check PR title follows Conventional Commits
+        run: |
+          title="${{ github.event.pull_request.title }}"
+          if ! echo "$title" | grep -Eq '^(fix|feat|chore|refactor|docs|test)(\(.+\))?: .+'; then
+            echo "::error::PR title must be Conventional Commits (e.g. 'fix: resolve SparkUI bind on Windows')"
+            exit 1
+          fi
+
+      - name: "Guard: fix PR must link issue and touch code"
+        run: |
+          title="${{ github.event.pull_request.title }}"
+          body="${{ github.event.pull_request.body }}"
+          # Only enforce on fix:
+          if echo "$title" | grep -Eq '^fix(\(.+\))?:'; then
+            if ! echo "$body" | grep -Eqi 'Closes #[0-9]+|Fixes #[0-9]+|Resolves #[0-9]+'; then
+              echo "::error::fix: PR must contain 'Closes #<issue>' in the description"
+              exit 1
+            fi
+            # Check diff touches tests or relevant source — not just docs
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+            files=$(git diff --name-only "$base"... "$head" || true)
+            echo "Changed files:"; echo "$files"
+            if ! echo "$files" | grep -Eq '^(tests/|sql/|src/|scripts/|utils/)'; then
+              echo "::error::fix: PR must change at least one of tests/, sql/, src/, scripts/, utils/"
+              exit 1
+            fi
+          fi
+
+  full-gate-on-fix-branch:
+    name: Full gate (ruff/mypy/pytest/sqlfluff)
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - name: Sync deps (frozen)
+        run: uv sync --frozen
+      - name: Ruff
+        run: uv run ruff check .
+      - name: Mypy
+        run: uv run mypy .
+      - name: Pytest
+        run: uv run pytest -q
+      - name: SQLFluff
+        run: uv run sqlfluff lint sql/ --dialect postgres
+      - name: Verify imports (no Docker)
+        run: uv run python -c "from src.pipeline.runner import run_pipeline; from tests.data_quality import run; print('imports ok')"
+
+  comment-on-fix-pr:
+    name: Comment checklist on fix PR
+    if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'bug')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            **Bug-fix checklist** (enforced by `bug-fix.yml`)
+            - [ ] `fix:` commit + `Closes #<bug issue>`
+            - [ ] Regression test added or `tests/generic/loops/*.sql` updated
+            - [ ] `make doctor` / `uv run python main.py` passes locally
+            - [ ] No secrets in diff, `.env` untouched

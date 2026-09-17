@@ -1,0 +1,31 @@
+name: "Stale — close abandoned issues/PRs"
+
+on:
+  schedule:
+    - cron: "30 9 * * 1" # Mondays 09:30 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          days-before-stale: 30
+          days-before-close: 14
+          stale-issue-message: |
+            This issue has been inactive 30d — labeled `stale`. It will be closed in 14d without activity. Reopen by commenting or removing `stale`.
+          stale-pr-message: |
+            This PR has been inactive 30d — labeled `stale`. Update it or it will be closed in 14d.
+          stale-issue-label: "stale"
+          stale-pr-label: "stale"
+          exempt-issue-labels: "sev: critical,sev: high,pinned"
+          exempt-pr-labels: "pinned"
+          days-before-pr-stale: 21
+          operations-per-run: 100

@@ -1,0 +1,101 @@
+product_name,brand_name,category_name,list_price,units_sold,total_revenue,orders,inventory
+Trek Slash 8 27.5 - 2016,Trek,Mountain Bikes,3999.99,462.0,1666675.38,99,2828.0
+Trek Conduit+ - 2016,Trek,Electric Bikes,2999.99,435.0,1167745.65,98,5151.0
+Trek Fuel EX 8 29 - 2016,Trek,Mountain Bikes,2899.99,429.0,1105417.71,94,3492.0
+Surly Straggler 650b - 2016,Surly,Cyclocross Bicycles,1680.99,453.0,680296.17,95,5723.0
+Trek Domane SLR 6 Disc - 2017,Trek,Road Bikes,5499.99,129.0,634753.71,24,1512.0
+Surly Straggler - 2016,Surly,Cyclocross Bicycles,1549.0,441.0,610522.86,93,4753.0
+Trek Remedy 29 Carbon Frameset - 2016,Trek,Mountain Bikes,1799.99,375.0,610142.25,83,1105.0
+Trek Powerfly 8 FS Plus - 2017,Trek,Electric Bikes,4999.99,123.0,564748.77,22,1950.0
+Trek Madone 9.2 - 2017,Trek,Road Bikes,4999.99,117.0,527698.83,25,1118.0
+Trek Silque SLR 8 Women's - 2017,Trek,Road Bikes,6499.99,87.0,523574.13,18,228.0
+Trek Silque SLR 7 Women's - 2017,Trek,Road Bikes,5999.99,90.0,489239.1,18,1220.0
+Trek Fuel EX 9.8 27.5 Plus - 2017,Trek,Mountain Bikes,5299.99,99.0,477158.01,22,750.0
+Heller Shagamaw Frame - 2016,Heller,Mountain Bikes,1320.99,387.0,453482.22,88,2366.0
+Trek Fuel EX 9.8 29 - 2017,Trek,Mountain Bikes,4999.99,99.0,442349.01,17,861.0
+Trek Boone 7 - 2017,Trek,Cyclocross Bicycles,3499.99,126.0,382828.74,23,725.0
+Trek Domane SL 6 - 2017,Trek,Road Bikes,3499.99,111.0,340933.89,17,352.0
+Surly Wednesday Frameset - 2016,Surly,Mountain Bikes,999.99,378.0,336866.22,82,2924.0
+Trek Remedy 9.8 - 2017,Trek,Mountain Bikes,5299.99,66.0,316409.34,14,490.0
+Trek Domane S 6 - 2017,Trek,Road Bikes,2699.99,117.0,280582.83,25,546.0
+Trek Boone Race Shop Limited - 2017,Trek,Cyclocross Bicycles,3499.99,87.0,273734.13,20,357.0
+Surly Karate Monkey 27.5+ Frameset - 2017,Surly,Mountain Bikes,2499.99,117.0,262423.83,24,1690.0
+Electra Townie Original 7D EQ - 2016,Electra,Cruisers Bicycles,599.99,468.0,248233.32,92,4085.0
+Ritchey Timberwolf Frameset - 2016,Ritchey,Mountain Bikes,749.99,354.0,236696.46,76,3465.0
+Electra Townie Original 21D - 2016,Electra,Cruisers Bicycles,549.99,459.0,227315.91,101,4992.0
+Electra Townie Original 7D EQ - 2016,Electra,Comfort Bicycles,599.99,402.0,217273.98,89,4050.0
+Surly Ice Cream Truck Frameset - 2016,Surly,Mountain Bikes,469.99,501.0,211114.29,107,4180.0
+Trek Domane SL Disc Frameset - 2017,Trek,Road Bikes,3199.99,72.0,205535.28,15,510.0
+Trek Fuel EX 5 27.5 Plus - 2017,Trek,Mountain Bikes,2299.99,102.0,203548.98,23,600.0
+Electra Townie Original 21D - 2016,Electra,Comfort Bicycles,549.99,408.0,202863.42,83,3916.0
+Electra Townie Original 7D - 2015/2016,Electra,Comfort Bicycles,499.99,444.0,199705.56,97,4214.0
+Electra Townie Original 7D EQ - Women's - 2016,Electra,Cruisers Bicycles,599.99,375.0,199526.25,77,5460.0
+Electra Moto 1 - 2016,Electra,Cruisers Bicycles,529.99,411.0,195184.29,84,2821.0
+Trek Domane S 5 Disc - 2017,Trek,Road Bikes,2599.99,78.0,178541.22,15,702.0
+Trek Emonda S 4 - 2017,Trek,Road Bikes,1499.99,126.0,172078.74,27,756.0
+Trek Domane SLR 9 Disc - 2018,Trek,Road Bikes,11999.99,15.0,163079.85,1,162.0
+Pure Cycles Western 3-Speed - Women's - 2015/2016,Pure Cycles,Cruisers Bicycles,449.0,402.0,162811.89,85,3026.0
+Pure Cycles Vine 8-Speed - 2016,Pure Cycles,Cruisers Bicycles,429.0,399.0,154594.44,86,2457.0
+Sun Bicycles ElectroLite - 2017,Sun Bicycles,Electric Bikes,1559.99,102.0,141147.78,20,648.0
+Haro Shift R3 - 2017,Haro,Mountain Bikes,1469.99,105.0,140942.55,20,984.0
+Pure Cycles William 3-Speed - 2016,Pure Cycles,Cruisers Bicycles,449.0,327.0,131022.69,76,3354.0
+Trek Emonda S 5 - 2017,Trek,Road Bikes,1999.99,69.0,123239.31,13,555.0
+Electra Girl's Hawaii 1 (20-inch) - 2015/2016,Electra,Children Bicycles,299.99,462.0,123034.38,98,2900.0
+Electra Amsterdam Fashion 7i Ladies' - 2017,Electra,Cruisers Bicycles,1099.99,120.0,119590.8,24,1488.0
+Haro SR 1.2 - 2017,Haro,Mountain Bikes,869.99,156.0,119588.64,30,928.0
+Electra Cruiser 1 (24-Inch) - 2016,Electra,Cruisers Bicycles,269.99,471.0,113978.49,102,3399.0
+Trek Super Commuter+ 8S - 2018,Trek,Electric Bikes,4999.99,24.0,111899.76,3,100.0
+Trek Powerfly 7 FS - 2018,Trek,Electric Bikes,4999.99,24.0,109499.76,4,85.0
+Electra Girl's Hawaii 1 (16-inch) - 2015/2016,Electra,Children Bicycles,269.99,435.0,104185.95,92,4606.0
+Surly Troll Frameset - 2017,Surly,Mountain Bikes,832.99,138.0,103432.23,23,2001.0
+Haro SR 1.3 - 2017,Haro,Mountain Bikes,1409.99,81.0,102365.19,17,1007.0
+Electra Cruiser 1 (24-Inch) - 2016,Electra,Children Bicycles,269.99,417.0,102234.03,88,4320.0
+Trek Stache 5 - 2017,Trek,Mountain Bikes,1499.99,75.0,101159.25,15,832.0
+Trek Domane SL 7 Women's - 2018,Trek,Road Bikes,4999.99,21.0,94199.79,3,265.0
+Trek X-Caliber 8 - 2017,Trek,Mountain Bikes,999.99,105.0,92818.95,22,1272.0
+Electra Townie Commute Go! Ladies' - 2018,Electra,Cruisers Bicycles,2999.99,33.0,89549.67,3,525.0
+Electra Girl's Hawaii 1 (16-inch) - 2015/2016,Electra,Cruisers Bicycles,269.99,372.0,89355.48,84,2580.0
+Trek Fuel EX 8 29 XT - 2018,Trek,Mountain Bikes,3199.99,30.0,88511.7,3,375.0
+Trek Boone 7 Disc - 2018,Trek,Cyclocross Bicycles,3999.99,24.0,84719.76,2,320.0
+Surly Steamroller - 2017,Surly,Road Bikes,875.99,105.0,83070.03,24,1274.0
+Surly Big Dummy Frameset - 2017,Surly,Mountain Bikes,999.99,93.0,83039.07,20,1092.0
+Electra Glam Punk 3i Ladies' - 2017,Electra,Cruisers Bicycles,799.99,114.0,82942.86,21,1344.0
+Trek Domane SLR 8 Disc - 2018,Trek,Road Bikes,7499.99,12.0,82124.88,2,72.0
+Surly Ice Cream Truck Frameset - 2017,Surly,Mountain Bikes,999.99,90.0,81809.1,21,1540.0
+Surly Wednesday - 2017,Surly,Mountain Bikes,1632.99,54.0,79314.27,13,286.0
+Trek Super Commuter+ 7 - 2018,Trek,Electric Bikes,3599.99,24.0,77543.76,2,320.0
+Trek Emonda SLR 8 - 2018,Trek,Road Bikes,6499.99,12.0,72539.88,1,58.0
+Trek XM700+ - 2018,Trek,Electric Bikes,3499.99,24.0,72449.76,3,295.0
+Trek Domane SL 6 - 2018,Trek,Road Bikes,3199.99,24.0,71039.76,2,168.0
+Sun Bicycles Biscayne Tandem CB - 2017,Sun Bicycles,Cruisers Bicycles,647.99,117.0,68699.79,23,972.0
+Trek XM700+ Lowstep - 2018,Trek,Electric Bikes,3499.99,21.0,62894.79,2,344.0
+Trek Emonda SLR 6 - 2018,Trek,Road Bikes,4499.99,15.0,62369.85,3,124.0
+Trek Domane ALR Disc Frameset - 2018,Trek,Road Bikes,3199.99,21.0,59999.79,1,164.0
+Sun Bicycles Brickell Tandem 7 - 2017,Sun Bicycles,Cruisers Bicycles,749.99,87.0,58634.13,20,600.0
+Sun Bicycles Spider 3i - 2017,Sun Bicycles,Mountain Bikes,832.99,78.0,58475.82,15,782.0
+Sun Bicycles Streamway 3 - 2017,Sun Bicycles,Comfort Bicycles,551.99,117.0,58091.31,26,672.0
+Electra Amsterdam Original 3i - 2015/2017,Electra,Cruisers Bicycles,659.99,96.0,56963.64,21,242.0
+Sun Bicycles Lil Bolt Type-R - 2017,Sun Bicycles,Cruisers Bicycles,346.99,180.0,56045.64,32,945.0
+Sun Bicycles Biscayne Tandem 7 - 2017,Sun Bicycles,Cruisers Bicycles,619.99,99.0,54869.01,21,352.0
+Trek Conduit+ - 2018,Trek,Electric Bikes,2799.99,21.0,53423.79,1,88.0
+Electra Amsterdam Original 3i Ladies' - 2017,Electra,Cruisers Bicycles,659.99,93.0,53379.87,21,276.0
+Sun Bicycles Streamway 7 - 2017,Sun Bicycles,Comfort Bicycles,533.99,111.0,52912.95,22,275.0
+Trek Domane SL Frameset - 2018,Trek,Road Bikes,6499.99,9.0,52649.91,0,105.0
+Electra Townie Original 7D - 2017,Electra,Comfort Bicycles,489.99,117.0,52507.23,24,1075.0
+Trek Domane SL 6 Disc - 2018,Trek,Road Bikes,3499.99,18.0,51974.82,2,100.0
+Electra Townie 3i EQ (20-inch) - Boys' - 2017,Electra,Children Bicycles,489.99,117.0,51375.33,26,1540.0
+Sun Bicycles Cruz 3 - 2017,Sun Bicycles,Comfort Bicycles,449.99,126.0,51109.74,24,1026.0
+Electra Townie Commute Go! - 2018,Electra,Cruisers Bicycles,2999.99,18.0,49949.82,3,60.0
+Trek Powerfly 5 Women's - 2018,Trek,Electric Bikes,3499.99,15.0,48614.85,0,51.0
+Electra Townie Commute Go! - 2018,Electra,Electric Bikes,2999.99,18.0,47249.82,1,140.0
+Sun Bicycles Atlas X-Type - 2017,Sun Bicycles,Cruisers Bicycles,416.99,123.0,46861.23,22,1768.0
+Trek CrossRip+ - 2018,Trek,Electric Bikes,4499.99,12.0,46574.88,2,188.0
+Trek Dual Sport+ - 2018,Trek,Electric Bikes,2799.99,18.0,46367.82,2,177.0
+Trek Emonda ALR 6 - 2018,Trek,Road Bikes,2299.99,21.0,45332.79,2,270.0
+Surly Ogre Frameset - 2017,Surly,Road Bikes,749.99,66.0,44729.34,16,714.0
+Electra Cruiser Lux Fat Tire 1 Ladies - 2017,Electra,Cruisers Bicycles,599.99,81.0,44243.19,15,1134.0
+Trek Domane SL 8 Disc - 2018,Trek,Road Bikes,5499.99,9.0,44219.91,2,117.0
+Trek Fuel EX 8 29 - 2018,Trek,Mountain Bikes,3199.99,15.0,43295.85,2,216.0
+Surly Wednesday Frameset - 2017,Surly,Mountain Bikes,469.99,105.0,43102.65,21,704.0
+Electra Townie Go! 8i Ladies' - 2018,Electra,Cruisers Bicycles,2599.99,18.0,42431.82,4,360.0
+Trek Remedy 7 27.5 - 2018,Trek,Mountain Bikes,2999.99,15.0,42209.85,3,248.0

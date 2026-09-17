@@ -2,7 +2,7 @@ name: "Docker Build & Smoke Test"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
     paths:
       - "docker/Dockerfile"
       - "docker-compose.yml"
@@ -13,7 +13,7 @@ on:
       - "pyproject.toml"
       - "uv.lock"
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
     paths:
       - "docker/Dockerfile"
       - "docker-compose.yml"
@@ -27,29 +27,37 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-smoke-test:
     name: Build image and verify imports
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
       - name: Build app image
-        run: docker build -f docker/Dockerfile -t bike-store-app:ci .
-
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          load: true
+          tags: bike-store-app:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
       - name: Verify entrypoint responds
         run: docker run --rm bike-store-app:ci --help
-
       - name: Verify all expected modules import cleanly
         run: |
           docker run --rm --entrypoint bash bike-store-app:ci -c "
             uv run python -c '
           import src.pipeline.runner
-          import src.database
-          import src.validation
-          import src.pipeline.runner
-          import utils
+          import src.validation.plpgsql_loops
+          import utils.engine
           print(\"All imports OK\")
           '
           "

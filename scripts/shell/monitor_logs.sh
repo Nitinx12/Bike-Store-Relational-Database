@@ -172,10 +172,10 @@ check_git_status() {
 
     # 2. Check sync status with upstream remote (silent fetch first)
     git -C "$ROOT_DIR" fetch --quiet 2>/dev/null || true
-    
+
     local upstream
     upstream="$(git -C "$ROOT_DIR" rev-parse --abbrev-ref @{u} 2>/dev/null || echo '')"
-    
+
     if [[ -n "$upstream" ]]; then
         local behind
         behind="$(git -C "$ROOT_DIR" rev-list --count HEAD.."$upstream" 2>/dev/null || echo 0)"
@@ -209,7 +209,7 @@ check_directories() {
 latest_log() {
     local directory="$1"
     [[ ! -d "$directory" ]] && return 1
-    
+
     # Leverages GNU find for accurate timestamp sorting
     find "$directory" -type f -name "*.log" -printf '%T@ %p\n' 2>/dev/null \
         | sort -nr | head -1 | cut -d' ' -f2-
@@ -242,11 +242,11 @@ check_log_age() {
 
 check_pipeline_logs() {
     print_section "Pipeline & Extraction Logs"
-    
+
     for category in "Pipeline:$PIPELINE_LOG_DIR" "Extraction:$EXTRACTION_LOG_DIR" "Data-Quality:$TEST_LOG_DIR"; do
         local name="${category%%:*}"
         local dir="${category##*:}"
-        
+
         local latest="$(latest_log "$dir")"
         if [[ -z "$latest" ]]; then
             warn "$name: No logs found."
@@ -262,7 +262,7 @@ check_pipeline_logs() {
         else
             pass "$name logs have no recent errors"
         fi
-        
+
         check_log_age "$name" "$dir"
     done
 }
@@ -271,7 +271,7 @@ check_validation_report() {
     [[ ! -d "$REPORT_DIR" ]] && return
 
     local latest_report="$(find "$REPORT_DIR" -type f -name "validation_report_*.json" -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)"
-    
+
     if [[ -z "$latest_report" ]]; then
         warn "No GX validation reports found"
         return
@@ -434,13 +434,13 @@ main() {
             ;;
         --check|--full)
             print_header "BIKE STORE ETL MONITORING"
-            
+
             # Abort early if dependencies fail
-            check_dependencies || { 
-                echo -e "${RED}Critical dependencies missing. Aborting.${RESET}"; 
-                exit 1; 
+            check_dependencies || {
+                echo -e "${RED}Critical dependencies missing. Aborting.${RESET}";
+                exit 1;
             }
-            
+
             check_git_status
             check_directories
             check_pipeline_logs
@@ -448,11 +448,11 @@ main() {
             check_recent_errors
             check_disk_usage
             check_infrastructure
-            
+
             if [[ "$mode" == "--full" ]]; then
                 cleanup_old_logs
             fi
-            
+
             print_summary
             exit $?
             ;;

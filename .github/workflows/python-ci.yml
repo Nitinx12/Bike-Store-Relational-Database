@@ -1,33 +1,47 @@
-name: "Python CI (ruff, mypy)"
+name: "Python CI (ruff, mypy, pytest)"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main, "feat/**", "fix/**", "bugfix/**"]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 permissions:
   contents: read
 
+concurrency:
+  group: python-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-and-typecheck:
-    name: Ruff + mypy
+    name: Ruff + Mypy + Pytest
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Sync dependencies
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - name: Sync dependencies (frozen)
         run: uv sync --frozen
-
-      - name: Run ruff check
+      - name: Ruff check
         run: uv run ruff check .
-
-      - name: Run mypy
+      - name: Ruff format --check
+        run: uv run ruff format --check .
+      - name: Mypy
         run: uv run mypy .
+      - name: Pytest (unit)
+        run: uv run pytest -q
+      - name: Import smoke test
+        run: uv run python -c "from src.pipeline.runner import run_pipeline; from src.validation.plpgsql_loops import run_all; print('imports ok')"
 
-      - name: Run pytest
-        run: uv run pytest
+  lockfile:
+    name: uv.lock in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with: { enable-cache: true }
+      - name: Check lockfile
+        run: uv lock --check
