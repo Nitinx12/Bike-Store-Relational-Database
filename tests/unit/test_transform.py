@@ -28,9 +28,15 @@ def test_detect_pk_col_composite():
 
 def test_detect_pk_col_singular_match():
     assert detect_pk_col(["brand_id", "brand_name"], "brands", logger) == "brand_id"
-    assert detect_pk_col(["category_id", "category_name"], "categories", logger) == "category_id"
+    assert (
+        detect_pk_col(["category_id", "category_name"], "categories", logger)
+        == "category_id"
+    )
     assert detect_pk_col(["customer_id", "email"], "customers", logger) == "customer_id"
-    assert detect_pk_col(["customer_id", "store_id", "order_id"], "orders", logger) == "order_id"
+    assert (
+        detect_pk_col(["customer_id", "store_id", "order_id"], "orders", logger)
+        == "order_id"
+    )
 
 
 def test_detect_pk_col_fallback():

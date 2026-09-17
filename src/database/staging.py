@@ -70,9 +70,10 @@ def merge_staging_to_target(
     except Exception:  # noqa: BLE001 - rowcount may raise per DBAPI
         count = None
     if count is None or count < 0:
-        count = conn.execute(
-            text(f'SELECT COUNT(*) FROM "{schema}"."{staging}"')
-        ).scalar() or 0
+        count = (
+            conn.execute(text(f'SELECT COUNT(*) FROM "{schema}"."{staging}"')).scalar()
+            or 0
+        )
     log.info("MERGE       : %d rows → %s.%s", count, schema, table)
     return int(count)
 

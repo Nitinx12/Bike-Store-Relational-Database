@@ -86,10 +86,7 @@ def ensure_target_table(
         if col not in existing:
             pg_type = _pg_type_for(table, col)
             conn.execute(
-                text(
-                    f'ALTER TABLE "{schema}"."{table}" '
-                    f'ADD COLUMN "{col}" {pg_type}'
-                )
+                text(f'ALTER TABLE "{schema}"."{table}" ADD COLUMN "{col}" {pg_type}')
             )
             log.info(
                 "Schema evolution → added column '%s' (%s) to %s.%s",

@@ -138,8 +138,8 @@ BEGIN
             END)                                                                 AS repeat_customers
         FROM orders AS O
         INNER JOIN (
-            SELECT 
-                customer_id, 
+            SELECT
+                customer_id,
                 COUNT(order_id) AS order_count
             FROM orders
             WHERE order_date BETWEEN p_start_date AND p_end_date
@@ -181,17 +181,17 @@ BEGIN
         COALESCE(CM.repeat_customers,     0)              AS repeat_customers,
         COALESCE(SK.total_stock_quantity, 0::NUMERIC)     AS total_stock_quantity
     FROM stores AS ST
-    LEFT JOIN order_summary    AS OS 
+    LEFT JOIN order_summary    AS OS
     ON OS.store_id = ST.store_id
-    LEFT JOIN revenue_metrics  AS RM 
+    LEFT JOIN revenue_metrics  AS RM
     ON RM.store_id = ST.store_id
-    LEFT JOIN fulfillment      AS F  
+    LEFT JOIN fulfillment      AS F
     ON F.store_id  = ST.store_id
-    LEFT JOIN staff_metrics    AS SM 
+    LEFT JOIN staff_metrics    AS SM
     ON SM.store_id = ST.store_id
-    LEFT JOIN customer_metrics AS CM 
+    LEFT JOIN customer_metrics AS CM
     ON CM.store_id = ST.store_id
-    LEFT JOIN stock_metrics    AS SK 
+    LEFT JOIN stock_metrics    AS SK
     ON SK.store_id = ST.store_id
     ORDER BY total_revenue DESC;
 

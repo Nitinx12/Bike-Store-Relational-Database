@@ -84,7 +84,7 @@ BEGIN
     current_stock AS (
         SELECT
             S.product_id,
-            SUM(S.quantity)::NUMERIC AS total_stock  
+            SUM(S.quantity)::NUMERIC AS total_stock
         FROM stocks AS S
         GROUP BY S.product_id
     ),
@@ -93,9 +93,9 @@ BEGIN
             OI.product_id,
             SUM(OI.quantity)::NUMERIC AS units_sold
         FROM order_items AS OI
-        INNER JOIN orders AS O ON 
+        INNER JOIN orders AS O ON
         O.order_id = OI.order_id
-        WHERE 
+        WHERE
             O.order_status = 'Completed'
             AND O.order_date BETWEEN p_start_date AND p_end_date
         GROUP BY OI.product_id
@@ -105,9 +105,9 @@ BEGIN
             OI.product_id,
             SUM(OI.total_value)::NUMERIC AS revenue
         FROM order_items AS OI
-        INNER JOIN orders AS O ON 
+        INNER JOIN orders AS O ON
         O.order_id = OI.order_id
-        WHERE 
+        WHERE
             O.order_status = 'Completed'
             AND O.order_date BETWEEN p_start_date AND p_end_date
         GROUP BY OI.product_id
@@ -117,9 +117,9 @@ BEGIN
             OI.product_id,
             SUM(OI.total_value)::NUMERIC AS lost
         FROM order_items AS OI
-        INNER JOIN orders AS O ON 
+        INNER JOIN orders AS O ON
         O.order_id = OI.order_id
-        WHERE 
+        WHERE
             O.order_status = 'Cancelled'
             AND O.order_date   BETWEEN p_start_date AND p_end_date
         GROUP BY OI.product_id
@@ -136,13 +136,13 @@ BEGIN
         COALESCE(AR.revenue,      0::NUMERIC)                        AS actual_revenue,
         COALESCE(LR.lost,         0::NUMERIC)                        AS lost_revenue
     FROM products            AS P
-    LEFT JOIN current_stock  AS CS ON 
+    LEFT JOIN current_stock  AS CS ON
     CS.product_id = P.product_id
-    LEFT JOIN stock_out      AS SO ON 
+    LEFT JOIN stock_out      AS SO ON
     SO.product_id = P.product_id
-    LEFT JOIN actual_revenue AS AR ON 
+    LEFT JOIN actual_revenue AS AR ON
     AR.product_id = P.product_id
-    LEFT JOIN lost_revenue   AS LR ON 
+    LEFT JOIN lost_revenue   AS LR ON
     LR.product_id = P.product_id;
 END;
 $$;

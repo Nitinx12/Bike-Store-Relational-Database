@@ -294,7 +294,12 @@ def run_pipeline(
             log.error("Collection auto-discovery failed: %s", exc)
             return {
                 "summaries": [],
-                "totals": {"rows_mongo": 0, "rows_new": 0, "rows_loaded": 0, "failed": 0},
+                "totals": {
+                    "rows_mongo": 0,
+                    "rows_new": 0,
+                    "rows_loaded": 0,
+                    "failed": 0,
+                },
                 "skipped_count": 0,
                 "collections": [],
                 "mode": mode,

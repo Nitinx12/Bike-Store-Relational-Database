@@ -114,7 +114,9 @@ def detect_pk_col(
 
     singular_exact = f"{singular}_id"
     if singular_exact in columns:
-        log.info("PK DETECT : '%s'  (singular match for collection name)", singular_exact)
+        log.info(
+            "PK DETECT : '%s'  (singular match for collection name)", singular_exact
+        )
         return singular_exact
 
     exact = f"{slug}_id"

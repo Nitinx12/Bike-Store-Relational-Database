@@ -1,6 +1,6 @@
 # AI Agent Instructions for Bike-Store-Relational-Database
 
-This document provides strict instructions, coding standards, and architectural context for any AI/LLM assisting with this project. 
+This document provides strict instructions, coding standards, and architectural context for any AI/LLM assisting with this project.
 
 ## 1. Project Overview & Structure
 This is an ETL (Extract, Transform, Load) data pipeline project that extracts data (likely from MongoDB, based on `scripts/python/mongo_to_postgres.py`), transforms it using PySpark, validates it via Great Expectations (`gx/`), and loads it into a PostgreSQL relational database. It includes observability via Docker/Grafana and extensive SQL-based analytics.
@@ -50,10 +50,10 @@ This is an ETL (Extract, Transform, Load) data pipeline project that extracts da
 *   **Environment**: Load the `.env` file automatically at the top of the Makefile if environment variables are required.
 
 ## 4. Package Management & Dependencies (`uv`)
-This project strictly uses [uv](https://github.com/astral-sh/uv) by Astral for Python dependency management. 
+This project strictly uses [uv](https://github.com/astral-sh/uv) by Astral for Python dependency management.
 *   **No pip/conda**: Do not suggest `pip install` or `conda install`.
 *   **Running Scripts**: Always prefix Python executions with `uv run` (e.g., `uv run main.py` or `uv run scripts/python/run_gx.py`).
-*   **Adding Dependencies**: 
+*   **Adding Dependencies**:
     *   Standard: `uv add <package>`
     *   **Dev Dependencies**: `uv add --dev <package>` (Use this for linters, formatters, or testing frameworks like `pytest`).
 *   **Syncing**: Suggest `uv sync` to install dependencies from `uv.lock` and `pyproject.toml`.

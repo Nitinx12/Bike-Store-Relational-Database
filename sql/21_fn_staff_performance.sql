@@ -83,7 +83,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 AS $$
-#variable_conflict use_column  
+#variable_conflict use_column
 BEGIN
     RETURN QUERY
     WITH order_summary AS (
@@ -158,9 +158,9 @@ BEGIN
         COALESCE(RM.total_discount_given, 0::NUMERIC) AS total_discount_given,
         COALESCE(F.on_time_rate,          0::NUMERIC) AS on_time_rate
     FROM order_summary AS OS
-    LEFT JOIN revenue_metrics AS RM ON 
+    LEFT JOIN revenue_metrics AS RM ON
     RM.staff_id = OS.staff_id
-    LEFT JOIN fulfillment     AS F  ON 
+    LEFT JOIN fulfillment     AS F  ON
     F.staff_id  = OS.staff_id
     ORDER BY total_revenue DESC;
 END;

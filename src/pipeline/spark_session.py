@@ -30,6 +30,11 @@ def get_spark(app_name: str = "MongoToPublicETL") -> SparkSession:
     extra_modules = os.getenv("SPARK_EXTRA_JAVA_MODULES", "jdk.incubator.vector")
     time_policy = os.getenv("SPARK_TIME_PARSER_POLICY", "LEGACY")
 
+    # SparkUI on Windows often fails to bind 4040-4056 (firewall / stale
+    # Java procs). Default to disabled; set SPARK_UI_ENABLED=1 to re-enable.
+    ui_enabled = os.getenv("SPARK_UI_ENABLED", "false").lower() in ("1", "true", "yes")
+    ui_port = os.getenv("SPARK_UI_PORT", "0" if not ui_enabled else "4040")
+
     builder = (
         SparkSession.builder.appName(app_name)
         .master(master)
@@ -38,12 +43,19 @@ def get_spark(app_name: str = "MongoToPublicETL") -> SparkSession:
         .config("spark.driver.memory", driver_mem)
         .config("spark.sql.legacy.timeParserPolicy", time_policy)
         .config("spark.logConf", "false")
+        # Windows stability: bind driver to loopback, avoid 0.0.0.0 UI bind
+        .config("spark.driver.host", os.getenv("SPARK_DRIVER_HOST", "127.0.0.1"))
+        .config("spark.driver.bindAddress", os.getenv("SPARK_DRIVER_BIND", "127.0.0.1"))
+        .config("spark.ui.enabled", str(ui_enabled).lower())
+        .config("spark.ui.port", ui_port)
+        .config("spark.port.maxRetries", os.getenv("SPARK_PORT_MAX_RETRIES", "32"))
+        .config("spark.ui.showConsoleProgress", "false")
     )
     if extra_modules:
         java_opt = f"--add-modules {extra_modules}"
-        builder = builder.config(
-            "spark.driver.extraJavaOptions", java_opt
-        ).config("spark.executor.extraJavaOptions", java_opt)
+        builder = builder.config("spark.driver.extraJavaOptions", java_opt).config(
+            "spark.executor.extraJavaOptions", java_opt
+        )
     spark = builder.getOrCreate()
     spark.sparkContext.setLogLevel(os.getenv("SPARK_LOG_LEVEL", "WARN"))
     return spark
