@@ -1,0 +1,59 @@
+# CI: static gates + unit tests + config checks + image builds.
+# Runs on every push and every pull request. Needs no live database:
+# the smoke suite (live Postgres + MongoDB) stays a local task
+# (`tasks.bat test-smoke` / `make test-smoke`).
+name: ci
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy .
+      - run: uv run sqlfluff lint sql/ --dialect postgres
+      - run: uv lock --check
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - run: uv sync --frozen
+      - run: uv run pytest tests/unit -q
+
+  config-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+      - run: uv sync --frozen
+      - run: uv run python scripts/run_gx.py --config-check
+      - run: uv run python -c "import main; print('entrypoint imports ok')"
+      - run: docker compose config > /dev/null
+        env:
+          DB_PASSWORD: ci-only-placeholder
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f dashboard/Dockerfile -t bike-store-dashboard:ci .
+      - run: docker build -f Dockerfile.pipeline -t bike-store-pipeline:ci .

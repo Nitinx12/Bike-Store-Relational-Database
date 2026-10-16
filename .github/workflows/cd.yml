@@ -1,0 +1,49 @@
+# CD: on every merge to main, build and push both images to GHCR.
+# Streamlit Cloud redeploys the dashboard itself on each main push;
+# Neon data loads remain a manual `main.py --full` run (see dashboard/README.md).
+name: cd
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta-dash
+        with:
+          images: ghcr.io/${{ github.repository }}-dashboard
+          tags: type=raw,value=latest
+      - uses: docker/metadata-action@v5
+        id: meta-pipe
+        with:
+          images: ghcr.io/${{ github.repository }}-pipeline
+          tags: type=raw,value=latest
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: dashboard/Dockerfile
+          push: true
+          tags: ${{ steps.meta-dash.outputs.tags }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.pipeline
+          push: true
+          tags: ${{ steps.meta-pipe.outputs.tags }}
