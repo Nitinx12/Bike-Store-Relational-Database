@@ -1,0 +1,61 @@
+# Contract automatically generated from MongoDB collection
+# Generated at: 2026-10-15 21:23:58
+# Collection: stocks
+
+metrics:
+  row_count: 939
+  column_count: 5
+
+description: Schema for stocks collection
+sample_size: 5
+
+columns:
+  _id:
+    type: ObjectId
+    example: 6a2b9d77f54587f8cfcd216f
+    nullable: False
+    null_count: 0
+    unique_values_sample: [ObjectId('6a2b9d77f54587f8cfcd22fb'), ObjectId('6a2b9d77f54587f8cfcd22fc'), ObjectId('6a2b9d77f54587f8cfcd2192'), ObjectId('6a2b9d77f54587f8cfcd2370'), ObjectId('6a2b9d77f54587f8cfcd240f')]
+
+  store_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3]
+
+  product_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  quantity:
+    type: int
+    example: 27
+    nullable: False
+    null_count: 0
+    unique_values_sample: [0, 1, 2, 3, 4]
+
+  updated_at:
+    type: datetime
+    example: 2026-06-12 11:08:21.873000
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2026, 6, 12, 11, 8, 21, 873000)]
+
+sample_documents:
+  - id: 0
+    _id: 6a2b9d77f54587f8cfcd216f
+    store_id: 1
+    product_id: 1
+    quantity: 27
+    updated_at: 2026-06-12 11:08:21.873000
+
+  - id: 1
+    _id: 6a2b9d77f54587f8cfcd2170
+    store_id: 1
+    product_id: 2
+    quantity: 5
+    updated_at: 2026-06-12 11:08:21.873000

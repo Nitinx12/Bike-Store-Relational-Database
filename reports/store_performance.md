@@ -24,7 +24,7 @@ Baldwin Bikes is the dominant performer across nearly every dimension, generatin
 | Total Revenue | $4,701,205.27 | $1,255,490.45 | $705,913.42 |
 | Avg Order Value | $4,613.55 | $4,420.74 | $4,971.22 |
 | Total Units Sold | 4,427 | 1,236 | 655 |
-| Total Discount Given | $316.30 | $85.67 | $43.15 |
+| Total Discount Given (rate-points, not $) | 316.30 | 85.67 | 43.15 |
 | On-Time Rate | 68.9% | 63.4% | 73.9% |
 | Total Staff | 3 | 4 | 3 |
 | Avg Revenue per Staff | $1,567,068.42 | $313,872.61 | $235,304.47 |
@@ -118,7 +118,7 @@ Baldwin's inventory is nearly perfectly matched to demand (almost a 1:1 ratio), 
 
 6. **No store meets a strong on-time delivery benchmark** — all three are below 75%, with Santa Cruz the weakest at 63.4%. Fulfillment delays are a shared, store-wide issue, not isolated to one location.
 
-7. **Discounting is minimal across the board** — total discounts given ($316.30, $85.67, $43.15) are negligible relative to revenue, suggesting discounting is not currently a meaningful lever being used to drive volume or retention.
+7. **Discounting is minimal across the board** — the summed per-line discount fractions (316.3, 85.7, 43.2 rate-points) are negligible relative to revenue, suggesting discounting is not currently a meaningful lever being used to drive volume or retention. (These are sums of the `discount` fraction column, not dollar amounts.)
 
 ---
 
@@ -220,7 +220,7 @@ LANGUAGE plpgsql
 | `total_revenue` | Sum of `order_items.total_value` for completed orders |
 | `avg_order_value` | Average per-order revenue across completed orders |
 | `total_units_sold` | Sum of `order_items.quantity` for completed orders |
-| `total_discount_given` | Sum of `order_items.discount` for completed orders |
+| `total_discount_given` | Sum of `order_items.discount` for completed orders (note: `discount` is a rate, e.g. 0.2 = 20%, so this is a summed rate, not dollars off) |
 | `on_time_rate` | % of completed orders where `shipped_date <= required_date`, among orders that have a `shipped_date` |
 | `total_staff` | Count of staff assigned to the store (not date-filtered) |
 | `avg_revenue_per_staff` | `total_revenue / total_staff`, rounded to 2 decimals |

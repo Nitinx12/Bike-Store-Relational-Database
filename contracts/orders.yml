@@ -1,0 +1,106 @@
+# Contract automatically generated from MongoDB collection
+# Generated at: 2026-10-15 21:23:58
+# Collection: orders
+
+metrics:
+  row_count: 1615
+  column_count: 10
+
+description: Schema for orders collection
+sample_size: 5
+
+columns:
+  _id:
+    type: ObjectId
+    example: 6a2b9d77f54587f8cfcd251a
+    nullable: False
+    null_count: 0
+    unique_values_sample: [ObjectId('6a2b9d77f54587f8cfcd28ce'), ObjectId('6a2b9d77f54587f8cfcd28f3'), ObjectId('6a2b9d77f54587f8cfcd25ad'), ObjectId('6a2b9d77f54587f8cfcd2aca'), ObjectId('6a2b9d77f54587f8cfcd2a71')]
+
+  order_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  customer_id:
+    type: int
+    example: 259
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  order_status:
+    type: str
+    example: Completed
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Completed', 'Pending', 'Rejected', 'Processing']
+
+  order_date:
+    type: datetime
+    example: 2016-01-01 00:00:00
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2016, 1, 1, 0, 0), datetime.datetime(2017, 8, 8, 0, 0), datetime.datetime(2017, 11, 6, 0, 0), datetime.datetime(2016, 5, 1, 0, 0), datetime.datetime(2016, 8, 1, 0, 0)]
+
+  required_date:
+    type: datetime
+    example: 2016-01-03 00:00:00
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2017, 8, 8, 0, 0), datetime.datetime(2017, 11, 6, 0, 0), datetime.datetime(2016, 5, 1, 0, 0), datetime.datetime(2017, 2, 24, 0, 0), datetime.datetime(2017, 3, 17, 0, 0)]
+
+  shipped_date:
+    type: datetime
+    example: 2016-01-03 00:00:00
+    nullable: True
+    null_count: 170
+    unique_values_sample: [datetime.datetime(2017, 8, 8, 0, 0), datetime.datetime(2017, 11, 6, 0, 0), datetime.datetime(2016, 5, 1, 0, 0), datetime.datetime(2017, 3, 17, 0, 0), datetime.datetime(2016, 8, 1, 0, 0)]
+
+  store_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3]
+
+  staff_id:
+    type: int
+    example: 2
+    nullable: False
+    null_count: 0
+    unique_values_sample: [2, 3, 6, 7, 8]
+
+  updated_at:
+    type: datetime
+    example: 2026-06-12 11:08:21.873000
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2026, 6, 12, 11, 8, 21, 873000)]
+
+sample_documents:
+  - id: 0
+    _id: 6a2b9d77f54587f8cfcd251a
+    order_id: 1
+    customer_id: 259
+    order_status: Completed
+    order_date: 2016-01-01 00:00:00
+    required_date: 2016-01-03 00:00:00
+    shipped_date: 2016-01-03 00:00:00
+    store_id: 1
+    staff_id: 2
+    updated_at: 2026-06-12 11:08:21.873000
+
+  - id: 1
+    _id: 6a2b9d77f54587f8cfcd251b
+    order_id: 2
+    customer_id: 1212
+    order_status: Completed
+    order_date: 2016-01-01 00:00:00
+    required_date: 2016-01-04 00:00:00
+    shipped_date: 2016-01-03 00:00:00
+    store_id: 2
+    staff_id: 6
+    updated_at: 2026-06-12 11:08:21.873000

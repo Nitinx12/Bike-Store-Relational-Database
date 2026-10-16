@@ -1,44 +1,14 @@
-
-# Welcome to Great Expectations! Always know what to expect from your data.
+# Great Expectations file context for the Bike Store database.
 #
-# Here you can define datasources, batch kwargs generators, integrations and
-# more. This file is intended to be committed to your repo. For help with
-# configuration please:
-#   - Read our docs: https://docs.greatexpectations.io/docs/guides/connecting_to_your_data/connect_to_data_overview/#2-configure-your-datasource
-#   - Join our slack channel: http://greatexpectations.io/slack
-
-# config_version refers to the syntactic version of this config file, and is used in maintaining backwards compatibility
-# It is auto-generated and usually does not need to be changed.
-config_version: 4
-
-# This config file supports variable substitution which enables: 1) keeping
-# secrets out of source control & 2) environment-based configuration changes
-# such as staging vs prod.
-#
-# When GX encounters substitution syntax (like `my_key: ${my_value}` or
-# `my_key: $my_value`) in the great_expectations.yml file, it will attempt
-# to replace the value of `my_key` with the value from an environment
-# variable `my_value` or a corresponding key read from this config file,
-# which is defined through the `config_variables_file_path`.
-# Environment variables take precedence over variables defined here.
-#
-# Substitution values defined here can be a simple (non-nested) value,
-# nested value such as a dictionary, or an environment variable (i.e. ${ENV_VAR})
-#
-#
-# https://docs.greatexpectations.io/docs/guides/setup/configuring_data_contexts/how_to_configure_credentials
-
+# Datasources, assets, and suites are registered by scripts/run_gx.py. Keeping
+# credentials out of this file means it is safe to commit; the runner reads
+# DB_HOST, DB_PORT, DB_NAME, DB_USER, and DB_PASSWORD from .env.
+config_version: 4.0
 
 config_variables_file_path: uncommitted/config_variables.yml
-
-# The plugins_directory will be added to your python path for custom modules
-# used to override and extend Great Expectations.
 plugins_directory: plugins/
 
 stores:
-# Stores are configurable places to store things like Expectations, Validations
-# Data Docs, and more. These are for advanced users only - most users can simply
-# leave this section alone.
   expectations_store:
     class_name: ExpectationsStore
     store_backend:
@@ -69,16 +39,99 @@ validation_results_store_name: validation_results_store
 checkpoint_store_name: checkpoint_store
 
 data_docs_sites:
-  # Data Docs make it simple to visualize data quality in your project. These
-  # include Expectations, Validations & Profiles. The are built for all
-  # Datasources from JSON artifacts in the local repo including validations &
-  # profiles from the uncommitted directory. Read more at https://docs.greatexpectations.io/docs/terms/data_docs
   local_site:
     class_name: SiteBuilder
-    # set to false to hide how-to buttons in Data Docs
-    show_how_to_buttons: true
     store_backend:
-        class_name: TupleFilesystemStoreBackend
-        base_directory: uncommitted/data_docs/local_site/
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/data_docs/local_site/
     site_index_builder:
-        class_name: DefaultSiteIndexBuilder
+      class_name: DefaultSiteIndexBuilder
+fluent_datasources:
+  bike_store_postgres:
+    type: postgres
+    id: f9518cf3-b1f2-419e-b9a6-e08e17e60f9e
+    assets:
+      brands:
+        type: table
+        id: 39e80502-ba80-4a7c-9e62-06ec77eec745
+        batch_metadata: {}
+        batch_definitions:
+          brands_whole_table:
+            id: 8b538a15-1111-47c7-acfa-0d66cf54fcf9
+            partitioner:
+        table_name: brands
+      categories:
+        type: table
+        id: a73abbaf-70a4-4b6d-939a-31cd6f6ca199
+        batch_metadata: {}
+        batch_definitions:
+          categories_whole_table:
+            id: d5abefb1-9e06-443b-a6b1-74efc1428120
+            partitioner:
+        table_name: categories
+      customers:
+        type: table
+        id: fd0df95a-0cb6-4f68-b6fe-67c987d0186a
+        batch_metadata: {}
+        batch_definitions:
+          customers_whole_table:
+            id: ed539f72-6a0f-4ab3-8731-7aaccb745879
+            partitioner:
+        table_name: customers
+      stores:
+        type: table
+        id: 9ccf0c04-7af6-4510-8aed-73f5df28c9b2
+        batch_metadata: {}
+        batch_definitions:
+          stores_whole_table:
+            id: b7304dbd-36d8-4654-88ff-6fff16e27399
+            partitioner:
+        table_name: stores
+      staffs:
+        type: table
+        id: a5a76944-7f99-4c34-ab90-ab2c82ecfe34
+        batch_metadata: {}
+        batch_definitions:
+          staffs_whole_table:
+            id: f938ba72-0ad1-41f6-8df2-3548da9ed133
+            partitioner:
+        table_name: staffs
+      products:
+        type: table
+        id: bb173998-8b36-49f3-a3c6-452a78c6539c
+        batch_metadata: {}
+        batch_definitions:
+          products_whole_table:
+            id: 5e0c17d8-4a3d-4021-a4b9-d4c916072ee8
+            partitioner:
+        table_name: products
+      orders:
+        type: table
+        id: 1cc05b58-03c9-4fbc-80c0-1948e8e45d88
+        batch_metadata: {}
+        batch_definitions:
+          orders_whole_table:
+            id: bf7d3776-740a-4f15-b987-5c371900a93d
+            partitioner:
+        table_name: orders
+      order_items:
+        type: table
+        id: 8e4e7c4b-fb9e-4d40-b134-c34039ea82f1
+        batch_metadata: {}
+        batch_definitions:
+          order_items_whole_table:
+            id: 66773dd2-24bc-4af8-989e-c69d20fcb04e
+            partitioner:
+        table_name: order_items
+      stocks:
+        type: table
+        id: ba5554ce-9835-4ae0-a088-1d7b47b59729
+        batch_metadata: {}
+        batch_definitions:
+          stocks_whole_table:
+            id: 0842afd3-21b3-4c0d-a670-582cdc9f7c69
+            partitioner:
+        table_name: stocks
+    connection_string: ${GX_POSTGRES_CONNECTION_STRING}
+analytics_enabled:
+data_context_id: f31dafa7-58d4-4e95-ae2e-c31757304939

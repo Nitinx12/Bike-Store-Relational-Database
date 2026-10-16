@@ -1,0 +1,4 @@
+# Local dashboard secrets — never commit real credentials.
+.streamlit/secrets.toml
+*.log
+__pycache__/

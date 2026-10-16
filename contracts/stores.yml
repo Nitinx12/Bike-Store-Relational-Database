@@ -1,0 +1,106 @@
+# Contract automatically generated from MongoDB collection
+# Generated at: 2026-10-15 21:23:58
+# Collection: stores
+
+metrics:
+  row_count: 3
+  column_count: 10
+
+description: Schema for stores collection
+sample_size: 3
+
+columns:
+  _id:
+    type: ObjectId
+    example: 6a2b9d77f54587f8cfcd216c
+    nullable: False
+    null_count: 0
+    unique_values_sample: [ObjectId('6a2b9d77f54587f8cfcd216c'), ObjectId('6a2b9d77f54587f8cfcd216d'), ObjectId('6a2b9d77f54587f8cfcd216e')]
+
+  store_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3]
+
+  store_name:
+    type: str
+    example: Santa Cruz Bikes
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Santa Cruz Bikes', 'Rowlett Bikes', 'Baldwin Bikes']
+
+  phone:
+    type: str
+    example: (831) 476-4321
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['(516) 379-8888', '(972) 530-5555', '(831) 476-4321']
+
+  email:
+    type: str
+    example: santacruz@bikes.shop
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['santacruz@bikes.shop', 'rowlett@bikes.shop', 'baldwin@bikes.shop']
+
+  street:
+    type: str
+    example: 3700 Portola Drive
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['8000 Fairway Avenue', '4200 Chestnut Lane', '3700 Portola Drive']
+
+  city:
+    type: str
+    example: Santa Cruz
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Santa Cruz', 'Baldwin', 'Rowlett']
+
+  state:
+    type: str
+    example: CA
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['NY', 'CA', 'TX']
+
+  zip_code:
+    type: int
+    example: 95060
+    nullable: False
+    null_count: 0
+    unique_values_sample: [11432, 75088, 95060]
+
+  updated_at:
+    type: datetime
+    example: 2026-06-12 11:08:21.873000
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2026, 6, 12, 11, 8, 21, 873000)]
+
+sample_documents:
+  - id: 0
+    _id: 6a2b9d77f54587f8cfcd216c
+    store_id: 1
+    store_name: Santa Cruz Bikes
+    phone: (831) 476-4321
+    email: santacruz@bikes.shop
+    street: 3700 Portola Drive
+    city: Santa Cruz
+    state: CA
+    zip_code: 95060
+    updated_at: 2026-06-12 11:08:21.873000
+
+  - id: 1
+    _id: 6a2b9d77f54587f8cfcd216d
+    store_id: 2
+    store_name: Baldwin Bikes
+    phone: (516) 379-8888
+    email: baldwin@bikes.shop
+    street: 4200 Chestnut Lane
+    city: Baldwin
+    state: NY
+    zip_code: 11432
+    updated_at: 2026-06-12 11:08:21.873000

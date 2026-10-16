@@ -1,0 +1,52 @@
+# Contract automatically generated from MongoDB collection
+# Generated at: 2026-10-15 21:23:58
+# Collection: categories
+
+metrics:
+  row_count: 7
+  column_count: 4
+
+description: Schema for categories collection
+sample_size: 5
+
+columns:
+  _id:
+    type: ObjectId
+    example: 6a2b9d77f54587f8cfcd3f30
+    nullable: False
+    null_count: 0
+    unique_values_sample: [ObjectId('6a2b9d77f54587f8cfcd3f35'), ObjectId('6a2b9d77f54587f8cfcd3f33'), ObjectId('6a2b9d77f54587f8cfcd3f30'), ObjectId('6a2b9d77f54587f8cfcd3f31'), ObjectId('6a2b9d77f54587f8cfcd3f34')]
+
+  category_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  category_name:
+    type: str
+    example: Children Bicycles
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Road Bikes', 'Cyclocross Bicycles', 'Mountain Bikes', 'Comfort Bicycles', 'Children Bicycles']
+
+  updated_at:
+    type: datetime
+    example: 2026-06-12 11:08:21.873000
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2026, 6, 12, 11, 8, 21, 873000)]
+
+sample_documents:
+  - id: 0
+    _id: 6a2b9d77f54587f8cfcd3f30
+    category_id: 1
+    category_name: Children Bicycles
+    updated_at: 2026-06-12 11:08:21.873000
+
+  - id: 1
+    _id: 6a2b9d77f54587f8cfcd3f31
+    category_id: 2
+    category_name: Comfort Bicycles
+    updated_at: 2026-06-12 11:08:21.873000

@@ -1,1 +1,0 @@
-# scripts package marker — enables `python -m scripts.module` imports

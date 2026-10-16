@@ -1,0 +1,8 @@
+# Pinned to the versions locked in the root uv.lock (pyproject).
+# Regenerate after `uv add/upgrade` so Docker builds the same tree.
+streamlit==1.66.0
+pandas==3.0.6
+plotly==7.1.0
+SQLAlchemy==2.1.4
+psycopg2-binary==2.9.13
+python-dotenv==1.2.4

@@ -1,0 +1,97 @@
+# Contract automatically generated from MongoDB collection
+# Generated at: 2026-10-15 21:23:58
+# Collection: order_items
+
+metrics:
+  row_count: 4722
+  column_count: 9
+
+description: Schema for order_items collection
+sample_size: 5
+
+columns:
+  _id:
+    type: ObjectId
+    example: 6a2b9d77f54587f8cfcd2b69
+    nullable: False
+    null_count: 0
+    unique_values_sample: [ObjectId('6a2b9d77f54587f8cfcd3ac0'), ObjectId('6a2b9d77f54587f8cfcd33f8'), ObjectId('6a2b9d77f54587f8cfcd2dfc'), ObjectId('6a2b9d77f54587f8cfcd2d79'), ObjectId('6a2b9d77f54587f8cfcd2f85')]
+
+  order_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  item_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  product_id:
+    type: int
+    example: 20
+    nullable: False
+    null_count: 0
+    unique_values_sample: [2, 3, 4, 5, 6]
+
+  quantity:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2]
+
+  list_price:
+    type: float
+    example: 599.99
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1549.0, 1549.99, 3599.99, 529.99, 533.99]
+
+  discount:
+    type: float
+    example: 0.2
+    nullable: False
+    null_count: 0
+    unique_values_sample: [0.2, 0.1, 0.07, 0.05]
+
+  total_value:
+    type: float
+    example: 479.99
+    nullable: False
+    null_count: 0
+    unique_values_sample: [2069.99, 6174.99, 2079.99, 2089.98, 4139.98]
+
+  updated_at:
+    type: datetime
+    example: 2026-06-12 11:08:21.873000
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2026, 6, 12, 11, 8, 21, 873000)]
+
+sample_documents:
+  - id: 0
+    _id: 6a2b9d77f54587f8cfcd2b69
+    order_id: 1
+    item_id: 1
+    product_id: 20
+    quantity: 1
+    list_price: 599.99
+    discount: 0.2
+    total_value: 479.99
+    updated_at: 2026-06-12 11:08:21.873000
+
+  - id: 1
+    _id: 6a2b9d77f54587f8cfcd2b6a
+    order_id: 1
+    item_id: 2
+    product_id: 8
+    quantity: 2
+    list_price: 1799.99
+    discount: 0.07
+    total_value: 3347.98
+    updated_at: 2026-06-12 11:08:21.873000
