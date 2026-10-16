@@ -11,6 +11,8 @@ if "%1"=="dq" goto dq
 if "%1"=="gx" goto gx
 if "%1"=="contracts" goto contracts
 if "%1"=="dashboard" goto dashboard
+if "%1"=="stack-up" goto stack-up
+if "%1"=="stack-down" goto stack-down
 if "%1"=="test" goto test
 if "%1"=="test-unit" goto test-unit
 if "%1"=="test-smoke" goto test-smoke
@@ -29,6 +31,8 @@ echo   dq              SQL data-quality suite in FK order
 echo   gx              Great Expectations suite (9 tables)
 echo   contracts       refresh contracts/*.yml from Mongo schemas
 echo   dashboard       local Streamlit dashboard
+echo   stack-up        start Postgres, MongoDB and dashboard in Docker
+echo   stack-down      stop the Docker stack (volumes keep the data)
 echo   test            unit + smoke suites
 echo   test-unit       fast unit suite, no database needed
 echo   test-smoke      live smoke suite (needs Postgres + MongoDB)
@@ -64,6 +68,14 @@ exit /b %errorlevel%
 
 :dashboard
 uv run streamlit run dashboard/home.py
+exit /b %errorlevel%
+
+:stack-up
+docker compose up --build -d
+exit /b %errorlevel%
+
+:stack-down
+docker compose down
 exit /b %errorlevel%
 
 :test

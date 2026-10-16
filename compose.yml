@@ -1,0 +1,59 @@
+# Bike Store local stack: Postgres + MongoDB + Streamlit dashboard.
+# Usage:  docker compose up --build        (foreground)
+#         docker compose up --build -d     (background)
+#         docker compose down              (stop; volumes keep the data)
+#
+# Copy .env.example to .env and set DB_PASSWORD first. The pipeline and
+# dashboard read the same values (see .env.example for DATABASE_URL mode).
+name: bike-store
+
+services:
+  postgres:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+      POSTGRES_DB: ${DB_NAME:-bike_store}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      # In-compose hostname is `postgres`, not localhost. If DB_PASSWORD
+      # contains URL-reserved chars (@ : / ? #), percent-encode it here.
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:?set DB_PASSWORD in .env}@postgres:5432/${DB_NAME:-bike_store}
+      DB_SCHEMA: ${DB_SCHEMA:-public}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  mongodata:

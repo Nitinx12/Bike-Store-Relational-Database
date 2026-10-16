@@ -1,6 +1,6 @@
 # Bike Store — one entry for every common workflow.
 # Unix/macOS/CI:  make <target>     Windows:  tasks.bat <target>
-.PHONY: help setup pipeline pipeline-full dq gx contracts dashboard test test-unit test-smoke lint sql-lint lock clean
+.PHONY: help setup pipeline pipeline-full dq gx contracts dashboard stack-up stack-down test test-unit test-smoke lint sql-lint lock clean
 
 help: ## list targets
 	@echo "  setup           install dependencies"
@@ -10,6 +10,8 @@ help: ## list targets
 	@echo "  gx              Great Expectations suite (9 tables)"
 	@echo "  contracts       refresh contracts/*.yml from Mongo schemas"
 	@echo "  dashboard       local Streamlit dashboard"
+	@echo "  stack-up        start Postgres, MongoDB and dashboard in Docker"
+	@echo "  stack-down      stop the Docker stack (volumes keep the data)"
 	@echo "  test            unit + smoke suites"
 	@echo "  test-unit       fast unit suite, no database needed"
 	@echo "  test-smoke      live smoke suite (needs Postgres + MongoDB)"
@@ -38,6 +40,12 @@ contracts: ## refresh contracts/*.yml from Mongo schemas
 
 dashboard: ## local Streamlit dashboard
 	uv run streamlit run dashboard/home.py
+
+stack-up: ## start Postgres, MongoDB and dashboard in Docker
+	docker compose up --build -d
+
+stack-down: ## stop the Docker stack (volumes keep the data)
+	docker compose down
 
 test: ## unit + smoke suites
 	uv run pytest -q
