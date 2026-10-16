@@ -1,0 +1,88 @@
+# Contract automatically generated from MongoDB collection
+# Generated at: 2026-10-15 21:23:58
+# Collection: products
+
+metrics:
+  row_count: 321
+  column_count: 8
+
+description: Schema for products collection
+sample_size: 5
+
+columns:
+  _id:
+    type: ObjectId
+    example: 6a2b9d77f54587f8cfcd3ddb
+    nullable: False
+    null_count: 0
+    unique_values_sample: [ObjectId('6a2b9d77f54587f8cfcd3ee4'), ObjectId('6a2b9d77f54587f8cfcd3df3'), ObjectId('6a2b9d77f54587f8cfcd3e84'), ObjectId('6a2b9d77f54587f8cfcd3e4d'), ObjectId('6a2b9d77f54587f8cfcd3e94')]
+
+  product_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  product_name:
+    type: str
+    example: Trek 820 - 2016
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Trek Boone 5 Disc - 2018', 'Trek Procal AL Frameset - 2018', 'Trek Emonda ALR 6 - 2018', 'Trek Remedy 9.8 - 2017', 'Electra Moto 3i - 2018']
+
+  brand_id:
+    type: int
+    example: 9
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  category_id:
+    type: int
+    example: 6
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  model_year:
+    type: int
+    example: 2016
+    nullable: False
+    null_count: 0
+    unique_values_sample: [2016, 2017, 2018, 2019]
+
+  list_price:
+    type: float
+    example: 379.99
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1549.0, 1549.99, 3599.99, 529.99, 533.99]
+
+  updated_at:
+    type: datetime
+    example: 2026-06-12 11:08:21.873000
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2026, 6, 12, 11, 8, 21, 873000)]
+
+sample_documents:
+  - id: 0
+    _id: 6a2b9d77f54587f8cfcd3ddb
+    product_id: 1
+    product_name: Trek 820 - 2016
+    brand_id: 9
+    category_id: 6
+    model_year: 2016
+    list_price: 379.99
+    updated_at: 2026-06-12 11:08:21.873000
+
+  - id: 1
+    _id: 6a2b9d77f54587f8cfcd3ddc
+    product_id: 2
+    product_name: Ritchey Timberwolf Frameset - 2016
+    brand_id: 5
+    category_id: 6
+    model_year: 2016
+    list_price: 749.99
+    updated_at: 2026-06-12 11:08:21.873000

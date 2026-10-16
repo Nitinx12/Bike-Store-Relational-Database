@@ -1,0 +1,52 @@
+# Contract automatically generated from MongoDB collection
+# Generated at: 2026-10-15 21:23:58
+# Collection: brands
+
+metrics:
+  row_count: 10
+  column_count: 4
+
+description: Schema for brands collection
+sample_size: 5
+
+columns:
+  _id:
+    type: ObjectId
+    example: 6a2b9d77f54587f8cfcd3f26
+    nullable: False
+    null_count: 0
+    unique_values_sample: [ObjectId('6a2b9d77f54587f8cfcd3f27'), ObjectId('6a2b9d77f54587f8cfcd3f2e'), ObjectId('6a2b9d77f54587f8cfcd3f29'), ObjectId('6a2b9d77f54587f8cfcd3f2a'), ObjectId('6a2b9d77f54587f8cfcd3f2b')]
+
+  brand_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  brand_name:
+    type: str
+    example: Electra
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Ritchey', 'Pure Cycles', 'Sun Bicycles', 'Surly', 'Heller']
+
+  updated_at:
+    type: datetime
+    example: 2026-06-12 11:08:21.873000
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2026, 6, 12, 11, 8, 21, 873000)]
+
+sample_documents:
+  - id: 0
+    _id: 6a2b9d77f54587f8cfcd3f26
+    brand_id: 1
+    brand_name: Electra
+    updated_at: 2026-06-12 11:08:21.873000
+
+  - id: 1
+    _id: 6a2b9d77f54587f8cfcd3f27
+    brand_id: 2
+    brand_name: Haro
+    updated_at: 2026-06-12 11:08:21.873000

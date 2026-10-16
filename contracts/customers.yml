@@ -1,0 +1,115 @@
+# Contract automatically generated from MongoDB collection
+# Generated at: 2026-10-15 21:23:58
+# Collection: customers
+
+metrics:
+  row_count: 1445
+  column_count: 11
+
+description: Schema for customers collection
+sample_size: 5
+
+columns:
+  _id:
+    type: ObjectId
+    example: 6a2b9d77f54587f8cfcd3f37
+    nullable: False
+    null_count: 0
+    unique_values_sample: [ObjectId('6a2b9d77f54587f8cfcd4223'), ObjectId('6a2b9d77f54587f8cfcd41b8'), ObjectId('6a2b9d77f54587f8cfcd40c2'), ObjectId('6a2b9d77f54587f8cfcd3f6e'), ObjectId('6a2b9d77f54587f8cfcd4433')]
+
+  customer_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  first_name:
+    type: str
+    example: Debra
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Karren', 'Angelique', 'Kim', 'Shay', 'Jeanie']
+
+  last_name:
+    type: str
+    example: Burks
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Gregory', 'Booth', 'Tran', 'Harrington', 'Cardenas']
+
+  phone:
+    type: str
+    example: (916) 381-6003
+    nullable: True
+    null_count: 1267
+    unique_values_sample: ['(562) 841-9339', '(717) 890-4260', '(631) 151-4988', '(507) 421-7354', '(916) 219-1774']
+
+  email:
+    type: str
+    example: debra.burks@yahoo.com
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['ashely.holmes@aol.com', 'lurlene.finch@msn.com', 'ladawn.downs@yahoo.com', 'shay.stephenson@aol.com', 'whitney.estes@gmail.com']
+
+  street:
+    type: str
+    example: 9273 Thorne Ave.
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['36 Pearl Court', '7090 Bridge Dr.', '83 E. Buttonwood Street', '10 Silver Spear Dr.', '7268 Leatherwood Ave.']
+
+  city:
+    type: str
+    example: Orchard Park
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Middle Village', 'Sugar Land', 'Torrance', 'New York', 'Rome']
+
+  state:
+    type: str
+    example: NY
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['NY', 'CA', 'TX']
+
+  zip_code:
+    type: int
+    example: 14127
+    nullable: False
+    null_count: 0
+    unique_values_sample: [11776, 14850, 11779, 12804, 11784]
+
+  updated_at:
+    type: datetime
+    example: 2026-10-15 17:29:55.228000
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2026, 10, 15, 17, 29, 55, 228000)]
+
+sample_documents:
+  - id: 0
+    _id: 6a2b9d77f54587f8cfcd3f37
+    customer_id: 1
+    first_name: Debra
+    last_name: Burks
+    phone: None
+    email: debra.burks@yahoo.com
+    street: 9273 Thorne Ave.
+    city: Orchard Park
+    state: NY
+    zip_code: 14127
+    updated_at: 2026-10-15 17:29:55.228000
+
+  - id: 1
+    _id: 6a2b9d77f54587f8cfcd3f38
+    customer_id: 2
+    first_name: Kasha
+    last_name: Todd
+    phone: None
+    email: kasha.todd@yahoo.com
+    street: 910 Vine Street
+    city: Campbell
+    state: CA
+    zip_code: 95008
+    updated_at: 2026-10-15 17:29:55.228000

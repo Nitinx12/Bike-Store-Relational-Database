@@ -1,1 +1,1 @@
-"""Bike Store ETL — core package."""
+# empty init, just marks src as a package

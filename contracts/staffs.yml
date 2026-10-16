@@ -1,0 +1,106 @@
+# Contract automatically generated from MongoDB collection
+# Generated at: 2026-10-15 21:23:58
+# Collection: staffs
+
+metrics:
+  row_count: 10
+  column_count: 10
+
+description: Schema for staffs collection
+sample_size: 5
+
+columns:
+  _id:
+    type: ObjectId
+    example: 6a2b9d77f54587f8cfcd3f1c
+    nullable: False
+    null_count: 0
+    unique_values_sample: [ObjectId('6a2b9d77f54587f8cfcd3f1d'), ObjectId('6a2b9d77f54587f8cfcd3f1c'), ObjectId('6a2b9d77f54587f8cfcd3f1e'), ObjectId('6a2b9d77f54587f8cfcd3f24'), ObjectId('6a2b9d77f54587f8cfcd3f1f')]
+
+  staff_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3, 4, 5]
+
+  first_name:
+    type: str
+    example: Fabiola
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Genna', 'Marcelene', 'Layla', 'Jannette', 'Virgie']
+
+  last_name:
+    type: str
+    example: Jackson
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['Wiggins', 'Boyer', 'David', 'Vargas', 'Copeland']
+
+  email:
+    type: str
+    example: fabiola.jackson@bikes.shop
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['jannette.david@bikes.shop', 'layla.terrell@bikes.shop', 'virgie.wiggins@bikes.shop', 'mireya.copeland@bikes.shop', 'marcelene.boyer@bikes.shop']
+
+  phone:
+    type: str
+    example: (831) 555-5554
+    nullable: False
+    null_count: 0
+    unique_values_sample: ['(831) 555-5554', '(972) 530-5556', '(831) 555-5556', '(972) 530-5555', '(972) 530-5557']
+
+  active:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1]
+
+  store_id:
+    type: int
+    example: 1
+    nullable: False
+    null_count: 0
+    unique_values_sample: [1, 2, 3]
+
+  manager_id:
+    type: int
+    example: 1
+    nullable: True
+    null_count: 1
+    unique_values_sample: [None, 1, 2, 5, 7]
+
+  updated_at:
+    type: datetime
+    example: 2026-06-12 11:08:21.873000
+    nullable: False
+    null_count: 0
+    unique_values_sample: [datetime.datetime(2026, 6, 12, 11, 8, 21, 873000)]
+
+sample_documents:
+  - id: 0
+    _id: 6a2b9d77f54587f8cfcd3f1c
+    staff_id: 1
+    first_name: Fabiola
+    last_name: Jackson
+    email: fabiola.jackson@bikes.shop
+    phone: (831) 555-5554
+    active: 1
+    store_id: 1
+    manager_id: None
+    updated_at: 2026-06-12 11:08:21.873000
+
+  - id: 1
+    _id: 6a2b9d77f54587f8cfcd3f1d
+    staff_id: 2
+    first_name: Mireya
+    last_name: Copeland
+    email: mireya.copeland@bikes.shop
+    phone: (831) 555-5555
+    active: 1
+    store_id: 1
+    manager_id: 1
+    updated_at: 2026-06-12 11:08:21.873000
