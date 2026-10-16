@@ -66,8 +66,7 @@ instead of a blank screen.
    DATABASE_URL = "<neon pooled connection string>"
    DB_SCHEMA = "public"
    ```
-   Root `requirements.txt` and `.streamlit/config.toml` are the Cloud-facing
-   config (error details off, usage stats off).
+   `dashboard/requirements.txt` pins the exact versions to install.
 
 ## Docker
 

@@ -1,3 +1,0 @@
-# Streamlit Community Cloud installs dependencies from this root file.
-# Real pins live in dashboard/requirements.txt (locked in uv.lock).
--r dashboard/requirements.txt
