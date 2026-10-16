@@ -20,7 +20,7 @@ if command -v uv >/dev/null 2>&1; then
   pass "pytest"
 
   echo -e "${CYAN}→ import smoke test${RESET}"
-  if ! uv run python -c "from src.pipeline.runner import run_pipeline; from src.validation.plpgsql_loops import run_all; print('imports ok')" 2>&1; then
+  if ! uv run python -c "import main; from src.jobs.incremental_load import main as etl; from src.jobs.run_dq import main as dq; print('imports ok')" 2>&1; then
     fail "import smoke test failed"
     exit 1
   fi
