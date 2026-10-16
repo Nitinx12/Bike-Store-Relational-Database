@@ -60,7 +60,9 @@ instead of a blank screen.
    `pg_dump "<local-url>" | psql "<neon-url>"`.
 3. **Push** this repo to GitHub.
 4. **Deploy** at [share.streamlit.io](https://share.streamlit.io):
-   repo → `main` → main file path `dashboard/home.py`; then
+   repo → `main` → main file path `dashboard/home.py`. Streamlit Cloud
+   installs from a root `requirements.txt`, so copy
+   `dashboard/requirements.txt` to the repo root first (same pins); then
    **App settings → Secrets**:
    ```toml
    DATABASE_URL = "<neon pooled connection string>"
