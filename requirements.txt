@@ -1,0 +1,8 @@
+# Streamlit Community Cloud installs dependencies from this root file.
+# Keep pins identical to dashboard/requirements.txt (locked in uv.lock).
+streamlit==1.66.0
+pandas==3.0.6
+plotly==7.1.0
+SQLAlchemy==2.1.4
+psycopg2-binary==2.9.13
+python-dotenv==1.2.1

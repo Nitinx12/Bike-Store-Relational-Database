@@ -1,19 +1,38 @@
+# Production-safe defaults for the publicly deployed app
+# (Streamlit Community Cloud reads .streamlit/config.toml from the repo root).
+# Local development overrides live in dashboard/.streamlit/config.toml.
 [theme]
-primaryColor = "#0F766E"
+primaryColor = "#0071CE"
 backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F0FDF4"
-textColor = "#1E293B"
+secondaryBackgroundColor = "#F8FAFC"
+textColor = "#0F172A"
 font = "sans serif"
 
 [server]
+runOnSave = false
 headless = true
-port = 8501
 enableCORS = false
 enableXsrfProtection = true
+port = 8501
 maxUploadSize = 50
 
 [browser]
 gatherUsageStats = false
 
 [client]
-showErrorDetails = true
+showErrorDetails = false
+toolbarMode = "minimal"
+
+[runner]
+magicEnabled = false
+fastReruns = true
+
+[logger]
+level = "warning"
+
+[deprecation]
+showfileUploaderEncoding = false
+showPyplotGlobalUse = false
+
+[mapbox]
+token = ""
